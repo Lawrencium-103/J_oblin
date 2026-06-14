@@ -1,4 +1,4 @@
-import json, os, re, random
+import json, os, re, random, threading
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -266,8 +266,8 @@ def scrape(req: ScrapeRequest):
 def scrape_cron(req: ScrapeRequest, token: str = Query("")):
     if CRON_TOKEN and token != CRON_TOKEN:
         raise HTTPException(403, "Invalid token")
-    result = run_nightly_scrape()
-    return {"status": "ok", "result": result}
+    threading.Thread(target=run_nightly_scrape, daemon=True).start()
+    return {"status": "started", "message": "Scraping in background"}
 
 
 @app.get("/api/jobs")
