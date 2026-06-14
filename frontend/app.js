@@ -5,7 +5,7 @@ async function apiFetch(method, path, body) {
   const opts = { method, headers: apiHeaders() };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(API + path, opts);
-  if (r.status === 401) {
+  if (r.status === 401 && !path.startsWith("/api/auth/login")) {
     localStorage.removeItem("joblin_token"); localStorage.removeItem("joblin_user");
     window.location.href = "/login.html";
     throw new Error("Unauthorized");
