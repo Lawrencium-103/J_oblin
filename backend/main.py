@@ -102,7 +102,8 @@ def register(req: RegisterRequest):
     user = create_user(req.email, hash_password(req.password), req.name)
     if not user:
         raise HTTPException(500, "Failed to create user")
-    token = create_access_token(user["id"], user["email"])
+    token = create_access_token(user["id"], user["email"], is_admin=False)
+    user["is_admin"] = False
     return {"token": token, "user": user}
 
 
@@ -111,8 +112,9 @@ def login(req: LoginRequest):
     user = get_user_by_email(req.email)
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(401, "Invalid email or password")
-    token = create_access_token(user["id"], user["email"])
-    return {"token": token, "user": {"id": user["id"], "email": user["email"], "name": user.get("name", "")}}
+    is_admin = bool(user.get("is_admin", 0))
+    token = create_access_token(user["id"], user["email"], is_admin=is_admin)
+    return {"token": token, "user": {"id": user["id"], "email": user["email"], "name": user.get("name", ""), "is_admin": is_admin}}
 
 
 @app.get("/api/auth/me")

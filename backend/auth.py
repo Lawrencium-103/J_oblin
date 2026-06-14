@@ -16,10 +16,10 @@ def verify_password(plain: str, hashed: str) -> bool:
     return _bcrypt.checkpw(plain.encode("utf-8"), hashed.encode("utf-8"))
 
 
-def create_access_token(user_id: int, email: str) -> str:
+def create_access_token(user_id: int, email: str, is_admin: bool = False) -> str:
     exp = datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
     return jwt.encode(
-        {"sub": str(user_id), "email": email, "exp": exp, "iat": datetime.now(timezone.utc)},
+        {"sub": str(user_id), "email": email, "is_admin": is_admin, "exp": exp, "iat": datetime.now(timezone.utc)},
         JWT_SECRET,
         algorithm=JWT_ALGORITHM,
     )
@@ -28,7 +28,7 @@ def create_access_token(user_id: int, email: str) -> str:
 def decode_token(token: str) -> dict:
     try:
         payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return {"user_id": int(payload["sub"]), "email": payload["email"]}
+        return {"user_id": int(payload["sub"]), "email": payload["email"], "is_admin": payload.get("is_admin", False)}
     except (JWTError, KeyError):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
 

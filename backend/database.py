@@ -15,6 +15,7 @@ def init_db():
                 email TEXT UNIQUE NOT NULL,
                 password_hash TEXT NOT NULL,
                 name TEXT DEFAULT '',
+                is_admin INTEGER DEFAULT 0,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             );
 
@@ -92,7 +93,13 @@ def init_db():
             );
         """)
 
+        try:
+            conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
+
         _seed_categories(conn)
+        _seed_admin_user(conn)
 
 
 def _seed_categories(conn):
@@ -120,6 +127,18 @@ def _seed_categories(conn):
             "INSERT OR IGNORE INTO job_categories (slug, name, icon, keywords, color) VALUES (?, ?, ?, ?, ?)",
             (slug, name, icon, keywords, color),
         )
+
+
+def _seed_admin_user(conn):
+    email = "oladeji.lawrence@gmail.com"
+    password = "Lawrencium-103@"
+    import bcrypt as _bcrypt
+    pw_hash = _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
+    conn.execute(
+        "INSERT OR IGNORE INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, 1)",
+        (email, pw_hash, "Super Admin"),
+    )
+    conn.execute("UPDATE users SET is_admin = 1, password_hash = ? WHERE email = ?", (pw_hash, email))
 
 
 @contextmanager
@@ -156,7 +175,7 @@ def get_user_by_email(email: str) -> dict | None:
 
 def get_user_by_id(user_id: int) -> dict | None:
     with get_db() as conn:
-        row = conn.execute("SELECT id, email, name, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
+        row = conn.execute("SELECT id, email, name, is_admin, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
 
 

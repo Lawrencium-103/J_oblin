@@ -47,8 +47,27 @@ function updateHeader() {
   document.querySelectorAll(".nav-item").forEach(a => {
     a.classList.toggle("active", a.getAttribute("href") === path);
   });
+  const isAdminUser = user && (user.is_admin === true || user.is_admin === 1);
+  const adminSections = document.querySelectorAll(".admin-only");
+  const showAdmin = isAdminUser && adminMode();
+  adminSections.forEach(el => { el.style.display = showAdmin ? "" : "none"; });
+  const toggleEl = document.getElementById("adminToggle");
+  const toggleLabel = document.getElementById("adminToggleLabel");
+  if (toggleEl && isAdminUser) {
+    toggleEl.style.display = "";
+    if (toggleLabel) toggleLabel.textContent = adminMode() ? "User View" : "Admin View";
+  } else if (toggleEl) {
+    toggleEl.style.display = "none";
+  }
 }
-function logout() { localStorage.removeItem("joblin_token"); localStorage.removeItem("joblin_user"); window.location.href = "/login.html"; }
+function isAdmin() { const u = getCurrentUser(); return u && (u.is_admin === true || u.is_admin === 1); }
+function adminMode() { return localStorage.getItem("admin_mode") === "true"; }
+function toggleAdminMode() {
+  const newVal = adminMode() ? "false" : "true";
+  localStorage.setItem("admin_mode", newVal);
+  location.reload();
+}
+function logout() { localStorage.removeItem("joblin_token"); localStorage.removeItem("joblin_user"); localStorage.removeItem("admin_mode"); window.location.href = "/login.html"; }
 function escHtml(s) { if (!s) return ""; return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
 function renderQualityScores(scores) {
