@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin — About the Developer</title>
+<meta name="description" content="Built by Lawrence Oladeji — AI-Native Data Analyst & Full-Stack Developer. Learn more about the developer behind Joblin.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-primary-400: #34d399;
+  --color-primary-500: #059669;
+  --color-primary-600: #047857;
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-sans);
+  background: var(--color-neutral-0);
+  color: var(--color-neutral-800);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 14px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s;
+}
+nav.scrolled { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-neutral-800); font-weight: 800; font-size: 20px; }
+.nav-brand-icon { width: 34px; height: 34px; background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #fff; }
+.nav-brand span { color: var(--color-primary-500); }
+.nav-links { display: flex; align-items: center; gap: 24px; }
+.nav-links a { text-decoration: none; color: var(--color-neutral-600); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: var(--color-primary-500); }
+.nav-cta { background: var(--color-primary-500); color: #fff !important; padding: 8px 20px; border-radius: 9999px; font-weight: 600; transition: all 0.2s !important; }
+.nav-cta:hover { background: var(--color-primary-600) !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+
+.hero {
+  padding: 120px 40px 80px;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+.hero-left h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.15; }
+.hero-left h1 span { color: var(--color-primary-500); }
+.hero-left .title-role { font-size: 18px; color: var(--color-primary-500); font-weight: 600; margin-top: 12px; margin-bottom: 20px; }
+.hero-left .contact-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
+.hero-left .contact-row a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 9999px; font-size: 14px; font-weight: 500; text-decoration: none; border: 1px solid var(--color-neutral-200); color: var(--color-neutral-700); transition: all 0.2s; }
+.hero-left .contact-row a:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); background: rgba(5,150,105,0.04); }
+.hero-left .contact-row .btn-primary-link { background: var(--color-primary-500); color: #fff; border-color: var(--color-primary-500); }
+.hero-left .contact-row .btn-primary-link:hover { background: var(--color-primary-600); color: #fff; }
+.hero-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.hero-avatar {
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 72px;
+  font-weight: 900;
+  color: #fff;
+  box-shadow: 0 20px 60px rgba(5,150,105,0.2);
+  user-select: none;
+}
+
+.section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+.section-label { font-size: 12px; font-weight: 700; color: var(--color-primary-500); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.section h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; }
+.section .subtitle { color: var(--color-neutral-500); font-size: 16px; line-height: 1.6; max-width: 680px; }
+
+.summary-text {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--color-neutral-600);
+  margin-top: 20px;
+  max-width: 800px;
+}
+
+/* ── Projects ── */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+.project-card {
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 16px;
+  padding: 28px;
+  transition: all 0.25s;
+  display: flex;
+  flex-direction: column;
+}
+.project-card:hover { border-color: var(--color-primary-200); box-shadow: 0 8px 24px rgba(0,0,0,0.06); transform: translateY(-3px); }
+.project-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--color-neutral-800); }
+.project-card p { font-size: 13px; line-height: 1.6; color: var(--color-neutral-500); flex: 1; }
+.project-card .tech-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
+.project-card .tech-tag { font-size: 11px; padding: 3px 10px; border-radius: 9999px; background: rgba(5,150,105,0.08); color: var(--color-primary-600); font-weight: 500; }
+.project-card .project-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--color-primary-500); text-decoration: none; margin-top: 8px; }
+.project-card .project-link:hover { color: var(--color-primary-600); gap: 8px; }
+
+/* ── Skills ── */
+.skills-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.skills-cloud span { padding: 6px 16px; border-radius: 9999px; background: var(--color-neutral-100); color: var(--color-neutral-700); font-size: 13px; font-weight: 500; transition: all 0.2s; }
+.skills-cloud span:hover { background: rgba(5,150,105,0.1); color: var(--color-primary-600); }
+
+/* ── How to Use ── */
+.howto-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+}
+.howto-step {
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 16px;
+  padding: 28px;
+  text-align: center;
+}
+.howto-step .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary-500); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; margin-bottom: 14px; }
+.howto-step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
+.howto-step p { font-size: 13px; color: var(--color-neutral-500); line-height: 1.6; }
+
+/* ── CTA ── */
+.cta-section {
+  background: linear-gradient(135deg, rgba(5,150,105,0.05), rgba(5,150,105,0.02));
+  border-radius: 24px;
+  padding: 60px 40px;
+  text-align: center;
+  max-width: 1100px;
+  margin: 0 auto 60px;
+}
+.cta-section h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
+.cta-section p { color: var(--color-neutral-500); margin-bottom: 28px; font-size: 16px; }
+.cta-section .btn-cta { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 9999px; background: var(--color-primary-500); color: #fff; font-size: 16px; font-weight: 600; text-decoration: none; transition: all 0.25s; }
+.cta-section .btn-cta:hover { background: var(--color-primary-600); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(5,150,105,0.3); }
+
+footer { text-align: center; padding: 40px; color: var(--color-neutral-400); font-size: 13px; border-top: 1px solid var(--color-neutral-100); }
+footer a { color: var(--color-primary-500); text-decoration: none; }
+
+@media (max-width: 768px) {
+  nav { padding: 12px 20px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 100px 20px 40px; gap: 40px; text-align: center; }
+  .hero-left h1 { font-size: 32px; }
+  .hero-left .contact-row { justify-content: center; }
+  .hero-avatar { width: 160px; height: 160px; font-size: 52px; }
+  .section { padding: 50px 20px; }
+  .section h2 { font-size: 26px; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .cta-section { margin: 0 20px 40px; padding: 40px 20px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-brand-icon">J</div>
+    Job<span>lin</span>
+  </a>
+  <div class="nav-links">
+    <a href="index.html#features">Features</a>
+    <a href="about.html" style="color:var(--color-primary-500);font-weight:600;">About</a>
+    <a href="login.html">Sign In</a>
+    <a href="register.html" class="nav-cta">Get Started Free</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section class="hero">
+  <div class="hero-left">
+    <h1>Lawrence <span>Oladeji</span></h1>
+    <div class="title-role">AI-Native Data Analyst &amp; Full-Stack Developer</div>
+    <p style="color:var(--color-neutral-500);font-size:15px;line-height:1.7;">
+      I build tools that turn raw data into decisions — from AI-powered job matching to
+      public health intelligence platforms serving millions.
+    </p>
+    <div class="contact-row">
+      <a href="mailto:Oladeji.lawrence@gmail.com" class="btn-primary-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+        Email
+      </a>
+      <a href="tel:+2349038819790">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        +234 903 881 9790
+      </a>
+      <a href="https://www.linkedin.com/in/lawrence-oladeji" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        LinkedIn
+      </a>
+      <a href="https://github.com/Lawrencium-103" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="hero-avatar">LO</div>
+  </div>
+</section>
+
+<!-- ── Summary ── -->
+<section class="section">
+  <div class="section-label">Career Summary</div>
+  <h2>What I Do</h2>
+  <p class="summary-text">
+    AI-Native Data Analyst with deep expertise transforming complex datasets into strategic
+    insights for executive decision-making in public health and development sectors. My work
+    spans traditional Business Intelligence (Power BI, SQL optimization, Data Governance)
+    augmented by Generative AI and LLM orchestration. I design multi-agentic systems using
+    LangGraph and CrewAI to automate workflows and reduce reporting latency.
+  </p>
+  <p class="summary-text" style="margin-top:14px;">
+    Experienced in Monitoring &amp; Evaluation, health system strengthening, and building
+    capacity of cross-functional teams. I build full-stack applications — from geospatial
+    health dashboards to AI-powered content engines — deployed on modern stacks
+    (Next.js, FastAPI, Docker, Vercel). Passionate about using technology to solve
+    real-world problems in Nigeria and across Africa.
+  </p>
+</section>
+
+<!-- ── Skills ── -->
+<section class="section">
+  <div class="section-label">Technical Skills</div>
+  <h2>Stack &amp; Tools</h2>
+  <div class="skills-cloud">
+    <span>Power BI</span><span>SQL</span><span>Python</span><span>LangGraph</span>
+    <span>CrewAI</span><span>Google BigQuery</span><span>PostgreSQL</span><span>Tableau</span>
+    <span>TensorFlow</span><span>Scikit-learn</span><span>Pandas</span><span>Streamlit</span>
+    <span>LangChain</span><span>DAX</span><span>ETL Pipelines</span><span>MySQL</span>
+    <span>Apache Airflow</span><span>DHIS2</span><span>TypeScript</span><span>Next.js</span>
+    <span>Node.js</span><span>Docker</span><span>FastAPI</span><span>NLP</span>
+    <span>Web Scraping</span><span>Geospatial Analysis</span><span>XGBoost</span><span>SHAP</span>
+  </div>
+</section>
+
+<!-- ── Projects ── -->
+<section class="section">
+  <div class="section-label">Featured Work</div>
+  <h2>Projects I've Built</h2>
+  <p class="subtitle">Live applications — from public health intelligence to AI matchmaking engines.</p>
+  <div class="projects-grid">
+
+    <div class="project-card">
+      <h3>Nigeria Public Health Dashboard</h3>
+      <p>Full-stack health intelligence platform for 37 states with interactive Leaflet choropleth maps, Recharts dashboards, NLP-driven query engine processing 1,665 health indicators. Voice interface via Web Speech API, PWA offline support for low-resource environments.</p>
+      <div class="tech-tags"><span class="tech-tag">TypeScript</span><span class="tech-tag">Next.js</span><span class="tech-tag">Leaflet</span><span class="tech-tag">NLP</span><span class="tech-tag">PWA</span></div>
+      <a href="https://nigeria-publichealth-dashboard.vercel.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>WHO ESPEN Nigeria NTD Data Dashboard</h3>
+      <p>Premium analytics platform deployed for international public health monitoring. Real-time supply chain latency algorithms with glassmorphism geospatial tracking UX covering 774 LGAs across 37 states with 11 years of SCH/PZQ data.</p>
+      <div class="tech-tags"><span class="tech-tag">Node.js</span><span class="tech-tag">Leaflet.js</span><span class="tech-tag">SQL</span><span class="tech-tag">Geospatial</span></div>
+      <a href="https://who-espen-nigeria-ntd.vercel.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>Startup Signal — AI Matchmaking Engine</h3>
+      <p>Multi-source startup discovery engine scraping Y Combinator, a16z Portfolio, Product Hunt, Wellfound, BetaList, and Crunchbase. Runs LLM-powered skill-fit scoring and auto-generates cold email drafts with critical-need analysis.</p>
+      <div class="tech-tags"><span class="tech-tag">Python</span><span class="tech-tag">Gradio</span><span class="tech-tag">LLM</span><span class="tech-tag">Groq</span><span class="tech-tag">Scraping</span></div>
+      <span class="project-link" style="opacity:0.5">Private repo</span>
+    </div>
+
+    <div class="project-card">
+      <h3>FairValue — Premiership Player Transfer Cap</h3>
+      <p>Production-grade XGBoost regression model for football transfer valuation using hedonic pricing theory and 12,500+ historical benchmarks. SHAP explainability, dynamic aging curves, contract leverage quantification. Verified against 30 real-world elite transfers.</p>
+      <div class="tech-tags"><span class="tech-tag">XGBoost</span><span class="tech-tag">SHAP</span><span class="tech-tag">FastAPI</span><span class="tech-tag">Docker</span></div>
+      <a href="https://premiership-player-fair-value.vercel.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>LinkyGen Intelligence</h3>
+      <p>Advanced AI application utilizing multi-agentic LangGraph architecture to streamline high-quality dynamic content pipelines with intelligent routing and generation.</p>
+      <div class="tech-tags"><span class="tech-tag">LangGraph</span><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span></div>
+      <a href="https://linkygen.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>SESA — Smart Energy Storage Arbitrage</h3>
+      <p>Stochastic optimization engine built on Agentic AI orchestration to minimize smart building electricity costs via BESS arbitrage using multi-agent decision making.</p>
+      <div class="tech-tags"><span class="tech-tag">Multi-Agent</span><span class="tech-tag">Python</span><span class="tech-tag">Optimization</span></div>
+      <a href="https://sesa-energy.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>Stratos Content Empire</h3>
+      <p>Strategic AI marketing tool powered by LangGraph multi-agent orchestration mapping pinpoint audience intent for precision content targeting.</p>
+      <div class="tech-tags"><span class="tech-tag">LangGraph</span><span class="tech-tag">Streamlit</span><span class="tech-tag">LLM</span></div>
+      <a href="https://stratos-content.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>XGen Studio</h3>
+      <p>Viral writing assistant leveraging multi-agent LLM workflow (CrewAI + LangChain) to scale brand growth through highly-humanized narrative generation.</p>
+      <div class="tech-tags"><span class="tech-tag">CrewAI</span><span class="tech-tag">LangChain</span><span class="tech-tag">Python</span></div>
+      <a href="https://xgenstudio.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>OyoAirTrack — Environmental Intelligence</h3>
+      <p>Democratizing environmental intelligence by mapping invisible air quality and heat data into actionable public health dashboards for a healthier Africa.</p>
+      <div class="tech-tags"><span class="tech-tag">Geospatial</span><span class="tech-tag">Python</span><span class="tech-tag">Leaflet.js</span></div>
+      <a href="https://oyoairtrack.netlify.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>Finstratz Analytics</h3>
+      <p>Python-based financial monitoring suite utilizing deep learning (TensorFlow, Scikit-learn) to forecast US stock price trends, market volatility, and generate buy/sell recommendations.</p>
+      <div class="tech-tags"><span class="tech-tag">TensorFlow</span><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span></div>
+      <a href="https://finstratz.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+    <div class="project-card">
+      <h3>Stanbic IBTC Portfolio Simulator</h3>
+      <p>Financial modeling application generating robust performance forecasts across Money Market portfolios with interactive simulation capabilities.</p>
+      <div class="tech-tags"><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span><span class="tech-tag">Financial Modeling</span></div>
+      <a href="https://stanbic-ibtc-portfolio-simulation.streamlit.app/" target="_blank" class="project-link">View Live →</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── How to Use Joblin ── -->
+<section class="section">
+  <div class="section-label">Quick Start</div>
+  <h2>How to Use Joblin</h2>
+  <p class="subtitle">Three steps to land your next role. No fluff. No hidden fees.</p>
+  <div class="howto-grid">
+    <div class="howto-step">
+      <div class="step-num">1</div>
+      <h3>Create Your Account</h3>
+      <p>Sign up with your email and password. Free, no credit card. You get instant access to all features including the free AI model.</p>
+    </div>
+    <div class="howto-step">
+      <div class="step-num">2</div>
+      <h3>Paste Your CV</h3>
+      <p>Go to <strong>Make My CV</strong> and paste your raw career text or use the voice narration feature. Add your target job title — Joblin learns your profile.</p>
+    </div>
+    <div class="howto-step">
+      <div class="step-num">3</div>
+      <h3>Match &amp; Tailor</h3>
+      <p>Browse jobs from 30+ boards or paste a specific role. Click <strong>Tailor My CV</strong> — Joblin rewrites your CV and cover letter for that exact job. Download as PDF or DOCX.</p>
+    </div>
+  </div>
+  <div style="text-align:center;margin-top:36px;">
+    <a href="register.html" class="nav-cta" style="display:inline-flex;padding:14px 32px;font-size:16px;text-decoration:none;">Start Matching Jobs Now</a>
+  </div>
+</section>
+
+<!-- ── CTA ── -->
+<section class="cta-section">
+  <h2>Built for Nigerian Job Seekers</h2>
+  <p>Free AI model included. No subscription. No hidden charges. Just your next opportunity.</p>
+  <a href="register.html" class="btn-cta">
+    Create Free Account
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+  </a>
+</section>
+
+<footer>
+  <p>Built by <a href="about.html">Lawrence Oladeji</a> &middot; Joblin &copy; 2026 &middot; <a href="login.html">Sign In</a> &middot; <a href="register.html">Create Account</a></p>
+</footer>
+
+<script>
+window.addEventListener('scroll', () => {
+  document.getElementById('nav').classList.toggle('scrolled', window.scrollY > 40);
+});
+</script>
+</body>
+</html>
