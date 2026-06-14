@@ -1,4 +1,4 @@
-const API = "http://127.0.0.1:8002";
+const API = window.location.origin;
 function getToken() { return localStorage.getItem("joblin_token"); }
 function apiHeaders() { const h = { "Content-Type": "application/json" }; const t = getToken(); if (t) h["Authorization"] = `Bearer ${t}`; return h; }
 async function apiFetch(method, path, body) {
