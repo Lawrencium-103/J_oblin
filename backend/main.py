@@ -320,6 +320,26 @@ def scrape_test(board: str = ""):
     from backend.database import save_global_jobs, get_global_stats
     s = NigerianJobScraper()
 
+    if board in ("ngo", "intl", "hi"):
+        import io, contextlib
+        boards_map = {
+            "ngo": ("backend.scrapers.ngos", "NGOJobScraper", "scrape_myngojob"),
+            "intl": ("backend.scrapers.international", "InternationalJobScraper", "scrape_reed"),
+            "hi": ("backend.scrapers.highimpact", "HighImpactScraper", "scrape_anthropic"),
+        }
+        mod_path, cls_name, method_name = boards_map[board]
+        import importlib
+        mod = importlib.import_module(mod_path)
+        scraper_cls = getattr(mod, cls_name)
+        scraper = scraper_cls()
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            try:
+                jobs = getattr(scraper, method_name)("Data Analyst")
+            except Exception as e:
+                return {"board": board, "error": str(e), "logs": buf.getvalue()[:2000]}
+        return {"board": board, "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
+
     if board:
         import io, contextlib, sys, requests as _req
         url = f"https://www.{board}.com/search?q=Data+Analyst"
@@ -351,39 +371,6 @@ def scrape_test(board: str = ""):
             "logs": buf.getvalue()[:2000],
             "direct_fetch": {"status": r.status_code, "length": len(r.text)},
         }
-
-    elif board == "ngo":
-        from backend.scrapers.ngos import NGOJobScraper
-        s = NGOJobScraper()
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-            try:
-                jobs = s.scrape_myngojob("Data Analyst")
-            except Exception as e:
-                return {"board": "ngo/myngojob", "error": str(e), "logs": buf.getvalue()[:2000]}
-        return {"board": "ngo/myngojob", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
-
-    elif board == "intl":
-        from backend.scrapers.international import InternationalJobScraper
-        s = InternationalJobScraper()
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-            try:
-                jobs = s.scrape_reed("Data Analyst")
-            except Exception as e:
-                return {"board": "intl/reed", "error": str(e), "logs": buf.getvalue()[:2000]}
-        return {"board": "intl/reed", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
-
-    elif board == "hi":
-        from backend.scrapers.highimpact import HighImpactScraper
-        s = HighImpactScraper()
-        buf = io.StringIO()
-        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
-            try:
-                jobs = s.scrape_anthropic("Data Analyst")
-            except Exception as e:
-                return {"board": "hi/anthropic", "error": str(e), "logs": buf.getvalue()[:2000]}
-        return {"board": "hi/anthropic", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
 
     all_jobs = []
     results = {}
