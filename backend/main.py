@@ -344,19 +344,11 @@ def scrape_test(board: str = ""):
                     jobs = method("Data Analyst")
                 except Exception as e:
                     return {"board": board, "error": str(e), "logs": buf.getvalue()[:2000]}
-        logs = buf.getvalue()[:2000]
-        scraper_soup = s.fetch_soup(url)
-        scraper_raw = ""
-        if scraper_soup:
-            scraper_raw = str(scraper_soup)[:300]
         return {
             "board": board,
             "count": len(jobs or []),
             "first": (jobs[0] if jobs else None),
-            "logs": logs,
-            "scraper_fetch": {"got_soup": scraper_soup is not None,
-                              "html_len": len(str(scraper_soup)) if scraper_soup else 0,
-                              "html_start": scraper_raw},
+            "logs": buf.getvalue()[:2000],
             "direct_fetch": {"status": r.status_code, "length": len(r.text)},
         }
 
