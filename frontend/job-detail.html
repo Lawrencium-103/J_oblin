@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Job Detail</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div class="top-bar-search">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="globalSearch" placeholder="Search jobs..." onkeydown="if(event.key==='Enter')location.href='jobs.html?search='+encodeURIComponent(this.value)">
+      </div>
+    </div>
+
+    <div class="page-content">
+      <a href="jobs.html" class="back-link">&larr; Back to Jobs</a>
+
+      <div class="card job-detail">
+        <div id="jobContent">
+          <div class="empty-state"><div class="spinner spinner-lg"></div></div>
+        </div>
+      </div>
+
+      <div class="card" id="tailorSection" style="display:none">
+        <div class="card-title">
+          <div class="card-icon">&#9889;</div>
+          Tailor Your Application
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+          Generate a tailored CV and cover letter for this specific job using your profile and API key.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="tailorJob()" id="tailorBtn">Generate CV & Cover Letter</button>
+          <button class="btn btn-secondary" id="downloadCvBtn" style="display:none" onclick="downloadFile('cv')">Download CV</button>
+          <button class="btn btn-secondary" id="downloadCoverBtn" style="display:none" onclick="downloadFile('cover')">Download Cover Letter</button>
+        </div>
+        <div id="tailorResult" style="margin-top:12px"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let jobId = null;
+let jobData = null;
+
+async function loadJob() {
+  jobId = new URLSearchParams(window.location.search).get("id");
+  if (!jobId) { document.getElementById("jobContent").innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><h3>No job selected</h3><p><a href="jobs.html">Browse jobs</a></p></div>'; return; }
+
+  try {
+    jobData = await apiFetch("GET", `/api/jobs/${jobId}`);
+    const j = jobData;
+    document.getElementById("jobContent").innerHTML = `
+      <h2>${escHtml(j.title)}</h2>
+      <div class="meta">
+        <span>&#128188; ${escHtml(j.company || "Unknown")}</span>
+        <span>&#128205; ${escHtml(j.location || "N/A")}</span>
+        <span>&#128197; ${escHtml(j.posted_date || "")}</span>
+        ${isNewJob(j) ? `<span class="new-badge ${timeSince(j.date_found).includes('m') ? 'new-badge-fresh' : ''}">${timeSince(j.date_found)}</span>` : ''}
+        <span>&#128279; ${escHtml(j.source || "")}</span>
+        ${renderCategoryBadge(j.job_category)}
+        ${j.is_graduate ? '<span class="cat-badge" style="background:#fef3c7;color:#d97706;border:1px solid #fbbf24">&#127891; Graduate</span>' : ''}
+      </div>
+      <div style="margin-bottom:12px">
+        <a href="${escHtml(j.url)}" target="_blank" class="btn btn-secondary btn-sm">&#128279; Open Original Listing</a>
+      </div>
+      <div class="description">${escHtml(j.description || "No description available.")}</div>`;
+    document.getElementById("tailorSection").style.display = "block";
+  } catch (err) {
+    document.getElementById("jobContent").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${escHtml(err.message)}</p></div>`;
+  }
+}
+
+async function tailorJob() {
+  const btn = document.getElementById("tailorBtn");
+  const resultDiv = document.getElementById("tailorResult");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating...';
+  resultDiv.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner spinner-lg"></div><p style="margin-top:12px;font-size:13px;color:var(--text-muted)">Tailoring your CV with AI...</p></div>';
+
+  try {
+    const result = await apiFetch("POST", `/api/tailor/${jobId}`);
+    resultDiv.innerHTML = `
+      <div class="tailor-result">
+        <div class="result-header">
+          <div>
+            <span class="match-score">${result.match_score}%</span>
+            <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Match Score</span>
+          </div>
+          <span class="provider-label">via ${result.provider}</span>
+        </div>
+        ${(result.keywords_hit || []).length ? `<div style="margin-bottom:12px"><span style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:4px">Keywords</span><div class="keyword-tags">${result.keywords_hit.map(k => `<span class="keyword-tag">${escHtml(k)}</span>`).join("")}</div></div>` : ''}
+        <div class="result-section">
+          <div class="result-section-title">Professional Summary</div>
+          <div class="result-section-body">${escHtml(result.professional_summary)}</div>
+        </div>
+        <div class="result-section">
+          <div class="result-section-title">Cover Letter Preview</div>
+          <div class="result-section-body">${escHtml(result.cover_letter)}</div>
+        </div>
+        ${renderQualityScores(result.quality_scores)}
+      </div>`;
+    document.getElementById("downloadCvBtn").style.display = "inline-flex";
+    document.getElementById("downloadCoverBtn").style.display = "inline-flex";
+    showToast("CV & Cover Letter generated!");
+  } catch (err) {
+    resultDiv.innerHTML = `<div style="color:var(--color-danger-500);font-size:13px;padding:12px;background:rgba(239,68,68,0.08);border-radius:6px">${escHtml(err.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = "Generate CV & Cover Letter";
+}
+
+async function downloadFile(type) {
+  try {
+    const token = getToken();
+    const r = await fetch(`${API}/api/download/${jobId}/${type}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) { showToast("Download failed", "error"); return; }
+    const blob = await r.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = `${type}.docx`; a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+loadJob();
+</script>
+</body>
+</html>

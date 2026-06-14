@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - My CV</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item active">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h2>My CV</h2>
+          <p class="subtitle">Manage your professional profile</p>
+        </div>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveCv()" id="saveBtn">Save CV</button>
+          <button class="btn btn-secondary" onclick="toggleJsonEditor()">&#9998; JSON Mode</button>
+        </div>
+      </div>
+
+      <div id="validation" style="margin-bottom:16px">    </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#128196;</div>
+          Import from Plain Text
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">Paste your CV text and Joblin will extract sections automatically.</p>
+        <textarea id="plainTextCv" placeholder="Paste your full CV text here..." rows="8"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-primary" onclick="convertPlainText()">Convert to Form</button>
+        </div>
+      </div>
+
+      <!-- Structured Form View -->
+      <div id="formView">
+        <div class="cv-form-section">
+          <h3>&#128100; Personal Info</h3>
+          <div class="cv-form-row">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="cvName" placeholder="Your Name">
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="cvEmail" placeholder="you@example.com">
+            </div>
+          </div>
+          <div class="cv-form-row">
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="cvPhone" placeholder="+234 800 000 0000">
+            </div>
+            <div class="form-group">
+              <label>Location</label>
+              <input type="text" id="cvLocation" placeholder="Lagos, Nigeria">
+            </div>
+          </div>
+          <div class="cv-form-row">
+            <div class="form-group">
+              <label>LinkedIn</label>
+              <input type="url" id="cvLinkedin" placeholder="https://linkedin.com/in/...">
+            </div>
+            <div class="form-group">
+              <label>Website</label>
+              <input type="url" id="cvWebsite" placeholder="https://...">
+            </div>
+          </div>
+        </div>
+
+        <div class="cv-form-section">
+          <h3>&#128736; Skills</h3>
+          <div class="form-group">
+            <label>Skills (comma-separated)</label>
+            <input type="text" id="cvSkills" placeholder="Python, SQL, Power BI, Excel, Data Analysis">
+          </div>
+        </div>
+
+        <div class="cv-form-section">
+          <h3>&#128188; Experience</h3>
+          <div id="experienceList"></div>
+          <button class="add-entry-btn" onclick="addExperience()">+ Add Experience</button>
+        </div>
+
+        <div class="cv-form-section">
+          <h3>&#127891; Education</h3>
+          <div id="educationList"></div>
+          <button class="add-entry-btn" onclick="addEducation()">+ Add Education</button>
+        </div>
+
+        <div class="cv-form-section">
+          <h3>&#128187; Projects</h3>
+          <div id="projectsList"></div>
+          <button class="add-entry-btn" onclick="addProject()">+ Add Project</button>
+        </div>
+
+        <div class="cv-form-section">
+          <h3>&#128220; Certifications</h3>
+          <div class="form-group">
+            <label>Certifications (comma-separated)</label>
+            <input type="text" id="cvCerts" placeholder="Google Data Analytics, AWS Cloud Practitioner, ...">
+          </div>
+        </div>
+      </div>
+
+      <!-- JSON Editor View (hidden by default) -->
+      <div class="card" id="jsonView" style="display:none">
+        <div class="card-title">
+          <div class="card-icon">&#9998;</div>
+          Edit CV as JSON
+        </div>
+        <div class="cv-editor">
+          <textarea id="cvJson" placeholder='{"personal_info":{"name":"Your Name",...},"skills":["Python","SQL","Power BI"],...}'></textarea>
+          <div class="preview" id="jsonPreview">Preview will appear here</div>
+        </div>
+        <p style="font-size:11px;color:var(--text-subtle);margin-top:8px">
+          Structure: <code>personal_info</code>, <code>skills</code>, <code>experience</code>, <code>education</code>, <code>projects</code>, <code>certifications</code>.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let savedCv = null;
+let expCounter = 0;
+let eduCounter = 0;
+let projCounter = 0;
+
+async function loadCv() {
+  try {
+    const data = await apiFetch("GET", "/api/cv");
+    savedCv = data;
+    populateForm(data);
+    document.getElementById("cvJson").value = JSON.stringify(data, null, 2);
+    previewJson(data);
+    validateCv(data);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+function populateForm(data) {
+  const info = data.personal_info || {};
+  document.getElementById("cvName").value = info.name || "";
+  document.getElementById("cvEmail").value = info.email || "";
+  document.getElementById("cvPhone").value = info.phone || "";
+  document.getElementById("cvLocation").value = info.location || "";
+  document.getElementById("cvLinkedin").value = info.linkedin || "";
+  document.getElementById("cvWebsite").value = info.website || "";
+  document.getElementById("cvSkills").value = (data.skills || []).join(", ");
+  document.getElementById("cvCerts").value = (data.certifications || []).join(", ");
+
+  // Experience
+  document.getElementById("experienceList").innerHTML = "";
+  expCounter = 0;
+  (data.experience || []).forEach(exp => addExperience(exp));
+
+  // Education
+  document.getElementById("educationList").innerHTML = "";
+  eduCounter = 0;
+  (data.education || []).forEach(edu => addEducation(edu));
+
+  // Projects
+  document.getElementById("projectsList").innerHTML = "";
+  projCounter = 0;
+  (data.projects || []).forEach(proj => addProject(proj));
+}
+
+function collectFormData() {
+  const skills = document.getElementById("cvSkills").value.split(",").map(s => s.trim()).filter(s => s);
+  const certs = document.getElementById("cvCerts").value.split(",").map(s => s.trim()).filter(s => s);
+
+  const experience = [];
+  document.querySelectorAll("#experienceList .entry-card").forEach(card => {
+    experience.push({
+      title: card.querySelector(".exp-title").value,
+      company: card.querySelector(".exp-company").value,
+      location: card.querySelector(".exp-location").value,
+      start_date: card.querySelector(".exp-start").value,
+      end_date: card.querySelector(".exp-end").value,
+      current: card.querySelector(".exp-current").checked,
+      description: card.querySelector(".exp-desc").value,
+      achievements: card.querySelector(".exp-achievements").value.split("\n").filter(a => a.trim()),
+    });
+  });
+
+  const education = [];
+  document.querySelectorAll("#educationList .entry-card").forEach(card => {
+    education.push({
+      degree: card.querySelector(".edu-degree").value,
+      institution: card.querySelector(".edu-institution").value,
+      location: card.querySelector(".edu-location").value,
+      start_date: card.querySelector(".edu-start").value,
+      end_date: card.querySelector(".edu-end").value,
+      gpa: card.querySelector(".edu-gpa").value,
+    });
+  });
+
+  const projects = [];
+  document.querySelectorAll("#projectsList .entry-card").forEach(card => {
+    projects.push({
+      name: card.querySelector(".proj-name").value,
+      description: card.querySelector(".proj-desc").value,
+      technologies: card.querySelector(".proj-tech").value.split(",").map(t => t.trim()).filter(t => t),
+      url: card.querySelector(".proj-url").value,
+    });
+  });
+
+  return {
+    personal_info: {
+      name: document.getElementById("cvName").value,
+      email: document.getElementById("cvEmail").value,
+      phone: document.getElementById("cvPhone").value,
+      location: document.getElementById("cvLocation").value,
+      linkedin: document.getElementById("cvLinkedin").value,
+      website: document.getElementById("cvWebsite").value,
+    },
+    professional_summary: (savedCv && savedCv.professional_summary) || "",
+    skills,
+    experience,
+    education,
+    projects,
+    certifications: certs,
+    languages: (savedCv && savedCv.languages) || [],
+  };
+}
+
+async function saveCv() {
+  const btn = document.getElementById("saveBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+  try {
+    let data;
+    const jsonView = document.getElementById("jsonView");
+    if (jsonView.style.display !== "none") {
+      data = JSON.parse(document.getElementById("cvJson").value);
+    } else {
+      data = collectFormData();
+    }
+    await apiFetch("PUT", "/api/cv", data);
+    savedCv = data;
+    if (jsonView.style.display !== "none") {
+      previewJson(data);
+    } else {
+      validateCv(data);
+    }
+    showToast("CV saved successfully");
+  } catch (err) {
+    if (err instanceof SyntaxError) showToast("Invalid JSON", "error");
+    else showToast(err.message, "error");
+  }
+  btn.disabled = false;
+  btn.textContent = "Save CV";
+}
+
+function toggleJsonEditor() {
+  const formView = document.getElementById("formView");
+  const jsonView = document.getElementById("jsonView");
+  if (jsonView.style.display === "none") {
+    // Sync form data to JSON
+    const data = collectFormData();
+    document.getElementById("cvJson").value = JSON.stringify(data, null, 2);
+    jsonView.style.display = "block";
+    formView.style.display = "none";
+    previewJson(data);
+  } else {
+    // Try to parse JSON and populate form
+    try {
+      const data = JSON.parse(document.getElementById("cvJson").value);
+      populateForm(data);
+      savedCv = data;
+      jsonView.style.display = "none";
+      formView.style.display = "block";
+      validateCv(data);
+    } catch (err) {
+      showToast("Invalid JSON — fix errors first", "error");
+    }
+  }
+}
+
+function previewJson(data) {
+  const el = document.getElementById("jsonPreview");
+  const info = data.personal_info || {};
+  el.innerHTML = `
+    <div style="margin-bottom:8px"><strong>${escHtml(info.name || "Unnamed")}</strong> · ${escHtml(info.email || "")}</div>
+    <div style="margin-bottom:4px"><strong>Skills:</strong> ${(data.skills || []).length}</div>
+    <div style="margin-bottom:4px"><strong>Experience:</strong> ${(data.experience || []).length} entries</div>
+    <div style="margin-bottom:4px"><strong>Education:</strong> ${(data.education || []).length} entries</div>
+    <div style="margin-bottom:4px"><strong>Projects:</strong> ${(data.projects || []).length}</div>
+    <div><strong>Certs:</strong> ${(data.certifications || []).length}</div>
+  `;
+}
+
+function validateCv(data) {
+  const el = document.getElementById("validation");
+  if (!data) { el.innerHTML = ""; return; }
+  const issues = [];
+  const info = data.personal_info || {};
+  if (!info.name) issues.push("Missing name");
+  if (!info.email) issues.push("Missing email");
+  if (!data.skills || !data.skills.length) issues.push("No skills listed");
+  if (!data.experience || !data.experience.length) issues.push("No experience listed");
+  const fields = ["personal_info", "skills", "experience", "education", "projects", "certifications"];
+  const present = fields.filter(f => data[f] && (typeof data[f] === "object" && Object.keys(data[f]).length > 0 || Array.isArray(data[f]) && data[f].length > 0));
+  el.innerHTML = `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+      ${present.map(f => `<span class="validation-badge present">${f}</span>`).join("")}
+      ${fields.filter(f => !present.includes(f)).map(f => `<span class="validation-badge missing">${f}</span>`).join("")}
+    </div>
+    ${issues.length ? `<div style="color:var(--color-warning-600);font-size:13px">${issues.join(" \u00b7 ")}</div>` : '<div style="color:var(--color-success-500);font-size:13px">All key fields present</div>'}
+  `;
+}
+
+function addExperience(data) {
+  const num = ++expCounter;
+  const d = data || { title: "", company: "", location: "", start_date: "", end_date: "", current: false, description: "", achievements: [] };
+  const html = `
+    <div class="entry-card" data-idx="${num}">
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <div class="cv-form-row">
+        <div class="form-group">
+          <label>Job Title</label>
+          <input type="text" class="exp-title" value="${escHtml(d.title)}" placeholder="Data Analyst">
+        </div>
+        <div class="form-group">
+          <label>Company</label>
+          <input type="text" class="exp-company" value="${escHtml(d.company)}" placeholder="Acme Corp">
+        </div>
+      </div>
+      <div class="cv-form-row">
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" class="exp-location" value="${escHtml(d.location)}" placeholder="Lagos, Nigeria">
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="form-group" style="flex:1">
+            <label>Start Date</label>
+            <input type="text" class="exp-start" value="${escHtml(d.start_date)}" placeholder="2022-01">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>End Date</label>
+            <input type="text" class="exp-end" value="${escHtml(d.end_date)}" placeholder="2024-06">
+          </div>
+        </div>
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px">
+        <input type="checkbox" class="exp-current" style="width:auto" ${d.current ? "checked" : ""}>
+        <label style="margin:0">I currently work here</label>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="exp-desc" rows="2" placeholder="Brief description of your role">${escHtml(d.description)}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Achievements (one per line)</label>
+        <textarea class="exp-achievements" rows="3" placeholder="Built SQL models reducing query latency by 15%">${(d.achievements || []).join("\n")}</textarea>
+      </div>
+    </div>`;
+  document.getElementById("experienceList").insertAdjacentHTML("beforeend", html);
+}
+
+function addEducation(data) {
+  const num = ++eduCounter;
+  const d = data || { degree: "", institution: "", location: "", start_date: "", end_date: "", gpa: "" };
+  const html = `
+    <div class="entry-card" data-idx="${num}">
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <div class="cv-form-row">
+        <div class="form-group">
+          <label>Degree</label>
+          <input type="text" class="edu-degree" value="${escHtml(d.degree)}" placeholder="B.Sc. Computer Science">
+        </div>
+        <div class="form-group">
+          <label>Institution</label>
+          <input type="text" class="edu-institution" value="${escHtml(d.institution)}" placeholder="University of Lagos">
+        </div>
+      </div>
+      <div class="cv-form-row">
+        <div class="form-group">
+          <label>Location</label>
+          <input type="text" class="edu-location" value="${escHtml(d.location)}" placeholder="Nigeria">
+        </div>
+        <div style="display:flex;gap:8px">
+          <div class="form-group" style="flex:1">
+            <label>Start Year</label>
+            <input type="text" class="edu-start" value="${escHtml(d.start_date)}" placeholder="2016">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>End Year</label>
+            <input type="text" class="edu-end" value="${escHtml(d.end_date)}" placeholder="2020">
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>GPA</label>
+        <input type="text" class="edu-gpa" value="${escHtml(d.gpa)}" placeholder="4.0 / 5.0">
+      </div>
+    </div>`;
+  document.getElementById("educationList").insertAdjacentHTML("beforeend", html);
+}
+
+function addProject(data) {
+  const num = ++projCounter;
+  const d = data || { name: "", description: "", technologies: [], url: "" };
+  const html = `
+    <div class="entry-card" data-idx="${num}">
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <div class="cv-form-row">
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" class="proj-name" value="${escHtml(d.name)}" placeholder="Sales Dashboard">
+        </div>
+        <div class="form-group">
+          <label>Technologies</label>
+          <input type="text" class="proj-tech" value="${escHtml((d.technologies || []).join(", "))}" placeholder="Python, Power BI, SQL">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="proj-desc" rows="2" placeholder="Brief description of the project">${escHtml(d.description)}</textarea>
+      </div>
+      <div class="form-group">
+        <label>URL</label>
+        <input type="url" class="proj-url" value="${escHtml(d.url)}" placeholder="https://github.com/...">
+      </div>
+    </div>`;
+  document.getElementById("projectsList").insertAdjacentHTML("beforeend", html);
+}
+
+async function convertPlainText() {
+  const text = document.getElementById("plainTextCv").value;
+  if (!text.trim()) { showToast("Paste your CV text first", "error"); return; }
+
+  const lines = text.split("\n").map(l => l.trim()).filter(l => l);
+  const cv = {
+    personal_info: { name: "", email: "", phone: "", location: "", linkedin: "", website: "" },
+    professional_summary: "",
+    skills: [],
+    experience: [],
+    education: [],
+    certifications: [],
+    projects: [],
+    languages: [],
+  };
+
+  let mode = "header";
+  let currentExp = null;
+
+  for (const line of lines) {
+    const upper = line.toUpperCase();
+    if (/^(SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS)/i.test(line)) { mode = "skills"; continue; }
+    if (/^(EXPERIENCE|WORK HISTORY|PROFESSIONAL EXPERIENCE|EMPLOYMENT)/i.test(line)) { mode = "experience"; continue; }
+    if (/^(EDUCATION|ACADEMIC)/i.test(line)) { mode = "education"; continue; }
+    if (/^(CERTIFICATION|LICENSES|CERT)/i.test(line)) { mode = "certs"; continue; }
+    if (/^(PROJECT|PORTFOLIO)/i.test(line)) { mode = "projects"; continue; }
+    if (/^(LANGUAGE)/i.test(line)) { mode = "languages"; continue; }
+
+    if (mode === "header") {
+      if (!cv.personal_info.name && !line.includes("@") && !line.includes("|") && !line.startsWith("http")) {
+        cv.personal_info.name = line; continue;
+      }
+      if (line.includes("@") || line.includes("|") || line.includes("\u2022")) {
+        const parts = line.split(/[|\u2022]/).map(p => p.trim());
+        for (const p of parts) {
+          if (p.includes("@")) cv.personal_info.email = p;
+          else if (/^\+?\d[\d\s-]{6,}/.test(p)) cv.personal_info.phone = p;
+          else if (p.length > 3 && !cv.personal_info.location) cv.personal_info.location = p;
+          else if (p.startsWith("http") || p.includes("linkedin")) cv.personal_info.linkedin = p;
+        }
+        continue;
+      }
+      continue;
+    }
+
+    if (mode === "skills") {
+      const skillParts = line.replace(/^[-\u2022*]\s*/, "").split(/[,;]/).map(s => s.trim()).filter(s => s);
+      cv.skills.push(...skillParts);
+      continue;
+    }
+
+    if (mode === "experience") {
+      if (/\|/.test(line) || /[\u2014\u2013-]/.test(line)) {
+        if (currentExp) cv.experience.push(currentExp);
+        const parts = line.split(/[|\u2014\u2013]/).map(p => p.trim());
+        currentExp = { title: parts[0] || "", company: parts[1] || "", location: "", start_date: "", end_date: "", current: false, description: "", achievements: [] };
+        for (const p of parts) {
+          const dateMatch = p.match(/(\d{4})\s*[\u2013\u2013to]+\s*(Present|\d{4}|current)/i);
+          if (dateMatch) {
+            currentExp.start_date = dateMatch[1];
+            currentExp.end_date = dateMatch[2].toLowerCase() === "present" ? "" : dateMatch[2];
+            currentExp.current = dateMatch[2].toLowerCase() === "present";
+          }
+        }
+        continue;
+      }
+      if (currentExp) {
+        if (/^[-\u2022*]\s+/.test(line)) {
+          currentExp.achievements.push(line.replace(/^[-\u2022*]\s+/, ""));
+        } else if (currentExp.achievements.length > 0) {
+          currentExp.achievements[currentExp.achievements.length - 1] += " " + line;
+        }
+      }
+      continue;
+    }
+
+    if (mode === "education") {
+      if (line.includes("|") || /[\u2014\u2013]/.test(line)) {
+        const parts = line.split(/[|\u2014\u2013]/).map(p => p.trim());
+        const edu = { degree: parts[0] || "", institution: parts[1] || "", location: "", start_date: "", end_date: "", gpa: "" };
+        const yearMatch = line.match(/(\d{4})\s*[\u2013\u2013]\s*(\d{4})/);
+        if (yearMatch) { edu.start_date = yearMatch[1]; edu.end_date = yearMatch[2]; }
+        cv.education.push(edu);
+      } else if (cv.education.length > 0) {
+        const last = cv.education[cv.education.length - 1];
+        if (!last.institution) last.institution = line;
+        else if (!last.location) last.location = line;
+      }
+      continue;
+    }
+
+    if (mode === "certs") {
+      cv.certifications.push(line.replace(/^[-\u2022*]\s*/, ""));
+      continue;
+    }
+
+    if (mode === "projects") {
+      if (/^[-\u2022*]\s+/.test(line)) {
+        const projectText = line.replace(/^[-\u2022*]\s+/, "");
+        const parts = projectText.split(/[|\u2014\u2013]/).map(p => p.trim());
+        cv.projects.push({ name: parts[0] || projectText, description: parts[1] || "", technologies: [], url: "" });
+      }
+      continue;
+    }
+
+    if (mode === "languages") {
+      cv.languages.push(line.replace(/^[-\u2022*]\s*/, ""));
+      continue;
+    }
+  }
+
+  if (currentExp) cv.experience.push(currentExp);
+  cv.skills = [...new Set(cv.skills.map(s => s.replace(/,$/, "").trim()))];
+
+  populateForm(cv);
+  savedCv = cv;
+  document.getElementById("cvJson").value = JSON.stringify(cv, null, 2);
+  validateCv(cv);
+  document.getElementById("jsonView").style.display = "none";
+  document.getElementById("formView").style.display = "block";
+  showToast("CV text converted — saving...");
+  try {
+    await apiFetch("PUT", "/api/cv", cv);
+    showToast("CV converted and saved! Ready for tailoring.");
+    savedCv = cv;
+  } catch (err) {
+    console.error("Auto-save failed:", err);
+    showToast("Converted to form, but auto-save failed: " + err.message, "error");
+  }
+}
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+loadCv();
+</script>
+</body>
+</html>

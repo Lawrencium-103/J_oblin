@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Settings</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item active">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h2>Settings</h2>
+          <p class="subtitle">Configure your API keys and account</p>
+        </div>
+      </div>
+
+        <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#128273;</div>
+          AI Provider
+        </div>
+
+        <div class="form-group">
+          <label class="toggle-label">
+            <input type="checkbox" id="useDefaultApi" checked>
+            <span class="toggle-slider"></span>
+            <span><strong>Use default Nemotron AI (free)</strong><br>
+            <span style="font-weight:400;color:var(--text-subtle);font-size:12px">NVIDIA Nemotron 3 Ultra — free CV rewriting, editing, making &amp; cover letters. No API key needed.</span></span>
+          </label>
+        </div>
+
+        <div id="personalKeysSection">
+          <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">
+            Provide your own API keys for AI-powered CV tailoring. Get free keys from
+            <a href="https://console.groq.com/keys" target="_blank">Groq</a>,
+            <a href="https://build.nvidia.com/" target="_blank">NVIDIA NIM</a>, or
+            <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>.
+            Your keys are stored encrypted and never shared.
+          </p>
+
+          <div class="form-group">
+            <label>Groq API Key <span style="font-weight:400;color:var(--text-subtle)">(fastest, free 14,400 req/day)</span></label>
+            <div class="key-input">
+              <span class="key-status" id="groqStatus"></span>
+              <input type="password" id="groqKey" placeholder="gsk_...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>NVIDIA NIM API Key <span style="font-weight:400;color:var(--text-subtle)">(fallback)</span></label>
+            <div class="key-input">
+              <span class="key-status" id="nvidiaStatus"></span>
+              <input type="password" id="nvidiaKey" placeholder="nvapi-...">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Gemini API Key <span style="font-weight:400;color:var(--text-subtle)">(2nd fallback)</span></label>
+            <div class="key-input">
+              <span class="key-status" id="geminiStatus"></span>
+              <input type="password" id="geminiKey" placeholder="AIza...">
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="saveKeys()" id="keysBtn">Save Settings</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#128100;</div>
+          Account
+        </div>
+        <p style="font-size:13px;color:var(--text-muted)">Logged in as <strong id="accountEmail"></strong></p>
+        <p style="font-size:12px;color:var(--text-subtle);margin-top:4px">When "Use default Nemotron AI" is ON, all CV features use the free shared Nemotron model. Toggle off to use your personal API keys instead.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+async function loadKeys() {
+  try {
+    const keys = await apiFetch("GET", "/api/keys");
+    document.getElementById("groqKey").value = keys.groq || "";
+    document.getElementById("nvidiaKey").value = keys.nvidia || "";
+    document.getElementById("geminiKey").value = keys.gemini || "";
+    document.getElementById("useDefaultApi").checked = keys.use_default_api !== false;
+    updateStatus("groqStatus", !!keys.groq);
+    updateStatus("nvidiaStatus", !!keys.nvidia);
+    updateStatus("geminiStatus", !!keys.gemini);
+    togglePersonalSection();
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+function updateStatus(elId, isSet) {
+  const el = document.getElementById(elId);
+  el.className = `key-status ${isSet ? "set" : "unset"}`;
+  el.title = isSet ? "Key is set" : "No key configured";
+}
+
+function togglePersonalSection() {
+  const useDefault = document.getElementById("useDefaultApi").checked;
+  const inputs = document.querySelectorAll("#personalKeysSection input");
+  for (const inp of inputs) inp.disabled = useDefault;
+  const section = document.getElementById("personalKeysSection");
+  section.style.opacity = useDefault ? "0.4" : "1";
+  section.style.pointerEvents = useDefault ? "none" : "auto";
+}
+
+document.getElementById("useDefaultApi").addEventListener("change", togglePersonalSection);
+
+async function saveKeys() {
+  const btn = document.getElementById("keysBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+  try {
+    await apiFetch("PUT", "/api/keys", {
+      groq: document.getElementById("groqKey").value.trim(),
+      nvidia: document.getElementById("nvidiaKey").value.trim(),
+      gemini: document.getElementById("geminiKey").value.trim(),
+      use_default_api: document.getElementById("useDefaultApi").checked,
+    });
+    updateStatus("groqStatus", !!document.getElementById("groqKey").value.trim());
+    updateStatus("nvidiaStatus", !!document.getElementById("nvidiaKey").value.trim());
+    updateStatus("geminiStatus", !!document.getElementById("geminiKey").value.trim());
+    showToast("Settings saved");
+  } catch (err) { showToast(err.message, "error"); }
+  btn.disabled = false; btn.textContent = "Save Settings";
+}
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+const user = getCurrentUser();
+if (user) document.getElementById("accountEmail").textContent = user.email || user.name;
+loadKeys();
+</script>
+</body>
+</html>

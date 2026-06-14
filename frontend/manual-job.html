@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Manual Entry</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item active">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h2>Manual Job Entry</h2>
+          <p class="subtitle">Add a job from a URL or paste details manually</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#128279;</div>
+          1. Paste a Job URL
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          Paste a link to any job posting. Joblin will extract title, company, and description automatically.
+        </p>
+        <div class="url-input-group">
+          <input type="url" id="jobUrl" placeholder="https://example.com/jobs/123">
+          <button class="btn btn-primary" onclick="extractUrl()" id="extractBtn">Extract</button>
+        </div>
+      </div>
+
+      <div class="card" id="extractedCard" style="display:none">
+        <div class="card-title">
+          <div class="card-icon">&#128203;</div>
+          2. Review Extracted Info
+        </div>
+        <div id="extractedPreview" class="extracted-preview"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="tailorFromData()" id="tailorManualBtn">Generate CV & Cover Letter</button>
+          <button class="btn btn-secondary" id="downloadCvDocx" style="display:none" onclick="downloadManualFile('cv', 'docx')">Download CV (DOCX)</button>
+          <button class="btn btn-secondary" id="downloadCvPdf" style="display:none" onclick="downloadManualFile('cv', 'pdf')">Download CV (PDF)</button>
+          <button class="btn btn-secondary" id="downloadCoverDocx" style="display:none" onclick="downloadManualFile('cover', 'docx')">Download Cover (DOCX)</button>
+          <button class="btn btn-secondary" id="downloadCoverPdf" style="display:none" onclick="downloadManualFile('cover', 'pdf')">Download Cover (PDF)</button>
+        </div>
+        <div id="manualResult" style="margin-top:12px"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#9998;</div>
+          3. Or Paste Details Directly
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          If URL extraction doesn't work well, fill in the fields manually.
+        </p>
+        <div class="cv-form-row">
+          <div class="form-group">
+            <label>Job Title</label>
+            <input type="text" id="manualTitle" placeholder="e.g. Data Analyst">
+          </div>
+          <div class="form-group">
+            <label>Company</label>
+            <input type="text" id="manualCompany" placeholder="e.g. Acme Corp">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Job Description</label>
+          <textarea id="manualDesc" placeholder="Paste the full job description here..." rows="8"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="tailorManualText()">Generate from Text</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let currentJobData = null;
+let currentManualPaths = null;
+
+async function extractUrl() {
+  const url = document.getElementById("jobUrl").value.trim();
+  if (!url) { showToast("Paste a URL first", "error"); return; }
+  const btn = document.getElementById("extractBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Extracting...';
+  try {
+    currentJobData = await apiFetch("POST", "/api/jobs/extract-url", { url });
+    document.getElementById("extractedCard").style.display = "block";
+    document.getElementById("extractedPreview").innerHTML = `
+      <div class="field"><div class="field-label">Title</div><div class="field-value">${escHtml(currentJobData.title)}</div></div>
+      <div class="field"><div class="field-label">Company</div><div class="field-value">${escHtml(currentJobData.company || "\u2014")}</div></div>
+      <div class="field"><div class="field-label">Location</div><div class="field-value">${escHtml(currentJobData.location || "\u2014")}</div></div>
+      <div class="field"><div class="field-label">Category</div><div class="field-value">${renderCategoryBadge(currentJobData.category)}</div></div>
+      <div class="field"><div class="field-label">Description</div>
+        <div class="field-value" style="font-size:12px;max-height:200px;overflow-y:auto;background:var(--bg-surface);padding:8px;border-radius:4px;border:1px solid var(--border-default);margin-top:2px">${escHtml(currentJobData.description || "No description extracted")}</div>
+      </div>`;
+    document.getElementById("tailorManualBtn").style.display = "inline-flex";
+    document.getElementById("manualResult").innerHTML = "";
+    showToast("Job info extracted!");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+  btn.disabled = false; btn.textContent = "Extract";
+}
+
+async function tailorFromData() {
+  if (!currentJobData) { showToast("Extract a job URL first", "error"); return; }
+  await _doTailor(currentJobData, "tailorManualBtn", "manualResult");
+}
+
+async function tailorManualText() {
+  const title = document.getElementById("manualTitle").value.trim();
+  const company = document.getElementById("manualCompany").value.trim();
+  const desc = document.getElementById("manualDesc").value.trim();
+  if (!title || !desc) { showToast("Title and description required", "error"); return; }
+  const data = { title, company, description: desc, category: "other" };
+  await _doTailor(data, null, "manualResult");
+}
+
+async function _doTailor(jobData, btnId, resultId) {
+  const btn = btnId ? document.getElementById(btnId) : null;
+  const resultDiv = document.getElementById(resultId);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating...'; }
+  resultDiv.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner spinner-lg"></div><p style="margin-top:12px;font-size:13px;color:var(--text-muted)">Generating with AI...</p></div>';
+
+  try {
+    const result = await apiFetch("POST", "/api/tailor/from-data", jobData);
+    resultDiv.innerHTML = `
+      <div class="tailor-result">
+        <div class="result-header">
+          <div>
+            <span class="match-score">${result.match_score}%</span>
+            <span style="font-size:12px;color:var(--text-muted);margin-left:8px">Match Score</span>
+          </div>
+          <span class="provider-label">via ${result.provider}</span>
+        </div>
+        ${(result.keywords_hit || []).length ? `<div style="margin-bottom:12px"><span class="result-section-title">Keywords</span><div class="keyword-tags">${result.keywords_hit.map(k => `<span class="keyword-tag">${escHtml(k)}</span>`).join("")}</div></div>` : ''}
+        <div class="result-section">
+          <div class="result-section-title">Professional Summary</div>
+          <div class="result-section-body">${escHtml(result.professional_summary)}</div>
+        </div>
+        <div class="result-section">
+          <div class="result-section-title">Cover Letter</div>
+          <div class="result-section-body result-section-body--cover">${escHtml(result.cover_letter || result.professional_summary)}</div>
+        </div>
+        ${renderQualityScores(result.quality_scores)}
+        ${result.cv_preview ? `
+        <details class="result-section" style="margin-top:12px;cursor:pointer">
+          <summary class="result-section-title" style="cursor:pointer">CV Preview</summary>
+          <div class="result-section-body" style="margin-top:6px;white-space:pre-wrap;font-size:11px;font-family:monospace">${escHtml(result.cv_preview)}</div>
+        </details>` : ''}
+      </div>`;
+    if (result.cv_path || result.cv_pdf_path) {
+      currentManualPaths = { cv: result.cv_path, cover: result.cover_path, cv_pdf: result.cv_pdf_path, cover_pdf: result.cover_pdf_path };
+      const _show = (id, show) => { const el = document.getElementById(id); if (el) el.style.display = show ? "inline-flex" : "none"; };
+      _show("downloadCvDocx", !!result.cv_path);
+      _show("downloadCvPdf", !!result.cv_pdf_path);
+      _show("downloadCoverDocx", !!result.cover_path);
+      _show("downloadCoverPdf", !!result.cover_pdf_path);
+    }
+    showToast("CV & Cover Letter generated!");
+  } catch (err) {
+    resultDiv.innerHTML = `<div style="color:var(--color-danger-500);font-size:13px;padding:12px;background:rgba(239,68,68,0.08);border-radius:6px">${escHtml(err.message)}</div>`;
+  }
+  if (btn) { btn.disabled = false; btn.textContent = "Generate CV & Cover Letter"; }
+}
+
+async function downloadManualFile(type, format) {
+  if (!currentManualPaths) { showToast("No generated files yet", "error"); return; }
+  const key = type === "cv" ? (format === "pdf" ? "cv_pdf" : "cv") : (format === "pdf" ? "cover_pdf" : "cover");
+  const path = currentManualPaths[key];
+  if (!path) { showToast("File not available", "error"); return; }
+  const filename = path.split("\\").pop().split("/").pop();
+  try {
+    const r = await fetch(API + "/api/download/manual/" + encodeURIComponent(filename), { headers: apiHeaders() });
+    if (!r.ok) { const err = await r.text().catch(() => ""); showToast(err || "Download failed", "error"); return; }
+    const blob = await r.blob();
+    const disp = r.headers.get("Content-Disposition") || "";
+    const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"'\s;]+)/i);
+    const dlName = match ? match[1] : filename;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = dlName; a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+</script>
+</body>
+</html>

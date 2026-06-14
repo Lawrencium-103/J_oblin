@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - All Jobs</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item active">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div class="top-bar-search">
+        <span class="search-icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search title, company, keywords..." onkeydown="if(event.key==='Enter')loadJobs()">
+      </div>
+      <div class="top-bar-actions">
+        <button class="btn btn-primary btn-sm" onclick="exportExcel()" id="exportBtn">Export Excel</button>
+      </div>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h2>All Jobs</h2>
+          <p class="subtitle" id="resultsStats">Loading...</p>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <select id="categoryFilter"><option value="">All Categories</option></select>
+        <select id="sourceFilter"><option value="">All Sources</option></select>
+        <select id="graduateFilter">
+          <option value="">All Levels</option>
+          <option value="true">Graduate / Entry</option>
+          <option value="false">Experienced</option>
+        </select>
+        <select id="sortOrder">
+          <option value="date">Newest First</option>
+          <option value="relevance">Most Relevant</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="loadJobs()">Filter</button>
+      </div>
+
+      <div id="jobList" class="job-list"></div>
+      <div id="pagination" class="pagination"></div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let currentPage = 0;
+const PAGE_SIZE = 50;
+
+async function loadConfig() {
+  try {
+    const config = await apiFetch("GET", "/api/config");
+    const catSel = document.getElementById("categoryFilter");
+    const srcSel = document.getElementById("sourceFilter");
+    (config.categories || []).forEach(c => {
+      catSel.innerHTML += `<option value="${c.slug}">${c.name}</option>`;
+    });
+    Object.values(config.boards || {}).forEach(boards => {
+      Object.entries(boards).forEach(([name, cfg]) => {
+        if (cfg.enabled) srcSel.innerHTML += `<option value="${name}">${name}</option>`;
+      });
+    });
+  } catch (err) {}
+}
+
+function getParams() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("search")) document.getElementById("searchInput").value = params.get("search");
+  if (params.get("category")) document.getElementById("categoryFilter").value = params.get("category");
+  return params;
+}
+
+async function loadJobs(page = 0) {
+  currentPage = page;
+  const search = document.getElementById("searchInput").value;
+  const category = document.getElementById("categoryFilter").value;
+  const source = document.getElementById("sourceFilter").value;
+  const graduate = document.getElementById("graduateFilter").value || null;
+  const sort = document.getElementById("sortOrder").value;
+  const offset = page * PAGE_SIZE;
+
+  document.getElementById("jobList").innerHTML = '<div class="empty-state"><div class="spinner spinner-lg"></div><p style="margin-top:12px">Loading jobs...</p></div>';
+
+  try {
+    let url = `/api/jobs?limit=${PAGE_SIZE}&offset=${offset}&sort=${sort}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    if (category) url += `&category=${encodeURIComponent(category)}`;
+    if (source) url += `&source=${encodeURIComponent(source)}`;
+    if (graduate) url += `&is_graduate=true`;
+
+    const data = await apiFetch("GET", url);
+    const jobs = data.jobs || [];
+
+    document.getElementById("resultsStats").textContent = `${data.total} jobs found \u00b7 showing ${offset+1}-${Math.min(offset+PAGE_SIZE, data.total)}`;
+
+    if (!jobs.length) {
+      document.getElementById("jobList").innerHTML = '<div class="empty-state"><div class="empty-icon">&#128270;</div><h3>No jobs found</h3><p>Try different filters or scrape more boards.</p></div>';
+      document.getElementById("pagination").innerHTML = "";
+      return;
+    }
+
+    document.getElementById("jobList").innerHTML = jobs.map(j => renderJobItem(j, isNewJob(j))).join("");
+
+    const totalPages = Math.ceil(data.total / PAGE_SIZE);
+    let pHTML = "";
+    if (page > 0) pHTML += `<button class="btn btn-secondary btn-sm" onclick="loadJobs(${page-1})">Prev</button>`;
+    for (let i = Math.max(0, page-2); i < Math.min(totalPages, page+3); i++) {
+      pHTML += `<button class="btn ${i===page?'btn-primary':'btn-secondary'} btn-sm" onclick="loadJobs(${i})">${i+1}</button>`;
+    }
+    if (page < totalPages-1) pHTML += `<button class="btn btn-secondary btn-sm" onclick="loadJobs(${page+1})">Next</button>`;
+    document.getElementById("pagination").innerHTML = pHTML;
+  } catch (err) {
+    document.getElementById("jobList").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${escHtml(err.message)}</p></div>`;
+  }
+}
+
+async function exportExcel() {
+  const btn = document.getElementById("exportBtn");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Exporting...';
+  try {
+    const search = document.getElementById("searchInput").value;
+    const category = document.getElementById("categoryFilter").value;
+    const source = document.getElementById("sourceFilter").value;
+    let url = `/api/export/excel`;
+    const params = [];
+    if (search) params.push(`search=${encodeURIComponent(search)}`);
+    if (category) params.push(`category=${encodeURIComponent(category)}`);
+    if (source) params.push(`source=${encodeURIComponent(source)}`);
+    if (params.length) url += "?" + params.join("&");
+
+    const token = getToken();
+    const r = await fetch(API + url, { headers: { Authorization: `Bearer ${token}` } });
+    if (!r.ok) { showToast("Export failed", "error"); return; }
+    const blob = await r.blob();
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "joblin_jobs.xlsx"; a.click();
+    URL.revokeObjectURL(a.href);
+    showToast("Excel exported!");
+  } catch (err) { showToast(err.message, "error"); }
+  btn.disabled = false; btn.innerHTML = "Export Excel";
+}
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+loadConfig();
+getParams();
+loadJobs();
+</script>
+</body>
+</html>

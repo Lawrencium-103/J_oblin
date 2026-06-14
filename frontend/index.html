@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin — Land Nigerian Jobs Faster (Free AI CV + Job Matcher)</title>
+<meta name="description" content="Joblin automatically finds jobs matching your profile, tailors your CV and cover letter to each role. Used by 12,000+ Nigerian job seekers. Free AI model included.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --color-primary-400: #34d399;
+  --color-primary-500: #059669;
+  --color-primary-600: #047857;
+  --color-neutral-0: #ffffff;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-400: #94a3b8;
+  --color-neutral-500: #64748b;
+  --color-neutral-600: #475569;
+  --color-neutral-700: #334155;
+  --color-neutral-800: #1e293b;
+  --color-neutral-900: #0f172a;
+  --color-neutral-950: #020617;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-neutral-0);
+  color: var(--color-neutral-800);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 14px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.3s;
+}
+
+nav.scrolled {
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--color-neutral-200);
+  padding: 10px 40px;
+}
+
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; transition: opacity 0.2s; }
+nav.scrolled .nav-brand { color: var(--color-neutral-800); }
+.nav-brand:hover { opacity: 0.8; }
+
+.brand-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0;
+  box-shadow: 0 0 16px rgba(5,150,105,0.25);
+}
+
+.brand-name { font-size: 19px; font-weight: 800; letter-spacing: -0.03em; }
+.brand-name span { color: var(--color-primary-400); }
+nav.scrolled .brand-name span { color: var(--color-primary-500); }
+
+.nav-links { display: flex; align-items: center; gap: 6px; }
+
+.nav-links a {
+  text-decoration: none; color: rgba(255,255,255,0.65);
+  font-size: 14px; font-weight: 500;
+  padding: 8px 14px; border-radius: 8px;
+  transition: all 0.2s;
+}
+nav.scrolled .nav-links a { color: var(--color-neutral-500); }
+.nav-links a:hover { color: #fff; background: rgba(255,255,255,0.08); }
+nav.scrolled .nav-links a:hover { color: var(--color-neutral-800); background: var(--color-neutral-100); }
+
+.nav-cta {
+  padding: 8px 20px !important;
+  background: var(--color-primary-500) !important;
+  color: #fff !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+.nav-cta:hover { background: var(--color-primary-600) !important; box-shadow: 0 0 20px rgba(5,150,105,0.25) !important; }
+
+/* ── Hero ── */
+.hero {
+  min-height: 100vh;
+  background: var(--color-neutral-950);
+  display: flex;
+  align-items: center;
+  padding: 100px 40px 60px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-glow {
+  position: absolute;
+  top: -15%; right: -5%;
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(5,150,105,0.12) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-glow2 {
+  position: absolute;
+  bottom: -10%; left: -5%;
+  width: 450px; height: 450px;
+  background: radial-gradient(circle, rgba(52,211,153,0.07) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.hero-left { max-width: 560px; }
+
+.hero-scare {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: 100px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #f87171;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: clamp(38px, 4.5vw, 56px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+  margin-bottom: 14px;
+}
+
+.hero h1 .highlight { background: linear-gradient(135deg, var(--color-primary-400), #6ee7b7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+.hero p {
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+/* ── Lead Form ── */
+.lead-form {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.lead-form input {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  font-size: 15px;
+  color: #fff;
+  font-family: var(--font-sans);
+  transition: all 0.2s;
+}
+
+.lead-form input::placeholder { color: rgba(255,255,255,0.3); }
+.lead-form input:focus { outline: none; border-color: var(--color-primary-500); box-shadow: 0 0 0 3px rgba(5,150,105,0.15); }
+
+.lead-form button {
+  padding: 14px 28px;
+  background: var(--color-primary-500);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all 0.25s;
+  white-space: nowrap;
+  box-shadow: 0 0 24px rgba(5,150,105,0.2);
+}
+
+.lead-form button:hover { background: var(--color-primary-600); transform: translateY(-1px); box-shadow: 0 0 32px rgba(5,150,105,0.35); }
+
+.hero-trust {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.hero-avatars {
+  display: flex;
+}
+
+.hero-avatars span {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--color-neutral-950);
+  display: flex;
+  align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: #fff;
+  margin-right: -8px;
+}
+
+.hero-avatars span:nth-child(1) { background: #3b82f6; }
+.hero-avatars span:nth-child(2) { background: #f59e0b; }
+.hero-avatars span:nth-child(3) { background: #ef4444; }
+.hero-avatars span:nth-child(4) { background: #8b5cf6; }
+
+.hero-trust-text {
+  font-size: 13px;
+  color: rgba(255,255,255,0.4);
+}
+
+.hero-trust-text strong { color: var(--color-primary-400); }
+
+.hero-proof {
+  display: flex;
+  gap: 24px;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.hero-proof-item {}
+
+.hero-proof-num {
+  font-size: 22px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.02em;
+}
+
+.hero-proof-label {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+
+/* ── Hero Right ── */
+.hero-right {
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 16px;
+  padding: 20px;
+}
+
+.hero-demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.hero-demo-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.hero-demo-tab {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.3);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hero-demo-tab.active { background: rgba(5,150,105,0.12); color: var(--color-primary-400); }
+
+.hero-demo-body {}
+
+.hero-demo-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
+  transition: all 0.2s;
+}
+
+.hero-demo-row:hover { background: rgba(255,255,255,0.03); }
+
+.hero-demo-icon {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.hero-demo-icon.green { background: rgba(5,150,105,0.12); }
+.hero-demo-icon.blue { background: rgba(59,130,246,0.12); }
+.hero-demo-icon.amber { background: rgba(245,158,11,0.12); }
+.hero-demo-icon.purple { background: rgba(139,92,246,0.12); }
+
+.hero-demo-content { flex: 1; }
+
+.hero-demo-content h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 2px;
+}
+
+.hero-demo-content p {
+  font-size: 12px;
+  color: rgba(255,255,255,0.35);
+}
+
+.hero-demo-tag {
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-weight: 600;
+}
+
+.hero-demo-tag.match { background: rgba(5,150,105,0.12); color: var(--color-primary-400); }
+.hero-demo-tag.new { background: rgba(59,130,246,0.12); color: #60a5fa; }
+
+.hero-demo-score {
+  text-align: center;
+}
+
+.hero-demo-score-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--color-primary-400);
+}
+
+.hero-demo-score-label {
+  font-size: 10px;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ── Social Proof Strip ── */
+.strip {
+  padding: 24px 40px;
+  text-align: center;
+  background: var(--color-neutral-50);
+  border-bottom: 1px solid var(--color-neutral-200);
+}
+
+.strip p {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-neutral-400);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 14px;
+}
+
+.strip-logos {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.strip-logo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-neutral-300);
+  letter-spacing: -0.02em;
+}
+
+/* ── How It Works ── */
+.how {
+  padding: 80px 40px;
+  background: var(--color-neutral-0);
+}
+
+.how-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+
+.how-label {
+  display: inline-flex;
+  padding: 4px 14px;
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.how h2 {
+  font-size: clamp(28px, 3.5vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin-bottom: 40px;
+  color: var(--color-neutral-900);
+}
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  text-align: left;
+}
+
+.how-card {
+  padding: 28px;
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 14px;
+  transition: all 0.25s;
+}
+
+.how-card:hover { border-color: var(--color-primary-200); box-shadow: 0 8px 25px -8px rgba(0,0,0,0.06); }
+
+.how-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--color-primary-500);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.how-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-neutral-900);
+  margin-bottom: 6px;
+}
+
+.how-card p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--color-neutral-500);
+}
+
+/* ── Pain → Gain ── */
+.contrast {
+  padding: 80px 40px;
+  background: var(--color-neutral-950);
+}
+
+.contrast-inner { max-width: 1000px; margin: 0 auto; }
+
+.contrast h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.contrast-sub {
+  font-size: 15px;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 36px;
+}
+
+.contrast-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.contrast-card {
+  padding: 24px;
+  border-radius: 14px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.contrast-card.bad { background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.1); }
+.contrast-card.good { background: rgba(5,150,105,0.06); border: 1px solid rgba(5,150,105,0.1); }
+
+.contrast-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+
+.contrast-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.contrast-card.bad h4 { color: #f87171; }
+.contrast-card.good h4 { color: var(--color-primary-400); }
+
+.contrast-card p {
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.contrast-card.bad p { color: rgba(255,255,255,0.4); }
+.contrast-card.good p { color: rgba(255,255,255,0.6); }
+
+/* ── Testimonials ── */
+.testy {
+  padding: 80px 40px;
+  background: var(--color-neutral-0);
+}
+
+.testy-inner { max-width: 1000px; margin: 0 auto; }
+
+.testy-label {
+  display: inline-flex;
+  padding: 4px 14px;
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-primary-600);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.testy h2 {
+  font-size: clamp(26px, 3vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
+  margin-bottom: 36px;
+  color: var(--color-neutral-900);
+}
+
+.testy-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.testy-card {
+  border: 1px solid var(--color-neutral-200);
+  border-radius: 14px;
+  padding: 24px;
+  transition: all 0.25s;
+}
+
+.testy-card:hover { box-shadow: 0 8px 25px -8px rgba(0,0,0,0.06); }
+
+.testy-stars { color: #f59e0b; font-size: 13px; margin-bottom: 10px; }
+
+.testy-quote {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-neutral-600);
+  margin-bottom: 14px;
+  font-style: italic;
+}
+
+.testy-author {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.testy-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; color: #fff;
+}
+
+.testy-avatar.blue { background: #3b82f6; }
+.testy-avatar.green { background: var(--color-primary-500); }
+.testy-avatar.amber { background: #f59e0b; }
+.testy-avatar.purple { background: #8b5cf6; }
+.testy-avatar.red { background: #ef4444; }
+
+.testy-name { font-size: 13px; font-weight: 600; color: var(--color-neutral-800); }
+.testy-role { font-size: 11px; color: var(--color-neutral-400); }
+
+/* ── Urgency CTA ── */
+.urgent {
+  background: var(--color-neutral-950);
+  padding: 80px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.urgent::before {
+  content: '';
+  position: absolute;
+  top: -25%;
+  left: 50%; transform: translateX(-50%);
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(5,150,105,0.08) 0%, transparent 65%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.urgent-inner { max-width: 700px; margin: 0 auto; position: relative; z-index: 1; }
+
+.urgent h2 {
+  font-size: clamp(28px, 3.5vw, 40px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 12px;
+}
+
+.urgent p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255,255,255,0.45);
+  margin-bottom: 28px;
+}
+
+.urgent-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 40px;
+  background: var(--color-primary-500);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 17px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.25s;
+  box-shadow: 0 0 30px rgba(5,150,105,0.25);
+}
+
+.urgent-btn:hover { background: var(--color-primary-600); transform: translateY(-2px); box-shadow: 0 0 40px rgba(5,150,105,0.4); }
+
+.urgent-note {
+  font-size: 13px;
+  color: rgba(255,255,255,0.25);
+  margin-top: 16px;
+}
+
+.urgent-note a { color: rgba(255,255,255,0.45); text-decoration: underline; }
+.urgent-note a:hover { color: #fff; }
+
+/* ── Footer ── */
+footer {
+  background: var(--color-neutral-950);
+  border-top: 1px solid rgba(255,255,255,0.03);
+  padding: 32px 40px;
+  text-align: center;
+}
+
+footer p { font-size: 12px; color: rgba(255,255,255,0.25); }
+footer a { color: rgba(255,255,255,0.4); text-decoration: none; }
+footer a:hover { color: #fff; }
+
+/* ── Animations ── */
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.fade-up { animation: fadeUp 0.5s ease-out both; }
+.fade-up-1 { animation: fadeUp 0.5s ease-out 0.1s both; }
+.fade-up-2 { animation: fadeUp 0.5s ease-out 0.2s both; }
+.fade-up-3 { animation: fadeUp 0.5s ease-out 0.3s both; }
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 30px; }
+  .hero-right { display: none; }
+  .how-grid, .contrast-grid, .testy-grid { grid-template-columns: 1fr; }
+  nav { padding: 12px 20px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .hero { padding: 80px 20px 50px; }
+  .how, .contrast, .testy, .urgent { padding: 50px 20px; }
+  .strip { padding: 20px; }
+  .lead-form { flex-direction: column; }
+  .lead-form input { min-width: 100%; }
+  .hero-proof { gap: 16px; flex-wrap: wrap; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 32px; }
+}
+</style>
+</head>
+<body>
+
+<nav id="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="brand-icon">J</div>
+    <span class="brand-name">Job<span>lin</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#testy">Results</a>
+    <a href="register.html" class="nav-cta">Create Free Account</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-scare">
+        &#9888; 73% of Nigerian CVs are rejected by ATS before a human reads them
+      </div>
+
+      <h1 class="fade-up">
+        Stop Applying Blind.<br>
+        Let AI Tailor Your CV to <span class="highlight">Every Single Job</span>
+      </h1>
+
+      <p class="fade-up-1">
+        Joblin automatically matches you to jobs from 33+ boards, rewrites your CV and
+        cover letter for each role, and helps Nigerian professionals at every level —
+        from NYSC corps members and graduate interns to junior, mid, and senior
+        professionals — land interviews 3x faster.
+      </p>
+
+      <!-- Immediate value capture -->
+      <form class="lead-form fade-up-2" action="register.html" method="GET">
+        <input type="email" name="email" placeholder="Enter your email address" required>
+        <button type="submit">Get My Free ATS Score &rarr;</button>
+      </form>
+
+      <div class="hero-trust fade-up-3">
+        <div class="hero-avatars">
+          <span>C</span>
+          <span>T</span>
+          <span>F</span>
+          <span>K</span>
+        </div>
+        <div class="hero-trust-text">
+          <strong>12,000+</strong> Nigerian job seekers already using Joblin
+        </div>
+      </div>
+
+      <div class="hero-proof fade-up-3">
+        <div>
+          <div class="hero-proof-num">33+</div>
+          <div class="hero-proof-label">Job Boards Scraped Daily</div>
+        </div>
+        <div>
+          <div class="hero-proof-num" id="liveJobCount">50K+</div>
+          <div class="hero-proof-label">Live Opportunities</div>
+        </div>
+        <div>
+          <div class="hero-proof-num">Free</div>
+          <div class="hero-proof-label">AI Model Included</div>
+        </div>
+      </div>
+      <div class="hero-trust fade-up-3" id="liveStatsBar" style="display:none;margin-top:-16px">
+        <div class="hero-trust-text">
+          <span id="newJobBadge" style="display:inline-block;background:var(--color-primary-500);color:#fff;font-size:10px;padding:1px 8px;border-radius:12px;font-weight:700;margin-right:6px">NEW</span>
+          <strong id="newJobCount">0</strong> new jobs added <span id="lastScrapedRel">today</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Demo panel -->
+    <div class="hero-right fade-up-1">
+      <div class="hero-demo-header">
+        <div class="hero-demo-tabs">
+          <span class="hero-demo-tab active">&#9733; Top Matches</span>
+          <span class="hero-demo-tab">New</span>
+          <span class="hero-demo-tab">Remote</span>
+        </div>
+        <span style="font-size:11px;color:rgba(255,255,255,0.3)">87% match</span>
+      </div>
+
+      <div class="hero-demo-body">
+        <div class="hero-demo-row">
+          <div class="hero-demo-icon green">&#127891;</div>
+          <div class="hero-demo-content">
+            <h4>Graduate Intern &mdash; Entry Level</h4>
+            <p>Lagos &bull; Posted 3h ago &bull; No experience required</p>
+          </div>
+          <div class="hero-demo-score">
+            <div class="hero-demo-score-val">96%</div>
+            <div class="hero-demo-score-label">Match</div>
+          </div>
+        </div>
+        <div class="hero-demo-row">
+          <div class="hero-demo-icon blue">&#128188;</div>
+          <div class="hero-demo-content">
+            <h4>Junior Data Analyst &mdash; Mid Level</h4>
+            <p>Remote &bull; Posted 4h ago &bull; 1-2 yrs experience</p>
+          </div>
+          <div class="hero-demo-score">
+            <div class="hero-demo-score-val" style="color:#60a5fa">91%</div>
+            <div class="hero-demo-score-label">Match</div>
+          </div>
+        </div>
+        <div class="hero-demo-row">
+          <div class="hero-demo-icon amber">&#127758;</div>
+          <div class="hero-demo-content">
+            <h4>NYSC Programme Associate &mdash; Corp Member</h4>
+            <p>Abuja &bull; Posted yesterday &bull; NYSC specific</p>
+          </div>
+          <div class="hero-demo-score">
+            <div class="hero-demo-score-val" style="color:#fbbf24">88%</div>
+            <div class="hero-demo-score-label">Match</div>
+          </div>
+        </div>
+        <div class="hero-demo-row">
+          <div class="hero-demo-icon purple">&#128202;</div>
+          <div class="hero-demo-content">
+            <h4>Senior Project Officer &mdash; Senior Level</h4>
+            <p>Lagos &bull; Posted 2d ago &bull; 5+ yrs experience</p>
+          </div>
+          <div class="hero-demo-score">
+            <div class="hero-demo-score-val" style="color:#a78bfa">79%</div>
+            <div class="hero-demo-score-label">Match</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SOCIAL PROOF ═══ -->
+<div class="strip">
+  <p>Trusted by job seekers at every career stage</p>
+  <div class="strip-logos">
+    <span class="strip-logo">&#127891; NYSC Corps Members</span>
+    <span class="strip-logo">&#127891; Graduate Interns</span>
+    <span class="strip-logo">&#127891; Entry Level</span>
+    <span class="strip-logo">&#127891; Junior Roles</span>
+    <span class="strip-logo">&#127891; Mid Level</span>
+    <span class="strip-logo">&#127891; Senior Roles</span>
+    <span class="strip-logo">&#127891; Career Changers</span>
+  </div>
+</div>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="how-label">Three Minutes to Your Next Interview</div>
+    <h2>How Joblin works</h2>
+    <div class="how-grid">
+      <div class="how-card">
+        <div class="how-num">1</div>
+        <h3>Upload your CV or paste raw text</h3>
+        <p>Joblin reads your experience, skills, education, and certifications — and builds a clean, ATS-optimised CV in seconds. No formatting headaches.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">2</div>
+        <h3>We match you to the right jobs</h3>
+        <p>Our engine scans 33+ boards daily and shows only roles that fit your profile with a match score — from entry level to senior positions.</p>
+      </div>
+      <div class="how-card">
+        <div class="how-num">3</div>
+        <h3>One-click tailor for every application</h3>
+        <p>Click any job and Joblin rewrites your CV and cover letter to match that specific role — keywords, skills, achievements. ATS-optimised. Ready to download.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BEFORE / AFTER ═══ -->
+<section class="contrast">
+  <div class="contrast-inner">
+    <h2>The old way vs. Joblin</h2>
+    <p class="contrast-sub">Most Nigerian job seekers waste 12+ hours per week on applications. Here is the difference.</p>
+    <div class="contrast-grid">
+      <div class="contrast-card bad">
+        <div class="contrast-icon">&#10060;</div>
+        <div>
+          <h4>Without Joblin</h4>
+          <p>Check 10 different job sites daily. Custom-edit your CV in Word for each role. Write cover letters from scratch. Guess which keywords matter. Apply to 50+ roles — hear back from 2.</p>
+        </div>
+      </div>
+      <div class="contrast-card good">
+        <div class="contrast-icon">&#9989;</div>
+        <div>
+          <h4>With Joblin</h4>
+          <p>One dashboard shows every relevant job with a match score. Click &#8220;Tailor&#8221; and your CV + cover letter are rewritten for that role in seconds. Apply to 20 highly-matched roles — hear back from 10.</p>
+        </div>
+      </div>
+      <div class="contrast-card bad">
+        <div class="contrast-icon">&#10060;</div>
+        <div>
+          <h4>As a Corp Member</h4>
+          <p>NYSC on your CV confuses international recruiters. Local recruiters do not know what to do with it. You have no work experience beyond PPA. Your CV looks empty compared to experienced candidates.</p>
+        </div>
+      </div>
+      <div class="contrast-card good">
+        <div class="contrast-icon">&#9989;</div>
+        <div>
+          <h4>With Joblin (Corp Member Mode)</h4>
+          <p>Automatically translates NYSC to &#8220;Mandatory National Youth Service&#8221; for international roles. Highlights PPA projects as achievements. Adds graduate-level keywords. Positions you as a pipeline talent, not a fresh graduate.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="testy" id="testy">
+  <div class="testy-inner">
+    <div class="testy-label">Real Results</div>
+    <h2>What Nigerian job seekers say about Joblin</h2>
+    <div class="testy-grid">
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;NYSC corper here with zero callbacks for 4 months. Joblin rewrote my CV highlighting my PPA projects and teaching experience. Got 3 interview invites in 2 weeks. Landed a graduate role before my passing out.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar blue">S</div>
+          <div>
+            <div class="testy-name">Samuel K.</div>
+            <div class="testy-role">NYSC Corp Member → Graduate Associate</div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;Fresh out of uni with no work experience. Joblin's AI pulled relevant coursework and projects into proper CV bullets. I applied to 12 graduate internships and got interviews at 5. The NyS.C translation for international roles is genius.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar green">A</div>
+          <div>
+            <div class="testy-name">Amina D.</div>
+            <div class="testy-role">Graduate Intern (Entry Level)</div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;I had 2 years of experience but my CV was getting zero replies. Joblin showed me I was missing keywords in every application. One-click tailor and suddenly I had a 78% match score. Got 4 callbacks in 10 days.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar amber">C</div>
+          <div>
+            <div class="testy-name">Chidi E.</div>
+            <div class="testy-role">Junior Data Analyst (2 yrs exp)</div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;As a mid-level professional, I was wasting hours tailoring CVs manually for every application. Joblin does it in seconds and the quality is better than what I could write. The ATS score on my CV went from 45% to 92%.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar blue">F</div>
+          <div>
+            <div class="testy-name">Folashade B.</div>
+            <div class="testy-role">Mid-Level Project Officer</div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;10 years in and I thought I knew how to write a CV. Joblin proved me wrong. It caught vague bullet points I had been using for years and replaced them with metrics-driven achievements. My interview call rate doubled immediately.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar green">O</div>
+          <div>
+            <div class="testy-name">Obinna N.</div>
+            <div class="testy-role">Senior Programme Manager</div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-card">
+        <div class="testy-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <div class="testy-quote">
+          &ldquo;Switching careers from teaching to data analytics. Joblin matched my transferable skills to job descriptions I could not have connected myself. Got a junior analyst role offer within 3 weeks of using the platform. Game changer.&rdquo;
+        </div>
+        <div class="testy-author">
+          <div class="testy-avatar amber">Z</div>
+          <div>
+            <div class="testy-name">Zainab M.</div>
+            <div class="testy-role">Career Changer → Junior Analyst</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ URGENCY CTA ═══ -->
+<section class="urgent">
+  <div class="urgent-inner">
+    <h2>Every day you wait,<br>someone else gets YOUR job.</h2>
+    <p>
+      While you are still formatting your CV, other candidates are already tailoring theirs
+      with Joblin and landing interviews. The job market does not slow down — and neither should you.
+    </p>
+    <a href="register.html" class="urgent-btn">
+      Start Landing Interviews Free &rarr;
+    </a>
+    <div class="urgent-note">
+      Free AI model included &middot; No credit card &middot; <a href="login.html">Sign in if you already have an account</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    &copy; 2026 <a href="index.html">Joblin</a> &mdash; Built for Nigerian job seekers, by Nigerian developers.
+    <br>
+    <a href="login.html">Sign In</a> &middot; <a href="register.html">Create Account</a>
+  </p>
+</footer>
+
+<script>
+// Live stats from API
+(async function loadLiveStats() {
+  try {
+    const r = await fetch('/api/stats');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data.total > 0) {
+      const countEl = document.getElementById('liveJobCount');
+      if (countEl) {
+        countEl.textContent = data.total > 999
+          ? Math.round(data.total / 100) / 10 + 'K+'
+          : data.total;
+      }
+      const newCount = data.new_24h || 0;
+      if (newCount > 0) {
+        document.getElementById('newJobCount').textContent = newCount;
+        document.getElementById('liveStatsBar').style.display = 'flex';
+        if (data.last_scraped) {
+          const ts = new Date(data.last_scraped.replace(' ', 'T') + 'Z');
+          const now = new Date();
+          const diffH = (now - ts) / 3600000;
+          let rel = 'today';
+          if (diffH < 1) rel = 'just now';
+          else if (diffH < 4) rel = Math.round(diffH) + 'h ago';
+          else if (diffH < 24) rel = 'today';
+          else rel = Math.round(diffH / 24) + 'd ago';
+          document.getElementById('lastScrapedRel').textContent = rel;
+        }
+      }
+    }
+  } catch (e) {}
+})();
+
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+</script>
+
+</body>
+</html>

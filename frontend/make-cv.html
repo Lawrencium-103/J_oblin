@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Make My CV</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.voice-btn.listening {
+  background: var(--color-danger-500);
+  color: #fff;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+.voice-btn .pulse-dot {
+  display: none;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #fff;
+  animation: pulse 1s ease-in-out infinite;
+}
+.voice-btn.listening .pulse-dot { display: inline-block; }
+.voice-btn.listening .mic-icon { display: none; }
+.voice-btn.listening .stop-icon { display: inline; }
+.voice-btn .stop-icon { display: none; }
+
+.target-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+.target-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-50);
+  border: 1px solid var(--color-primary-200);
+  color: var(--color-primary-600);
+  font-weight: 500;
+}
+.target-tag .remove-tag {
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--color-primary-400);
+  transition: color var(--transition-fast);
+}
+.target-tag .remove-tag:hover { color: var(--color-danger-500); }
+
+.toggle-group {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  width: fit-content;
+}
+.toggle-group .toggle-option {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+  border: none;
+  font-family: inherit;
+  transition: all var(--transition-fast);
+}
+.toggle-group .toggle-option.active {
+  background: var(--color-primary-500);
+  color: #fff;
+}
+.toggle-group .toggle-option:not(.active):hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-default);
+}
+
+.remote-options {
+  display: none;
+  padding: var(--space-3);
+  background: var(--bg-app);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-default);
+  margin-top: var(--space-3);
+}
+.remote-options.visible { display: block; }
+
+.make-cv-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+}
+.cv-input-section textarea {
+  min-height: 350px;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  line-height: var(--leading-relaxed);
+}
+.cv-output-section .cv-preview {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-height: 600px;
+  overflow-y: auto;
+  padding: var(--space-3);
+  background: var(--bg-app);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+}
+.cv-output-section .cv-preview:empty::before {
+  content: "Your generated CV will appear here\u2026";
+  color: var(--text-subtle);
+  font-style: italic;
+}
+
+.char-count {
+  font-size: 11px;
+  color: var(--text-subtle);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.form-inline-group {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.form-inline-group input { flex: 1; }
+
+@media (max-width: 768px) {
+  .make-cv-grid { grid-template-columns: 1fr; }
+  .toggle-group { width: 100%; }
+  .toggle-group .toggle-option { flex: 1; text-align: center; }
+}
+</style>
+</head>
+<body>
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <a href="dashboard.html" class="sidebar-brand">
+      <div class="brand-icon">J</div>
+      <h1>Job<span>lin</span></h1>
+    </a>
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-title">Main</div>
+      <a href="index.html" class="nav-item">
+        <span class="nav-icon">&#127968;</span>
+        <span class="nav-label">Home</span>
+      </a>
+      <a href="dashboard.html" class="nav-item">
+        <span class="nav-icon">&#9632;</span>
+        <span class="nav-label">Dashboard</span>
+      </a>
+      <a href="jobs.html" class="nav-item">
+        <span class="nav-icon">&#9654;</span>
+        <span class="nav-label">All Jobs</span>
+      </a>
+      <a href="manual-job.html" class="nav-item">
+        <span class="nav-icon">+</span>
+        <span class="nav-label">Manual Entry</span>
+      </a>
+      <div class="sidebar-section-title">My Profile</div>
+      <a href="make-cv.html" class="nav-item active">
+        <span class="nav-icon">&#9997;</span>
+        <span class="nav-label">Make My CV</span>
+      </a>
+      <a href="cv-editor.html" class="nav-item">
+        <span class="nav-icon">&#9998;</span>
+        <span class="nav-label">Edit CV</span>
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-icon">&#9881;</span>
+        <span class="nav-label">Settings</span>
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="user-avatar" id="avatarInitial">U</div>
+        <div class="user-details">
+          <span class="user-name" id="user-name"></span>
+          <span class="user-email" id="user-email"></span>
+        </div>
+      </div>
+      <button class="logout-btn" onclick="logout()">
+        <span>&#10140;</span>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="top-bar">
+      <button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">&#9776;</button>
+      <div style="font-size:var(--text-sm);font-weight:600;color:var(--text-default)">Make My CV</div>
+    </div>
+
+    <div class="page-content">
+      <div class="page-header">
+        <div>
+          <h2>Build Your CV From Scratch</h2>
+          <p class="subtitle">Tell us about yourself — paste, type, or speak. AI will create a professional CV.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <div class="card-icon">&#127908;</div>
+          1. Voice Narration (Optional)
+        </div>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+          Speak about your experience, skills, and career goals. Tap the mic and talk naturally.
+        </p>
+        <button class="btn btn-secondary voice-btn" id="voiceBtn" onclick="toggleVoice()">
+          <span class="mic-icon">&#127908;</span>
+          <span class="stop-icon">&#9632;</span>
+          <span class="pulse-dot"></span>
+          <span id="voiceLabel">Start Recording</span>
+        </button>
+        <div id="voiceStatus" style="font-size:12px;color:var(--text-subtle);margin-top:6px"></div>
+      </div>
+
+      <div class="make-cv-grid">
+        <div class="cv-input-section">
+          <div class="card">
+            <div class="card-title">
+              <div class="card-icon">&#128221;</div>
+              2. Your Information
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+              Paste everything about yourself — skills, jobs, education, projects, achievements. Be as detailed as you like.
+            </p>
+            <textarea id="rawText" placeholder="Paste your work experience, skills, education, certifications, projects, languages, professional memberships...
+
+Example:
+            I'm Chidi Okonkwo. I studied Computer Science at University of Lagos (2016-2020). I worked as a software developer for 2 years after NYSC. I know Python, JavaScript, React, Node.js, SQL. I built a payment processing system that handled 50k+ transactions daily. I also have experience with AWS and Docker.
+
+I'm interested in full-stack development roles. I also have a Google Cloud certification and I speak English and Igbo fluently.
+
+... just write naturally, include everything you remember!"></textarea>
+            <div class="char-count"><span id="charCount">0</span> characters</div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <div class="card-icon">&#127919;</div>
+              3. Target Jobs
+            </div>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">
+              What roles or sectors are you interested in? Add one or more.
+            </p>
+            <div class="form-inline-group">
+              <input type="text" id="targetInput" placeholder="e.g. Data Analyst, Software Developer, NGO Sector" onkeydown="if(event.key==='Enter')addTarget()">
+              <button class="btn btn-primary btn-sm" onclick="addTarget()">Add</button>
+            </div>
+            <div class="target-tags" id="targetTags"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <div class="card-icon">&#127758;</div>
+              4. CV Type
+            </div>
+            <div class="toggle-group" id="cvTypeToggle">
+              <button class="toggle-option active" data-value="local" onclick="setCvType('local')">&#127463;&#127466; Local (Nigeria)</button>
+              <button class="toggle-option" data-value="international" onclick="setCvType('international')">&#127758; International</button>
+            </div>
+            <div class="remote-options" id="remoteOptions">
+              <div class="cv-form-row">
+                <div class="form-group">
+                  <label><input type="checkbox" id="remoteCheck" checked> Prefer Remote Work</label>
+                </div>
+                <div class="form-group">
+                  <label>Time Zone</label>
+                  <select id="timezoneSelect">
+                    <option value="Africa/Lagos">Africa/Lagos (WAT)</option>
+                    <option value="Africa/Accra">Africa/Accra (GMT)</option>
+                    <option value="Africa/Nairobi">Africa/Nairobi (EAT)</option>
+                    <option value="Africa/Cairo">Africa/Cairo (EET)</option>
+                    <option value="Africa/Casablanca">Africa/Casablanca (+1)</option>
+                    <option value="Europe/London">Europe/London (GMT/BST)</option>
+                    <option value="Europe/Berlin">Europe/Berlin (CET/CEST)</option>
+                    <option value="America/New_York">America/New_York (ET)</option>
+                    <option value="America/Chicago">America/Chicago (CT)</option>
+                    <option value="America/Denver">America/Denver (MT)</option>
+                    <option value="America/Los_Angeles">America/Los_Angeles (PT)</option>
+                    <option value="Asia/Dubai">Asia/Dubai (+4)</option>
+                    <option value="Asia/Singapore">Asia/Singapore (+8)</option>
+                    <option value="Asia/Tokyo">Asia/Tokyo (JST)</option>
+                    <option value="Australia/Sydney">Australia/Sydney (AEDT)</option>
+                    <option value="Pacific/Auckland">Pacific/Auckland (NZDT)</option>
+                    <option value="Etc/UTC">UTC / Flexible</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-lg" onclick="generateCV()" id="generateBtn" style="width:100%">
+            <span>&#9889;</span> Generate My CV
+          </button>
+        </div>
+
+        <div class="cv-output-section">
+          <div class="card">
+            <div class="card-title">
+              <div class="card-icon">&#128196;</div>
+              5. Your CV
+            </div>
+            <div id="generatedPreview" class="cv-preview"></div>
+            <div id="generatedActions" style="display:none;margin-top:var(--space-3)">
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-primary" onclick="saveCv()">&#10003; Save &amp; Use for Tailoring</button>
+                <button class="btn btn-secondary" id="downloadDocxBtn" style="display:none" onclick="downloadFile('docx')">&#128196; Download CV (DOCX)</button>
+                <button class="btn btn-secondary" id="downloadPdfBtn" style="display:none" onclick="downloadFile('pdf')">&#128196; Download CV (PDF)</button>
+                <button class="btn btn-secondary" onclick="location.href='cv-editor.html'">&#9998; Edit in CV Editor</button>
+              </div>
+              <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
+                Your CV is automatically saved so you can use it with the <a href="manual-job.html">Manual Entry</a> tool to tailor it to specific jobs.
+              </p>
+            </div>
+            <div id="generatedError" style="display:none"></div>
+          </div>
+
+          <div class="card">
+            <div class="card-title">
+              <div class="card-icon">&#128161;</div>
+              Tips for a Great CV
+            </div>
+            <ul style="font-size:12px;color:var(--text-muted);line-height:1.7;padding-left:16px">
+              <li>Include numbers and metrics — "reduced cost by 20%", "managed 50+ clients"</li>
+              <li>List all software, tools, and languages you know</li>
+              <li>Mention achievements, not just duties</li>
+              <li>Include volunteer work, internships, and side projects</li>
+              <li>For Nigeria: include NYSC status, local certifications</li>
+              <li>For International: highlight remote collaboration, timezone flexibility</li>
+              <li>Be honest — never fabricate experience</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let targetJobs = [];
+let cvType = "local";
+let recognition = null;
+let generatedCv = null;
+let generatedPaths = null;
+
+// ── Voice Narration ──────────────────────────────────────────────────────
+
+function toggleVoice() {
+  const btn = document.getElementById("voiceBtn");
+  if (recognition && recognition.listening) {
+    stopVoice();
+    return;
+  }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    showToast("Voice not supported. Try Chrome or Edge.", "error");
+    return;
+  }
+  recognition = new SpeechRecognition();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = "en-NG";
+
+  const ta = document.getElementById("rawText");
+  const status = document.getElementById("voiceStatus");
+
+  recognition.onresult = function(event) {
+    let interim = "";
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) {
+        ta.value += (ta.value ? " " : "") + transcript;
+      } else {
+        interim = transcript;
+      }
+    }
+    status.textContent = interim ? "Listening: \"" + interim + "\u2026" : "Listening\u2026";
+    updateCharCount();
+  };
+
+  recognition.onerror = function(event) {
+    status.textContent = "Error: " + event.error;
+    btn.classList.remove("listening");
+    document.getElementById("voiceLabel").textContent = "Start Recording";
+  };
+
+  recognition.onend = function() {
+    btn.classList.remove("listening");
+    document.getElementById("voiceLabel").textContent = "Start Recording";
+    status.textContent = "Recording stopped. " + ta.value.length + " characters captured.";
+    recognition = null;
+  };
+
+  recognition.start();
+  recognition.listening = true;
+  btn.classList.add("listening");
+  document.getElementById("voiceLabel").textContent = "Recording\u2026";
+  status.textContent = "Listening\u2026";
+}
+
+function stopVoice() {
+  if (recognition) {
+    recognition.stop();
+    recognition.listening = false;
+  }
+}
+
+// ── Target Jobs ──────────────────────────────────────────────────────────
+
+function addTarget() {
+  const input = document.getElementById("targetInput");
+  const val = input.value.trim();
+  if (!val) return;
+  targetJobs.push(val);
+  input.value = "";
+  renderTargets();
+}
+
+function removeTarget(idx) {
+  targetJobs.splice(idx, 1);
+  renderTargets();
+}
+
+function renderTargets() {
+  const container = document.getElementById("targetTags");
+  if (targetJobs.length === 0) {
+    container.innerHTML = '<span style="font-size:12px;color:var(--text-subtle)">No targets added yet. Add at least one job title or sector.</span>';
+    return;
+  }
+  container.innerHTML = targetJobs.map((t, i) =>
+    `<span class="target-tag">${escHtml(t)} <span class="remove-tag" onclick="removeTarget(${i})">&times;</span></span>`
+  ).join("");
+}
+
+// ── CV Type ──────────────────────────────────────────────────────────────
+
+function setCvType(type) {
+  cvType = type;
+  document.querySelectorAll(".toggle-option").forEach(b => b.classList.toggle("active", b.dataset.value === type));
+  document.getElementById("remoteOptions").classList.toggle("visible", type === "international");
+}
+
+// ── Char Count ───────────────────────────────────────────────────────────
+
+function updateCharCount() {
+  document.getElementById("charCount").textContent = document.getElementById("rawText").value.length;
+}
+document.getElementById("rawText").addEventListener("input", updateCharCount);
+
+// ── Generate CV ──────────────────────────────────────────────────────────
+
+async function generateCV() {
+  const rawText = document.getElementById("rawText").value.trim();
+  if (!rawText) {
+    showToast("Paste or type your information first", "error");
+    return;
+  }
+  if (targetJobs.length === 0) {
+    showToast("Add at least one target job or sector", "error");
+    return;
+  }
+
+  const btn = document.getElementById("generateBtn");
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating\u2026';
+  const preview = document.getElementById("generatedPreview");
+  preview.textContent = "Generating your CV with AI\u2026 this takes about 15-30 seconds.\n\nPlease wait\u2026";
+
+  try {
+    const result = await apiFetch("POST", "/api/cv/make-cv", {
+      raw_text: rawText,
+      target_jobs: targetJobs,
+      target_type: cvType,
+      remote: document.getElementById("remoteCheck").checked,
+      timezone: document.getElementById("timezoneSelect").value,
+    });
+
+    if (result.status === "ok") {
+      generatedCv = result.cv;
+      generatedPaths = { cv: result.cv_path, cv_pdf: result.cv_pdf_path };
+      preview.textContent = result.preview || "CV generated successfully!";
+      const _el = id => document.getElementById(id);
+      const _show = (id, show) => { const el = _el(id); if (el) el.style.display = show ? "inline-flex" : "none"; };
+      const _g = _el("generatedActions"); if (_g) _g.style.display = "block";
+      const _ge = _el("generatedError"); if (_ge) _ge.style.display = "none";
+      _show("downloadDocxBtn", !!result.cv_path);
+      _show("downloadPdfBtn", !!result.cv_pdf_path);
+      showToast("CV generated! Review and save below.");
+    } else {
+      preview.textContent = "Could not generate CV. Please try again with more details.";
+    }
+  } catch (err) {
+    const _ge = document.getElementById("generatedError");
+    if (_ge) _ge.style.display = "block";
+    document.getElementById("generatedError").innerHTML =
+      '<div style="color:var(--color-danger-500);font-size:13px;padding:12px;background:rgba(239,68,68,0.08);border-radius:6px">' +
+      escHtml(err.message) + '</div>';
+    preview.textContent = "";
+  }
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>&#9889;</span> Generate My CV';
+}
+
+async function saveCv() {
+  if (!generatedCv) return;
+  try {
+    await apiFetch("PUT", "/api/cv", generatedCv);
+    showToast("CV saved! Ready for tailoring.");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function downloadFile(format) {
+  if (!generatedPaths) return;
+  const key = format === "pdf" ? "cv_pdf" : "cv";
+  const path = generatedPaths[key];
+  if (!path) { showToast("File not available", "error"); return; }
+  const filename = path.split("\\").pop().split("/").pop();
+  try {
+    const r = await fetch(API + "/api/download/manual/" + encodeURIComponent(filename), { headers: apiHeaders() });
+    if (!r.ok) { const err = await r.text().catch(() => ""); showToast(err || "Download failed", "error"); return; }
+    const blob = await r.blob();
+    const disp = r.headers.get("Content-Disposition") || "";
+    const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"'\s;]+)/i);
+    const dlName = match ? match[1] : filename;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = dlName; a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) { showToast(err.message, "error"); }
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────
+
+if (!getToken()) window.location.href = "login.html";
+updateHeader();
+renderTargets();
+</script>
+</body>
+</html>
