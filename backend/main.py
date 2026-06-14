@@ -352,6 +352,39 @@ def scrape_test(board: str = ""):
             "direct_fetch": {"status": r.status_code, "length": len(r.text)},
         }
 
+    elif board == "ngo":
+        from backend.scrapers.ngos import NGOJobScraper
+        s = NGOJobScraper()
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            try:
+                jobs = s.scrape_myngojob("Data Analyst")
+            except Exception as e:
+                return {"board": "ngo/myngojob", "error": str(e), "logs": buf.getvalue()[:2000]}
+        return {"board": "ngo/myngojob", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
+
+    elif board == "intl":
+        from backend.scrapers.international import InternationalJobScraper
+        s = InternationalJobScraper()
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            try:
+                jobs = s.scrape_reed("Data Analyst")
+            except Exception as e:
+                return {"board": "intl/reed", "error": str(e), "logs": buf.getvalue()[:2000]}
+        return {"board": "intl/reed", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
+
+    elif board == "hi":
+        from backend.scrapers.highimpact import HighImpactScraper
+        s = HighImpactScraper()
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf), contextlib.redirect_stderr(buf):
+            try:
+                jobs = s.scrape_anthropic("Data Analyst")
+            except Exception as e:
+                return {"board": "hi/anthropic", "error": str(e), "logs": buf.getvalue()[:2000]}
+        return {"board": "hi/anthropic", "count": len(jobs or []), "first": (jobs[0] if jobs else None), "logs": buf.getvalue()[:2000]}
+
     all_jobs = []
     results = {}
     for name in dir(s):
