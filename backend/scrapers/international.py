@@ -101,7 +101,22 @@ class InternationalJobScraper(BaseScraper):
                         url_val, "himalayas", CAT, (item.get("posted_date","") or "")[:10],
                     ))
                 print(f"[himalayas] {len(jobs)} jobs for '{query}'")
-                return self.filter_fresh(jobs)
+        return self.filter_fresh(jobs)
+
+    # ── Config name aliases ──────────────────────────────────────────────
+    def scrape_himalayas(self, query: str) -> list[dict]:
+        return self.scrape_himalayas_app(query)
+
+    def scrape_remoteworkng(self, query: str) -> list[dict]:
+        return self.scrape_remotework_ng(query)
+
+    def scrape_realworkfromanywhere(self, query: str) -> list[dict]:
+        from bs4 import BeautifulSoup
+        url = "https://realworkfromanywhere.com/"
+        soup = self.fetch_soup(url)
+        if not soup:
+            return []
+        return self._extract_from_text(soup, "realworkfromanywhere", "https://realworkfromanywhere.com", CAT)
         # HTML fallback
         soup = self.fetch_soup(f"https://himalayas.app/jobs?q={quote(query)}")
         if soup:

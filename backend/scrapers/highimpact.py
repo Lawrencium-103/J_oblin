@@ -80,7 +80,11 @@ class HighImpactScraper(BaseScraper):
                     if tags:
                         desc = f"[{', '.join(tags[:4])}] {desc}" if desc else ", ".join(tags[:4])
                     jobs.append(self._make_job(title, company, location, desc, ext_url, "80000hours", CAT, posted))
-                return self.filter_fresh(jobs)
+        return self.filter_fresh(jobs)
+
+    # ── Config name alias ─────────────────────────────────────────────────
+    def scrape_80000hours(self, query: str) -> list[dict]:
+        return self.scrape_eightythousandhours(query)
         except Exception as e:
             print(f"[80000hours] Algolia API error: {e}")
         # Method 2: HTML fallback
