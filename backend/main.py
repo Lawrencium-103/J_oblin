@@ -19,6 +19,7 @@ from backend.database import (
     get_categories, classify_job_title,
     link_user_job, get_user_job_link, get_user_linked_jobs, update_link_tailoring,
     deactivate_old_jobs,
+    create_reset_token, get_valid_token, mark_token_used, update_password,
 )
 from backend.auth import hash_password, verify_password, create_access_token, get_current_user
 from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch
@@ -75,6 +76,12 @@ class RegisterRequest(BaseModel):
 class LoginRequest(BaseModel):
     email: str; password: str
 
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    token: str; password: str
+
 class ScrapeRequest(BaseModel):
     title: str = ""; boards: list[str] = []
 
@@ -111,6 +118,30 @@ def login(req: LoginRequest):
 @app.get("/api/auth/me")
 def me(current_user: dict = Depends(get_current_user)):
     return get_user_by_id(current_user["user_id"])
+
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest):
+    if not req.email:
+        raise HTTPException(400, "Email is required")
+    raw_token = create_reset_token(req.email)
+    if not raw_token:
+        return {"message": "If that email is registered, a reset token has been generated"}
+    return {"token": raw_token, "message": "Use this token to reset your password (expires in 15 minutes)"}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest):
+    if not req.token or not req.password:
+        raise HTTPException(400, "Token and password are required")
+    if len(req.password) < 6:
+        raise HTTPException(400, "Password must be at least 6 characters")
+    entry = get_valid_token(req.token)
+    if not entry:
+        raise HTTPException(400, "Invalid or expired reset token")
+    mark_token_used(entry["id"])
+    update_password(entry["user_id"], hash_password(req.password))
+    return {"message": "Password reset successfully"}
 
 
 # ── CV Routes ───────────────────────────────────────────────────────────────
@@ -268,6 +299,70 @@ def scrape_cron(req: ScrapeRequest, token: str = Query("")):
         raise HTTPException(403, "Invalid token")
     threading.Thread(target=run_nightly_scrape, daemon=True).start()
     return {"status": "started", "message": "Scraping in background"}
+
+@app.get("/api/check-network")
+def check_network():
+    import requests as _req
+    results = {}
+    for url in ["https://google.com", "https://www.myjobmag.com", "https://api.github.com"]:
+        try:
+            r = _req.get(url, timeout=8)
+            results[url] = f"OK ({r.status_code})"
+        except Exception as e:
+            results[url] = f"FAIL: {type(e).__name__}"
+    return results
+
+@app.get("/api/scrape/test")
+def scrape_test(board: str = ""):
+    from backend.scrapers.nigeria import NigerianJobScraper
+    from backend.database import save_global_jobs, get_global_stats
+    s = NigerianJobScraper()
+
+    if board:
+        import io, contextlib, sys, requests as _req
+        url = f"https://www.{board}.com/search?q=Data+Analyst"
+        if board == "hotnigerianjobs":
+            url = "https://www.hotnigerianjobs.com/?s=Data+Analyst"
+        elif board == "myjobmag":
+            url = "https://www.myjobmag.com/search?q=Data+Analyst"
+        elif board == "ngcareers":
+            url = "https://ngcareers.com/jobs?q=Data+Analyst"
+        elif board == "jobzilla":
+            url = "https://www.jobzilla.ng/jobs?q=Data+Analyst"
+        elif board == "jobgurus":
+            url = "https://www.jobgurus.com.ng/?s=Data+Analyst"
+        r = _req.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        method = getattr(s, f"scrape_{board}", None)
+        if not method:
+            return {"error": f"no scraper named {board}"}
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            with contextlib.redirect_stderr(buf):
+                try:
+                    jobs = method("Data Analyst")
+                except Exception as e:
+                    return {"board": board, "error": str(e), "logs": buf.getvalue()[:2000]}
+        return {
+            "board": board,
+            "count": len(jobs or []),
+            "first": (jobs[0] if jobs else None),
+            "logs": buf.getvalue()[:2000],
+            "direct_fetch": {"status": r.status_code, "length": len(r.text)},
+        }
+
+    all_jobs = []
+    results = {}
+    for name in dir(s):
+        if name.startswith("scrape_"):
+            board_name = name.replace("scrape_", "")
+            try:
+                jobs = getattr(s, name)("Data Analyst")
+                results[board_name] = len(jobs or [])
+                if jobs: all_jobs.extend(jobs)
+            except Exception as e:
+                results[board_name] = f"err: {e}"
+    saved = save_global_jobs(all_jobs)
+    return {"results": results, "total_scraped": len(all_jobs), "total_saved": saved, "stats": get_global_stats()}
 
 
 @app.get("/api/jobs")

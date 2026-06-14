@@ -22,13 +22,25 @@
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+        <div class="pwd-wrapper">
+          <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password">
+          <span class="pwd-toggle" onclick="togglePwd('password',this)">&#128065;</span>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary btn-lg" style="width:100%" id="loginBtn">Sign In</button>
     </form>
+    <p class="footer-link" style="margin-bottom:var(--space-2)"><a href="forgot-password.html">Forgot password?</a></p>
     <p class="footer-link">Don't have an account? <a href="register.html">Create one</a></p>
   </div>
 </div>
+<script>
+function togglePwd(id, el) {
+  const inp = document.getElementById(id);
+  const isPwd = inp.type === "password";
+  inp.type = isPwd ? "text" : "password";
+  el.innerHTML = isPwd ? "&#128064;" : "&#128065;";
+}
+</script>
 <script src="app.js"></script>
 <script>
 const btn = document.getElementById("loginBtn");

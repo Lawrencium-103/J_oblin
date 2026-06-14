@@ -1,6 +1,9 @@
+import hashlib
+import secrets
 import sqlite3
 import json
 from contextlib import contextmanager
+from datetime import datetime, timedelta, timezone
 from backend.config import DATABASE_PATH
 
 
@@ -65,6 +68,17 @@ def init_db():
                 tailored_cover_path TEXT,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 UNIQUE(user_id, job_id)
+            );
+
+            -- Password reset tokens
+            CREATE TABLE IF NOT EXISTS reset_tokens (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL,
+                token_hash TEXT NOT NULL,
+                expires_at TIMESTAMP NOT NULL,
+                used INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_id) REFERENCES users(id)
             );
 
             -- Job category definitions
@@ -144,6 +158,48 @@ def get_user_by_id(user_id: int) -> dict | None:
     with get_db() as conn:
         row = conn.execute("SELECT id, email, name, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
         return dict(row) if row else None
+
+
+# ── Password Reset ──────────────────────────────────────────────────────────
+
+def create_reset_token(email: str) -> str | None:
+    user = get_user_by_email(email)
+    if not user:
+        return None
+    raw_token = secrets.token_hex(32)
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
+    with get_db() as conn:
+        conn.execute(
+            "DELETE FROM reset_tokens WHERE user_id = ?", (user["id"],)
+        )
+        conn.execute(
+            "INSERT INTO reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
+            (user["id"], token_hash, expires_at),
+        )
+    return raw_token
+
+
+def get_valid_token(raw_token: str) -> dict | None:
+    token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
+    with get_db() as conn:
+        row = conn.execute(
+            """SELECT rt.*, u.email FROM reset_tokens rt
+               JOIN users u ON u.id = rt.user_id
+               WHERE rt.token_hash = ? AND rt.used = 0 AND rt.expires_at > datetime('now')""",
+            (token_hash,),
+        ).fetchone()
+        return dict(row) if row else None
+
+
+def mark_token_used(token_id: int) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE reset_tokens SET used = 1 WHERE id = ?", (token_id,))
+
+
+def update_password(user_id: int, password_hash: str) -> None:
+    with get_db() as conn:
+        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
 
 
 # ── API Keys ────────────────────────────────────────────────────────────────
@@ -271,7 +327,7 @@ def save_global_jobs(jobs: list[dict]) -> int:
 
 def classify_job_title(title: str, description: str = "") -> str:
     text = f"{title} {description}".lower()
-    from config import JOB_CATEGORIES
+    from backend.config import JOB_CATEGORIES
     best_cat = "other"
     best_score = 0
     for slug, info in JOB_CATEGORIES.items():
