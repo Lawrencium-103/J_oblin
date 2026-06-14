@@ -10,10 +10,11 @@ CAT = "nigeria"
 _TITLE_SELS    = ["h2 a","h3 a","h4 a","a.job-title","[class*='title'] a",
                   "a[class*='title']","a[class*='job']",".job-name a","a"]
 _COMPANY_SELS  = ["[class*='company'] a","[class*='company']","[class*='employer']",
-                  "[class*='recruiter']","[class*='org']","span[class*='name']"]
+                  "[class*='recruiter']","[class*='org']","span[class*='name']",
+                  "[class*='logo'] a img","[class*='logo'] img"]
 _LOCATION_SELS = ["[class*='location']","[class*='place']","[class*='city']",
                   "[class*='state']","span[class*='loc']","[class*='area']"]
-_DATE_SELS     = ["time","[class*='date']","[class*='posted']","[class*='time']","span.date"]
+_DATE_SELS     = ["time","[class*='date']","[class*='posted']","[class*='time']","span.date","#job-date"]
 _DESC_SELS     = ["[class*='desc']","[class*='excerpt']","[class*='summary']","p"]
 
 
@@ -62,7 +63,9 @@ class NigerianJobScraper(BaseScraper):
         if ld:
             for j in ld: j.update({"source": "myjobmag", "category": CAT})
             return self.filter_fresh(ld[:20])
+        # Try common card selectors first, then site-specific
         cards = self.multi_select(soup, [
+            "li.job-list-li",
             "article.job-item","div.job-item","li.job-item",
             "div[class*='job-list'] > div","ul.jobs-list > li",
             "div[class*='joblist'] article","article",
@@ -103,6 +106,7 @@ class NigerianJobScraper(BaseScraper):
             for j in ld: j.update({"source": "jobgurus", "category": CAT})
             return self.filter_fresh(ld[:15])
         cards = self.multi_select(soup, [
+            "div.panel.panel-default.job-post-panel",
             "article.job_listing","article[class*='job']",
             "li.job_listing","div.job_listing","article","div[class*='listing']",
         ])
@@ -160,6 +164,7 @@ class NigerianJobScraper(BaseScraper):
             print(f"[jobzilla] {len(ld)} jobs for '{query}'")
             return self.filter_fresh(ld[:20])
         cards = self.multi_select(soup, [
+            "div.card.border-0.shadow",
             "div.job-item","div.job-listing","div.search-result","div.job-row",
             "div.job-card","article.job","li.job-item","div[class*='job']","article",
         ])
@@ -178,6 +183,10 @@ class NigerianJobScraper(BaseScraper):
                 if not title or not href or href in seen: continue
                 seen.add(href)
                 company  = self.first_text(card, _COMPANY_SELS)
+                if not company:
+                    logo = card.select_one("[class*='logo'] img")
+                    if logo and logo.get("alt"):
+                        company = logo["alt"]
                 location = self.first_text(card, _LOCATION_SELS, "Nigeria")
                 posted   = self.first_text(card, _DATE_SELS)
                 desc     = self.first_text(card, _DESC_SELS)

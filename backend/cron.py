@@ -39,7 +39,7 @@ def _scrape_board(board_name: str, cat: str, query: str) -> list[dict]:
                 j["category"] = cat
             return result
     except Exception as e:
-        pass
+        print(f"[cron] Error scraping {board_name} ({cat}/{query}): {e}")
     return []
 
 

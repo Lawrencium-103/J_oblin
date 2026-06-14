@@ -272,7 +272,7 @@ def _scrape_board(board_name: str, cat: str, query: str) -> list[dict]:
                 j["source"] = board_name; j["category"] = cat
             return result
     except Exception as e:
-        pass
+        print(f"[scrape] Error scraping {board_name} ({cat}): {e}")
     return []
 
 
