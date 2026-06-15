@@ -233,16 +233,19 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(500, f"Failed to save CV: {str(e)}")
 
-    # Generate preview text + documents
-    preview = generate_cv_preview_text(cv_data)
+    try:
+        # Generate preview text + documents
+        preview = generate_cv_preview_text(cv_data)
 
-    name = (cv_data.get("personal_info") or {}).get("name", "")
-    slug = _file_slug(name, req.target_jobs[0] if req.target_jobs else "CV", "", number="00")
-    cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
-    cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
-    profile = get_cv_profile(str(user_id))
-    generate_cv_docx(cv_data, cv_path, target_type=req.target_type, profile=profile)
-    generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile)
+        name = (cv_data.get("personal_info") or {}).get("name", "")
+        slug = _file_slug(name, req.target_jobs[0] if req.target_jobs else "CV", "", number="00")
+        cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
+        cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
+        profile = get_cv_profile(str(user_id))
+        generate_cv_docx(cv_data, cv_path, target_type=req.target_type, profile=profile)
+        generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile)
+    except Exception as e:
+        raise HTTPException(500, f"Document generation failed: {type(e).__name__}: {e}")
 
     return {
         "status": "ok",

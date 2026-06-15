@@ -272,21 +272,24 @@ def _exec_lastid(conn, sql: str, params=()):
 
 # ── Init ─────────────────────────────────────────────────────────────────────
 
+def _safe_alter(conn, sql: str):
+    try:
+        with conn.cursor() as cur:
+            cur.execute(sql)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+
+
 def init_db():
     if _is_pg():
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(_PG_DDL)
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("ALTER TABLE global_jobs ALTER COLUMN date_found TYPE TIMESTAMP USING date_found::timestamp")
-            except Exception:
-                pass
-            try:
-                with conn.cursor() as cur:
-                    cur.execute("ALTER TABLE user_cv ADD COLUMN raw_text TEXT DEFAULT ''")
-            except Exception:
-                pass
+            conn.commit()
+            _safe_alter(conn, "ALTER TABLE global_jobs ALTER COLUMN date_found TYPE TIMESTAMP USING date_found::timestamp")
+            _safe_alter(conn, "ALTER TABLE user_cv ADD COLUMN IF NOT EXISTS raw_text TEXT DEFAULT ''")
+            _safe_alter(conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0")
             _seed_categories(conn)
             _seed_admin_user(conn)
     else:

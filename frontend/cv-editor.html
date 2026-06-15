@@ -89,6 +89,7 @@
           <p class="subtitle">Manage your professional profile</p>
         </div>
         <div class="actions">
+          <span id="autoSaveStatus" style="font-size:12px;color:var(--text-subtle);margin-right:8px"></span>
           <button class="btn btn-primary" onclick="saveCv()" id="saveBtn">Save CV</button>
           <button class="btn btn-secondary" onclick="toggleJsonEditor()">&#9998; JSON Mode</button>
         </div>
@@ -155,19 +156,19 @@
         <div class="cv-form-section">
           <h3>&#128188; Experience</h3>
           <div id="experienceList"></div>
-          <button class="add-entry-btn" onclick="addExperience()">+ Add Experience</button>
+          <button class="add-entry-btn" onclick="addExperience();scheduleAutoSave()">+ Add Experience</button>
         </div>
 
         <div class="cv-form-section">
           <h3>&#127891; Education</h3>
           <div id="educationList"></div>
-          <button class="add-entry-btn" onclick="addEducation()">+ Add Education</button>
+          <button class="add-entry-btn" onclick="addEducation();scheduleAutoSave()">+ Add Education</button>
         </div>
 
         <div class="cv-form-section">
           <h3>&#128187; Projects</h3>
           <div id="projectsList"></div>
-          <button class="add-entry-btn" onclick="addProject()">+ Add Project</button>
+          <button class="add-entry-btn" onclick="addProject();scheduleAutoSave()">+ Add Project</button>
         </div>
 
         <div class="cv-form-section">
@@ -203,6 +204,8 @@ let savedCv = null;
 let expCounter = 0;
 let eduCounter = 0;
 let projCounter = 0;
+let autoSaveTimer = null;
+let isLoadingCv = false;
 
 async function loadCv() {
   try {
@@ -304,6 +307,7 @@ function collectFormData() {
 }
 
 async function saveCv() {
+  clearTimeout(autoSaveTimer);
   const btn = document.getElementById("saveBtn");
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span> Saving...';
@@ -323,6 +327,8 @@ async function saveCv() {
     } else {
       validateCv(data);
     }
+    const status = document.getElementById("autoSaveStatus");
+    if (status) { status.textContent = "\u2713 Saved"; setTimeout(() => { status.textContent = ""; }, 3000); }
     showToast("CV saved successfully");
   } catch (err) {
     if (err instanceof SyntaxError) showToast("Invalid JSON", "error");
@@ -395,7 +401,7 @@ function addExperience(data) {
   const d = data || { title: "", company: "", location: "", start_date: "", end_date: "", current: false, description: "", achievements: [] };
   const html = `
     <div class="entry-card" data-idx="${num}">
-      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove();scheduleAutoSave()">&times;</button>
       <div class="cv-form-row">
         <div class="form-group">
           <label>Job Title</label>
@@ -443,7 +449,7 @@ function addEducation(data) {
   const d = data || { degree: "", institution: "", location: "", start_date: "", end_date: "", gpa: "" };
   const html = `
     <div class="entry-card" data-idx="${num}">
-      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove();scheduleAutoSave()">&times;</button>
       <div class="cv-form-row">
         <div class="form-group">
           <label>Degree</label>
@@ -483,7 +489,7 @@ function addProject(data) {
   const d = data || { name: "", description: "", technologies: [], url: "" };
   const html = `
     <div class="entry-card" data-idx="${num}">
-      <button class="remove-entry" onclick="this.closest('.entry-card').remove()">&times;</button>
+      <button class="remove-entry" onclick="this.closest('.entry-card').remove();scheduleAutoSave()">&times;</button>
       <div class="cv-form-row">
         <div class="form-group">
           <label>Project Name</label>
@@ -637,9 +643,41 @@ async function convertPlainText() {
   }
 }
 
+function scheduleAutoSave() {
+  if (isLoadingCv) return;
+  clearTimeout(autoSaveTimer);
+  const status = document.getElementById("autoSaveStatus");
+  if (status) status.textContent = "Unsaved changes\u2026";
+  autoSaveTimer = setTimeout(async () => {
+    try {
+      let data;
+      const jsonView = document.getElementById("jsonView");
+      if (jsonView.style.display !== "none") {
+        data = JSON.parse(document.getElementById("cvJson").value);
+      } else {
+        data = collectFormData();
+      }
+      await apiFetch("PUT", "/api/cv", data);
+      savedCv = data;
+      if (status) status.textContent = "\u2713 Saved";
+      setTimeout(() => { if (status) status.textContent = ""; }, 3000);
+    } catch (err) {
+      const status = document.getElementById("autoSaveStatus");
+      if (status) status.textContent = "Save failed";
+      console.error("Auto-save failed:", err);
+    }
+  }, 2000);
+}
+
 if (!getToken()) window.location.href = "login.html";
 updateHeader();
-loadCv();
+
+isLoadingCv = true;
+loadCv().then(() => { isLoadingCv = false; });
+
+document.getElementById("formView").addEventListener("input", scheduleAutoSave);
+document.getElementById("formView").addEventListener("change", scheduleAutoSave);
+document.getElementById("cvJson").addEventListener("input", scheduleAutoSave);
 </script>
 </body>
 </html>

@@ -330,15 +330,15 @@ I'm interested in full-stack development roles. I also have a Google Cloud certi
             </div>
             <div id="generatedPreview" class="cv-preview"></div>
             <div id="generatedActions" style="display:none;margin-top:var(--space-3)">
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button class="btn btn-primary" onclick="saveCv()">&#10003; Save &amp; Use for Tailoring</button>
-                <button class="btn btn-secondary" id="downloadDocxBtn" style="display:none" onclick="downloadFile('docx')">&#128196; Download CV (DOCX)</button>
+               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                 <span style="font-size:12px;color:var(--color-success-500);font-weight:500">&#10003; CV auto-saved</span>
+                 <button class="btn btn-secondary" id="downloadDocxBtn" style="display:none" onclick="downloadFile('docx')">&#128196; Download CV (DOCX)</button>
                 <button class="btn btn-secondary" id="downloadPdfBtn" style="display:none" onclick="downloadFile('pdf')">&#128196; Download CV (PDF)</button>
                 <button class="btn btn-secondary" onclick="location.href='cv-editor.html'">&#9998; Edit in CV Editor</button>
-              </div>
-              <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
-                Your CV is automatically saved so you can use it with the <a href="manual-job.html">Manual Entry</a> tool to tailor it to specific jobs.
-              </p>
+               </div>
+               <p style="font-size:12px;color:var(--text-muted);margin-top:12px">
+                 Your CV is saved automatically. Use it with the <a href="manual-job.html">Manual Entry</a> tool to tailor it to specific jobs.
+               </p>
             </div>
             <div id="generatedError" style="display:none"></div>
           </div>
@@ -550,16 +550,6 @@ async function generateCV() {
 
   btn.disabled = false;
   btn.innerHTML = '<span>&#9889;</span> Generate My CV';
-}
-
-async function saveCv() {
-  if (!generatedCv) return;
-  try {
-    await apiFetch("PUT", "/api/cv", generatedCv);
-    showToast("CV saved! Ready for tailoring.");
-  } catch (err) {
-    showToast(err.message, "error");
-  }
 }
 
 async function downloadFile(format) {
