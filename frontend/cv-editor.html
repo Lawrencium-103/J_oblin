@@ -209,12 +209,18 @@ let isLoadingCv = false;
 
 async function loadCv() {
   try {
-    const data = await apiFetch("GET", "/api/cv");
+    const [data, rawResult] = await Promise.all([
+      apiFetch("GET", "/api/cv"),
+      apiFetch("GET", "/api/cv/raw-text"),
+    ]);
     savedCv = data;
     populateForm(data);
     document.getElementById("cvJson").value = JSON.stringify(data, null, 2);
     previewJson(data);
     validateCv(data);
+    if (rawResult && rawResult.raw_text) {
+      document.getElementById("plainTextCv").value = rawResult.raw_text;
+    }
   } catch (err) {
     showToast(err.message, "error");
   }
@@ -634,7 +640,11 @@ async function convertPlainText() {
   document.getElementById("formView").style.display = "block";
   showToast("CV text converted — saving...");
   try {
-    await apiFetch("PUT", "/api/cv", cv);
+    const text = document.getElementById("plainTextCv").value;
+    await Promise.all([
+      apiFetch("PUT", "/api/cv", cv),
+      apiFetch("PUT", "/api/cv/raw-text", { raw_text: text }),
+    ]);
     showToast("CV converted and saved! Ready for tailoring.");
     savedCv = cv;
   } catch (err) {
