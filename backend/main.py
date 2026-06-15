@@ -182,8 +182,12 @@ def put_raw_text(data: dict = Body(...), current_user: dict = Depends(get_curren
         raise HTTPException(500, detail=f"Failed to save raw text: {str(e)}")
 
 
+class ParseCVRequest(BaseModel):
+    raw_text: str = ""
+
+
 @app.post("/api/cv/parse")
-def parse_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
+def parse_cv(req: ParseCVRequest, current_user: dict = Depends(get_current_user)):
     api_keys = get_effective_api_keys(current_user["user_id"])
     cv = parse_cv_text(req.raw_text, api_keys)
     return cv
