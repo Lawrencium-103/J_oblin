@@ -641,10 +641,8 @@ async function convertPlainText() {
   showToast("CV text converted — saving...");
   try {
     const text = document.getElementById("plainTextCv").value;
-    await Promise.all([
-      apiFetch("PUT", "/api/cv", cv),
-      apiFetch("PUT", "/api/cv/raw-text", { raw_text: text }),
-    ]);
+    await apiFetch("PUT", "/api/cv", cv);
+    await apiFetch("PUT", "/api/cv/raw-text", { raw_text: text });
     showToast("CV converted and saved! Ready for tailoring.");
     savedCv = cv;
   } catch (err) {
