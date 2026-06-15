@@ -13,7 +13,7 @@ from backend.cron import run_nightly_scrape
 from backend.database import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     save_api_keys, get_api_keys, get_effective_api_keys,
-    save_user_settings, get_user_settings,
+    save_user_settings, get_user_settings, get_and_increment_cv_gen_count,
     save_cv, get_cv, get_cv_default, save_cv_raw_text, get_cv_raw_text,
     save_global_jobs, get_global_jobs, get_global_job, get_global_stats,
     get_categories, classify_job_title,
@@ -27,20 +27,15 @@ from backend.cv_quality import score_cv_quality
 from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
 
-def _file_slug(name: str, title: str, company: str = "", number: str = "00") -> str:
-    parts = [number]
+def _file_slug(name: str, company: str = "", counter: int = 0) -> str:
+    parts = [str(counter).zfill(2)]
     if name:
         parts.append(re.sub(r"[^a-zA-Z0-9]", "", name)[:20])
-    if title:
-        stitle = re.sub(r"[^a-zA-Z0-9 ]", "", title).strip()[:20]
-        if stitle:
-            words = stitle.split()
-            parts.append("".join(w.capitalize() for w in words[:3]))
     if company:
         scompany = re.sub(r"[^a-zA-Z0-9]", "", company)[:10]
         if scompany:
             parts.append(scompany)
-    return "_".join(parts) if parts else f"{number}_cv"
+    return "_".join(parts) if parts else f"{str(counter).zfill(2)}_cv"
 from backend.cv_diversity import randomize_tailored_cv
 from backend.excel_export import export_jobs_to_excel
 
@@ -238,7 +233,8 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
         preview = generate_cv_preview_text(cv_data)
 
         name = (cv_data.get("personal_info") or {}).get("name", "")
-        slug = _file_slug(name, req.target_jobs[0] if req.target_jobs else "CV", "", number="00")
+        counter = get_and_increment_cv_gen_count(user_id)
+        slug = _file_slug(name, counter=counter)
         cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
         cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
         profile = get_cv_profile(str(user_id))
@@ -659,8 +655,8 @@ def tailor_from_job_data(
         tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=user_id)
 
     name = (tailored_cv.get("personal_info") or {}).get("name", "")
-    score = result.get("match_score", 0)
-    slug = _file_slug(name, job.get("title", ""), job.get("company", ""), number=str(score).zfill(2))
+    counter = get_and_increment_cv_gen_count(user_id)
+    slug = _file_slug(name, job.get("company", ""), counter=counter)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
@@ -673,7 +669,7 @@ def tailor_from_job_data(
 
     return {
         "status": "ok",
-        "match_score": score,
+        "match_score": result.get("match_score", 0),
         "provider": result.get("provider", "rule-based"),
         "keywords_hit": result.get("keywords_hit", []),
         "professional_summary": result.get("professional_summary", ""),
@@ -725,8 +721,8 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
         tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=user_id)
 
     name = (tailored_cv.get("personal_info") or {}).get("name", "")
-    score = result.get("match_score", 0)
-    slug = _file_slug(name, job.get("title", ""), job.get("company", ""), number=str(score).zfill(2))
+    counter = get_and_increment_cv_gen_count(user_id)
+    slug = _file_slug(name, job.get("company", ""), counter=counter)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")

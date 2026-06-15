@@ -114,7 +114,8 @@ CREATE TABLE IF NOT EXISTS global_jobs (
 
 CREATE TABLE IF NOT EXISTS user_settings (
     user_id INTEGER PRIMARY KEY,
-    use_default_api INTEGER DEFAULT 1
+    use_default_api INTEGER DEFAULT 1,
+    cv_gen_count INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS user_job_links (
@@ -194,7 +195,8 @@ CREATE TABLE IF NOT EXISTS global_jobs (
 
 CREATE TABLE IF NOT EXISTS user_settings (
     user_id INTEGER PRIMARY KEY,
-    use_default_api INTEGER DEFAULT 1
+    use_default_api INTEGER DEFAULT 1,
+    cv_gen_count INTEGER DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS user_job_links (
@@ -290,6 +292,7 @@ def init_db():
             _safe_alter(conn, "ALTER TABLE global_jobs ALTER COLUMN date_found TYPE TIMESTAMP USING date_found::timestamp")
             _safe_alter(conn, "ALTER TABLE user_cv ADD COLUMN IF NOT EXISTS raw_text TEXT DEFAULT ''")
             _safe_alter(conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0")
+            _safe_alter(conn, "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS cv_gen_count INTEGER DEFAULT 0")
             _seed_categories(conn)
             _seed_admin_user(conn)
     else:
@@ -301,6 +304,10 @@ def init_db():
                 pass
             try:
                 conn.execute("ALTER TABLE user_cv ADD COLUMN raw_text TEXT DEFAULT ''")
+            except _sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE user_settings ADD COLUMN cv_gen_count INTEGER DEFAULT 0")
             except _sqlite3.OperationalError:
                 pass
             _seed_categories(conn)
@@ -454,6 +461,17 @@ def save_user_settings(user_id: int, settings: dict) -> None:
         )
 
 
+def get_and_increment_cv_gen_count(user_id: int) -> int:
+    with get_db() as conn:
+        rows = _exec(conn, "SELECT cv_gen_count FROM user_settings WHERE user_id = ?", (user_id,)).fetchall()
+        if not rows:
+            _exec(conn, "INSERT INTO user_settings (user_id, use_default_api, cv_gen_count) VALUES (?, 1, 1)")
+            return 1
+        current = int(rows[0]["cv_gen_count"] or 0)
+        _exec(conn, "UPDATE user_settings SET cv_gen_count = ? WHERE user_id = ?", (current + 1, user_id))
+        return current + 1
+
+
 def get_api_keys(user_id: int) -> dict:
     with get_db() as conn:
         rows = _exec(conn, "SELECT provider, api_key FROM api_keys WHERE user_id = ?", (user_id,)).fetchall()
@@ -464,8 +482,8 @@ def get_effective_api_keys(user_id: int) -> dict:
     from backend.config import DEFAULT_NVIDIA_KEY
     keys = get_api_keys(user_id)
     settings = get_user_settings(user_id)
-    if settings.get("use_default_api", True):
-        keys["nvidia"] = DEFAULT_NVIDIA_KEY
+    if settings.get("use_default_api", True) and DEFAULT_NVIDIA_KEY:
+        keys.setdefault("nvidia", DEFAULT_NVIDIA_KEY)
     return keys
 
 

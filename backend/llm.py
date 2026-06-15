@@ -166,10 +166,16 @@ def _call_gemma(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
 
 
 def _call_any(prompt: str, api_keys: dict, max_tokens: int = 512) -> str | None:
-    return _call_nim(prompt, api_keys.get("nvidia", ""), max_tokens) or \
-           _call_groq(prompt, api_keys.get("groq", ""), max_tokens) or \
-           _call_gemini(prompt, api_keys.get("gemini", ""), max_tokens) or \
-           _call_gemma(prompt, api_keys.get("gemini", ""), max_tokens)
+    if not any(api_keys.values()):
+        print("[llm] No API keys available — will use rule-based fallback")
+    result = _call_nim(prompt, api_keys.get("nvidia", ""), max_tokens)
+    if result: return result
+    result = _call_groq(prompt, api_keys.get("groq", ""), max_tokens)
+    if result: return result
+    result = _call_gemini(prompt, api_keys.get("gemini", ""), max_tokens)
+    if result: return result
+    result = _call_gemma(prompt, api_keys.get("gemini", ""), max_tokens)
+    return result
 
 
 SKILL_TAXONOMY = {
