@@ -252,8 +252,7 @@ def _cur(conn):
 
 def _exec(conn, sql: str, params=()):
     c = _cur(conn)
-    c.execute(_fix_sql(sql), params)
-    return c
+    return c.execute(_fix_sql(sql), params)
 
 
 def _exec_lastid(conn, sql: str, params=()):

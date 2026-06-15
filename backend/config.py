@@ -275,6 +275,36 @@ JOB_BOARDS = {
             "search_url": "https://remotework.ng/?s={query}",
             "type": "public", "region": "Africa/Remote", "icon": "global", "enabled": True,
         },
+        "bruntwork": {
+            "base_url": "https://bruntwork.io",
+            "search_url": "https://bruntwork.io/jobs?search={query}",
+            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
+        },
+        "scalearmy": {
+            "base_url": "https://scalearmy.com",
+            "search_url": "https://scalearmy.com/jobs?search={query}",
+            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
+        },
+        "cryptocurrencyjobs": {
+            "base_url": "https://cryptocurrencyjobs.co",
+            "search_url": "https://cryptocurrencyjobs.co/?search={query}",
+            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
+        },
+        "web3career": {
+            "base_url": "https://web3.career",
+            "search_url": "https://web3.career/search?q={query}",
+            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
+        },
+        "remote3": {
+            "base_url": "https://remote3.co",
+            "search_url": "https://remote3.co/jobs?q={query}",
+            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
+        },
+        "blockchainwork": {
+            "base_url": "https://blockchain.work",
+            "search_url": "https://blockchain.work/jobs?q={query}",
+            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
+        },
     },
 }
 
