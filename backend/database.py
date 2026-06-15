@@ -244,23 +244,26 @@ def get_db():
             conn.close()
 
 
+def _cur(conn):
+    if _is_pg():
+        return conn.cursor()
+    return conn
+
+
 def _exec(conn, sql: str, params=()):
-    return conn.execute(_fix_sql(sql), params)
+    c = _cur(conn)
+    c.execute(_fix_sql(sql), params)
+    return c
 
 
 def _exec_lastid(conn, sql: str, params=()):
+    c = _cur(conn)
     if _is_pg():
-        cur = conn.execute(_fix_sql(sql) + " RETURNING id", params)
-        row = cur.fetchone()
+        c.execute(_fix_sql(sql) + " RETURNING id", params)
+        row = c.fetchone()
         return row["id"] if row else None
     cur = conn.execute(sql, params)
     return cur.lastrowid
-
-
-def _total_changes(conn):
-    if _is_pg():
-        return conn.statusmessage.split()[-1] if conn.statusmessage else 0
-    return conn.total_changes
 
 
 # ── Init ─────────────────────────────────────────────────────────────────────
@@ -310,10 +313,7 @@ def _seed_categories(conn):
             "INSERT OR IGNORE INTO job_categories (slug, name, icon, keywords, color) VALUES (?, ?, ?, ?, ?)",
             "slug",
         )
-        if _is_pg():
-            conn.execute(_fix_sql(sql), (slug, name, icon, keywords, color))
-        else:
-            conn.execute(sql, (slug, name, icon, keywords, color))
+        _exec(conn, sql, (slug, name, icon, keywords, color))
 
 
 def _seed_admin_user(conn):
@@ -325,12 +325,8 @@ def _seed_admin_user(conn):
         "INSERT OR IGNORE INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, 1)",
         "email",
     )
-    if _is_pg():
-        conn.execute(_fix_sql(sql), (email, pw_hash, "Super Admin"))
-        conn.execute("UPDATE users SET is_admin = 1, password_hash = %s WHERE email = %s", (pw_hash, email))
-    else:
-        conn.execute(sql, (email, pw_hash, "Super Admin"))
-        conn.execute("UPDATE users SET is_admin = 1, password_hash = ? WHERE email = ?", (pw_hash, email))
+    _exec(conn, sql, (email, pw_hash, "Super Admin"))
+    _exec(conn, "UPDATE users SET is_admin = 1, password_hash = ? WHERE email = ?", (pw_hash, email))
 
 
 # ── Users ───────────────────────────────────────────────────────────────────
@@ -421,10 +417,7 @@ def get_user_settings(user_id: int) -> dict:
                 "INSERT OR IGNORE INTO user_settings (user_id, use_default_api) VALUES (?, 1)",
                 "user_id",
             )
-            if _is_pg():
-                conn.execute(_fix_sql(sql), (user_id,))
-            else:
-                conn.execute(sql, (user_id,))
+            _exec(conn, sql, (user_id,))
             return {"use_default_api": True}
         return {"use_default_api": bool(rows[0]["use_default_api"])}
 
@@ -509,13 +502,14 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     has_full_info,
                     is_graduate,
                 )
+                c = _cur(conn)
                 if _is_pg():
                     pg_sql = "INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING"
-                    cur = conn.execute(pg_sql, p)
-                    if cur.rowcount > 0:
+                    c.execute(pg_sql, p)
+                    if c.rowcount > 0:
                         saved += 1
                 else:
-                    conn.execute(sql, p)
+                    c.execute(sql, p)
                     if conn.total_changes > 0:
                         saved += 1
             except Exception:
@@ -621,10 +615,7 @@ def link_user_job(user_id: int, job_id: int) -> bool:
                 "INSERT OR IGNORE INTO user_job_links (user_id, job_id) VALUES (?, ?)",
                 "user_id, job_id",
             )
-            if _is_pg():
-                conn.execute(_fix_sql(sql), (user_id, job_id))
-            else:
-                conn.execute(sql, (user_id, job_id))
+            _exec(conn, sql, (user_id, job_id))
             return True
         except Exception:
             return False
@@ -729,16 +720,11 @@ def get_global_stats():
 
 def deactivate_old_jobs(days: int = 7):
     with get_db() as conn:
-        _exec(
+        c = _exec(
             conn,
             f"UPDATE global_jobs SET is_active = 0 WHERE date_found < {_now_offset_param(days)}",
         )
-        removed = _total_changes(conn)
-        if _is_pg() and isinstance(removed, str):
-            try:
-                removed = int(removed)
-            except (ValueError, TypeError):
-                removed = 0
+        removed = c.rowcount
         _exec(
             conn,
             "DELETE FROM user_job_links WHERE job_id IN (SELECT id FROM global_jobs WHERE is_active = 0)",
