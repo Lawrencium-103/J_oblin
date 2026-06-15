@@ -244,20 +244,17 @@ def get_db():
             conn.close()
 
 
-def _cur(conn):
-    if _is_pg():
-        return conn.cursor()
-    return conn
-
-
 def _exec(conn, sql: str, params=()):
-    c = _cur(conn)
-    return c.execute(_fix_sql(sql), params)
+    if _is_pg():
+        c = conn.cursor()
+        c.execute(_fix_sql(sql), params)
+        return c
+    return conn.execute(sql, params)
 
 
 def _exec_lastid(conn, sql: str, params=()):
-    c = _cur(conn)
     if _is_pg():
+        c = conn.cursor()
         c.execute(_fix_sql(sql) + " RETURNING id", params)
         row = c.fetchone()
         return row["id"] if row else None
@@ -501,14 +498,13 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     has_full_info,
                     is_graduate,
                 )
-                c = _cur(conn)
                 if _is_pg():
-                    pg_sql = "INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING"
-                    c.execute(pg_sql, p)
+                    c = conn.cursor()
+                    c.execute("INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING", p)
                     if c.rowcount > 0:
                         saved += 1
                 else:
-                    c.execute(sql, p)
+                    conn.execute(sql, p)
                     if conn.total_changes > 0:
                         saved += 1
             except Exception:
