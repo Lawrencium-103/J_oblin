@@ -121,6 +121,8 @@ def _seed_categories(conn):
         ("procurement-supply", "Procurement & Supply Chain", "package", "procurement,procurement officer,purchasing,supply chain,logistics,logistics officer,warehouse,inventory,supply officer,store keeper,transport,fleet", "#0891b2"),
         ("legal-compliance", "Legal & Compliance", "shield", "legal,lawyer,compliance,regulatory,company secretary,legal officer,corporate counsel,attorney,paralegal,risk compliance", "#475569"),
         ("remote", "Remote / Anywhere", "wifi", "remote,work from home,telecommute,virtual,distributed,anywhere,global", "#0891b2"),
+        ("design-creative", "Design & Creative", "pen-tool", "graphic designer,ui designer,ux designer,ui/ux,product designer,visual designer,motion designer,video editor,illustrator,creative director,web designer,figma,designer,design,ux research,multimedia,creative", "#8b5cf6"),
+        ("content-writing", "Content & Writing", "edit", "content writer,copywriter,technical writer,editor,proofreader,content strategist,seo writer,ghostwriter,blog writer,writer,content creator,journalist,editorial", "#ec4899"),
     ]
     for slug, name, icon, keywords, color in categories:
         conn.execute(
@@ -313,7 +315,7 @@ def save_global_jobs(jobs: list[dict]) -> int:
         for job in jobs:
             try:
                 category = classify_job_title(job.get("title", ""), job.get("description", ""))
-                is_graduate = _is_graduate_job(job.get("title", ""), job.get("description", ""))
+                is_graduate = _is_graduate_job(job.get("title", ""), job.get("description", ""), category)
                 has_full_info = 1 if (
                     len(job.get("description", "") or "") > 100
                     and job.get("company", "")
@@ -360,13 +362,36 @@ def classify_job_title(title: str, description: str = "") -> str:
     return best_cat
 
 
-def _is_graduate_job(title: str, description: str) -> int:
+def _is_graduate_job(title: str, description: str, category: str = "") -> int:
     text = f"{title} {description}".lower()
-    grad_kw = ["graduate", "entry level", "entry-level", "junior", "intern", "trainee",
-               "recent graduate", "graduate trainee", "nysc", "fresh graduate", "no experience"]
-    for kw in grad_kw:
+
+    if category == "graduate-entry":
+        return 1
+
+    strong = ["graduate trainee", "graduate intern", "graduate programme",
+              "graduate program", "nysc", "corper", "corps member",
+              "fresh graduate", "recent graduate", "entry level", "entry-level",
+              "no experience", "no prior experience", "graduate scheme",
+              "management trainee", "new graduate", "graduate assistant"]
+    for kw in strong:
         if kw in text:
             return 1
+
+    moderate = ["graduate", "intern", "internship", "trainee",
+                "junior", "apprentice", "apprenticeship",
+                "early career", "emerging talent", "newly qualified",
+                "young professional", "graduate entry",
+                "0-2 year", "0-3 year", "1-2 year", "1-3 year", "0-2 yr", "0-3 yr"]
+    for kw in moderate:
+        if kw in text:
+            senior = ["senior", "lead ", "head ", "principal", "director",
+                      "manager", "supervisor", "experienced", "vp ", "vice president",
+                      "chief", "executive", "sr.", "sr ", "ii", "iii", "2+ year",
+                      "3+ year", "5+ year", "7+ year"]
+            if any(s in text for s in senior):
+                continue
+            return 1
+
     return 0
 
 

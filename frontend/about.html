@@ -91,7 +91,7 @@ nav.scrolled { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); 
   user-select: none;
 }
 
-.section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+.section { padding: 60px 40px; max-width: 1100px; margin: 0 auto; }
 .section-label { font-size: 12px; font-weight: 700; color: var(--color-primary-500); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
 .section h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; }
 .section .subtitle { color: var(--color-neutral-500); font-size: 16px; line-height: 1.6; max-width: 680px; }
@@ -166,18 +166,20 @@ nav.scrolled { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); 
 footer { text-align: center; padding: 40px; color: var(--color-neutral-400); font-size: 13px; border-top: 1px solid var(--color-neutral-100); }
 footer a { color: var(--color-primary-500); text-decoration: none; }
 
-@media (max-width: 768px) {
-  nav { padding: 12px 20px; }
-  .nav-links a:not(.nav-cta) { display: none; }
-  .hero { grid-template-columns: 1fr; padding: 100px 20px 40px; gap: 40px; text-align: center; }
-  .hero-left h1 { font-size: 32px; }
-  .hero-left .contact-row { justify-content: center; }
-  .hero-avatar { width: 160px; height: 160px; font-size: 52px; }
-  .section { padding: 50px 20px; }
-  .section h2 { font-size: 26px; }
-  .projects-grid { grid-template-columns: 1fr; }
-  .cta-section { margin: 0 20px 40px; padding: 40px 20px; }
-}
+body { animation: fadeIn 0.4s ease-out; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (max-width: 768px) {
+    nav { padding: 12px 20px; }
+    .nav-links a:not(.nav-cta) { display: none; }
+    .hero { grid-template-columns: 1fr; padding: 90px 20px 30px; gap: 30px; text-align: center; }
+    .hero-left h1 { font-size: 32px; }
+    .hero-left .contact-row { justify-content: center; }
+    .hero-avatar { width: 140px; height: 140px; font-size: 52px; }
+    .section { padding: 36px 20px; }
+    .section h2 { font-size: 26px; }
+    .projects-grid { grid-template-columns: 1fr; }
+    .cta-section { margin: 0 20px 28px; padding: 32px 20px; }
+  }
 </style>
 </head>
 <body>

@@ -15,10 +15,6 @@
     </a>
     <nav class="sidebar-nav">
       <div class="sidebar-section-title">Main</div>
-      <a href="index.html" class="nav-item">
-        <span class="nav-icon">&#127968;</span>
-        <span class="nav-label">Home</span>
-      </a>
       <a href="dashboard.html" class="nav-item">
         <span class="nav-icon">&#9632;</span>
         <span class="nav-label">Dashboard</span>
@@ -166,7 +162,7 @@ async function loadJobs(page = 0) {
     if (search) url += `&search=${encodeURIComponent(search)}`;
     if (category) url += `&category=${encodeURIComponent(category)}`;
     if (source) url += `&source=${encodeURIComponent(source)}`;
-    if (graduate) url += `&is_graduate=true`;
+    if (graduate) url += `&is_graduate=${graduate}`;
 
     const data = await apiFetch("GET", url);
     const jobs = data.jobs || [];

@@ -8,14 +8,22 @@ from .base import BaseScraper
 CAT = "nigeria"
 
 _TITLE_SELS    = ["h2 a","h3 a","h4 a","a.job-title","[class*='title'] a",
-                  "a[class*='title']","a[class*='job']",".job-name a","a"]
+                  "a[class*='title']","a[class*='job']",".job-name a","a[rel='bookmark']",
+                  "h2.entry-title a","h3.entry-title a",".job_title a",".job-title a",
+                  "h2","h3","a"]
 _COMPANY_SELS  = ["[class*='company'] a","[class*='company']","[class*='employer']",
                   "[class*='recruiter']","[class*='org']","span[class*='name']",
-                  "[class*='logo'] a img","[class*='logo'] img"]
+                  "[class*='logo'] a img","[class*='logo'] img",
+                  "[class*='organization']","[class*='employer-name']",
+                  "[class*='recruiter-name']",".job-org",".job-company"]
 _LOCATION_SELS = ["[class*='location']","[class*='place']","[class*='city']",
-                  "[class*='state']","span[class*='loc']","[class*='area']"]
-_DATE_SELS     = ["time","[class*='date']","[class*='posted']","[class*='time']","span.date","#job-date"]
-_DESC_SELS     = ["[class*='desc']","[class*='excerpt']","[class*='summary']","p"]
+                  "[class*='state']","span[class*='loc']","[class*='area']",
+                  "[class*='address']",".job-location","[class*='country']"]
+_DATE_SELS     = ["time","[class*='date']","[class*='posted']","[class*='time']",
+                  "span.date","#job-date","[class*='ago']","[datetime]",
+                  "[class*='published']","[class*='meta'] time"]
+_DESC_SELS     = ["[class*='desc']","[class*='excerpt']","[class*='summary']",
+                  "[class*='content'] p","p","[class*='text']"]
 
 
 class NigerianJobScraper(BaseScraper):
@@ -68,7 +76,10 @@ class NigerianJobScraper(BaseScraper):
             "li.job-list-li",
             "article.job-item","div.job-item","li.job-item",
             "div[class*='job-list'] > div","ul.jobs-list > li",
-            "div[class*='joblist'] article","article",
+            "div[class*='joblist'] article",
+            "div.search-result","div.job-listing","div.job-post",
+            "div.listing-item","div.post-item","li.listing-item",
+            "tr","div.row","div[class*='list'] > div","article",
         ])
         result = self._parse_cards(cards, "myjobmag", "https://www.myjobmag.com", 20)
         if not result:
@@ -127,7 +138,9 @@ class NigerianJobScraper(BaseScraper):
             return self.filter_fresh(ld[:15])
         cards = self.multi_select(soup, [
             "div.job-post","article.post","div.post",
-            "li.job","article[class*='post']","div[class*='job']","article",
+            "li.job","article[class*='post']","div[class*='job']",
+            "div.search-result","div.job-listing","li.post",
+            "div[class*='list'] > div","tr","div.row","article",
         ])
         result = self._parse_cards(cards, "hotnigerianjobs", "https://www.hotnigerianjobs.com", 15)
         if not result:
@@ -145,7 +158,10 @@ class NigerianJobScraper(BaseScraper):
             for j in ld: j.update({"source": "ngcareers", "category": CAT})
             return self.filter_fresh(ld[:15])
         cards = self.multi_select(soup, [
-            "div.job-card","article.job","li.job","div[class*='vacancy']","article",
+            "div.job-card","article.job","li.job","div[class*='vacancy']",
+            "div.job-listing","div.job-post","div.search-result",
+            "li.job-listing","div[class*='listing']","div.post",
+            "li.post","tr","div.row","div[class*='list'] > div","article",
         ])
         result = self._parse_cards(cards, "ngcareers", "https://ngcareers.com", 15)
         if not result:

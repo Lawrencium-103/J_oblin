@@ -396,23 +396,28 @@ class BaseScraper:
 
     # ── Heuristic text extractor (last resort) ────────────────────────────
 
-    def _extract_from_text(self, soup: BeautifulSoup, source: str, base_url: str, cat: str, limit: int = 20) -> list[dict]:
-        """
-        Last-resort extractor: find all <a> tags, filter by likely job-title patterns.
-        Works even when a site completely redesigns its layout.
-        """
+    def _extract_from_text(self, soup: BeautifulSoup, source: str, base_url: str, cat: str, limit: int = 25) -> list[dict]:
         JOB_KEYWORDS = [
             "analyst", "officer", "manager", "engineer", "developer", "coordinator",
             "specialist", "associate", "consultant", "director", "intern", "trainee",
             "researcher", "advisor", "supervisor", "lead", "head", "assistant",
+            "analytics", "scientist", "architect", "analyst/programmer", "professor",
         ]
+        SKIP_TITLES = ["job openings", "job vacancies", "job recruitment",
+                       "subscribe", "newsletter", "affiliate", "success stories",
+                       "reviews", "goody bag", "sign up", "create account",
+                       "forgot password", "privacy policy", "terms of service",
+                       "sitemap", "contact us", "about us", "career tips",
+                       "interview tips", "cv writing", "resume writing"]
         jobs, seen = [], set()
-        for a in soup.find_all("a", href=True)[:200]:
+        for a in soup.find_all("a", href=True)[:250]:
             text = self._clean_text(a.get_text())
             if not text or len(text) < 5 or len(text) > 120:
                 continue
             text_lower = text.lower()
             if not any(kw in text_lower for kw in JOB_KEYWORDS):
+                continue
+            if any(sk in text_lower for sk in SKIP_TITLES):
                 continue
             href = a.get("href", "")
             full_url = urljoin(base_url, href) if not href.startswith("http") else href
@@ -420,7 +425,58 @@ class BaseScraper:
             if fp in seen:
                 continue
             seen.add(fp)
-            jobs.append(self._make_job(text, "", "", "", full_url, source, cat))
+
+            # Try to extract company/location from surrounding context
+            company = ""
+            location = ""
+            desc = ""
+            parent = a.parent
+            for _ in range(5):
+                if not parent or parent.name in ("html", "body", "div", "section"):
+                    break
+                parent = parent.parent
+            if parent:
+                parent_text = parent.get_text(" ", strip=True)
+                # Try common separators
+                for sep in [" at ", " – ", " — ", " - ", " | ", " @ "]:
+                    if sep in text and text.index(sep) < len(text) * 0.7:
+                        parts = text.split(sep, 1)
+                        candidate = parts[-1].strip()
+                        if candidate and len(candidate) < 60:
+                            company = candidate
+                            text = parts[0].strip()
+                            break
+                # Try to find company from surrounding elements
+                if not company:
+                    for sel in [".company", "[class*='company']", "[class*='employer']",
+                                "[class*='org']", ".organization", "span[class*='name']",
+                                ".job-meta", ".meta", "small", ".text-muted"]:
+                        el = parent.select_one(sel)
+                        if el:
+                            ct = self._clean_text(el.get_text())
+                            if ct and len(ct) < 60 and ct not in text:
+                                company = ct
+                                break
+                # Try to find location
+                for sel in ["[class*='location']", "[class*='place']", "[class*='city']",
+                            "[class*='state']", "[class*='country']", ".job-location"]:
+                    el = parent.select_one(sel)
+                    if el:
+                        lt = self._clean_text(el.get_text())
+                        if lt and len(lt) < 60:
+                            location = lt
+                            break
+                # Try to get description from nearby text
+                for sel in ["p", "[class*='desc']", "[class*='summary']",
+                            "[class*='excerpt']", ".text", ".content"]:
+                    el = parent.select_one(sel)
+                    if el and el != a:
+                        dt = self._clean_text(el.get_text())
+                        if dt and len(dt) > 20 and dt != text:
+                            desc = dt[:400]
+                            break
+
+            jobs.append(self._make_job(text, company, location, desc, full_url, source, cat))
             if len(jobs) >= limit:
                 break
         if jobs:

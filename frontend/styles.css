@@ -115,6 +115,11 @@ a:hover { color: var(--color-primary-600); }
 
 :focus-visible { outline: 2px solid var(--color-primary-500); outline-offset: 2px; border-radius: var(--radius-sm); }
 
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-neutral-300); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-400); }
+
 .app-layout { display: flex; min-height: 100vh; }
 
 /* ── Sidebar ── */
@@ -348,6 +353,7 @@ a:hover { color: var(--color-primary-600); }
   max-width: 1240px;
   width: 100%;
   margin: 0 auto;
+  animation: fadeIn 0.3s ease-out;
 }
 
 .page-header {
@@ -681,26 +687,16 @@ label { display: block; font-size: var(--text-sm); font-weight: 500; color: var(
   padding: var(--space-4) var(--space-5);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  transition: all var(--transition-fast);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   background: var(--bg-surface);
   position: relative;
 }
 
-.job-item::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: var(--radius-lg);
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-  pointer-events: none;
-}
-
 .job-item:hover {
   border-color: var(--color-primary-200);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04);
+  transform: translateY(-1px);
 }
 
 .job-item .job-info { flex: 1; min-width: 0; }

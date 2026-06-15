@@ -1,9 +1,8 @@
 import time
 import asyncio
-from datetime import datetime
-from contextlib import contextmanager
+from datetime import datetime, timedelta
 
-from backend.config import JOB_BOARDS, PUBLIC_BOARDS, CRON_QUERIES
+from backend.config import PUBLIC_BOARDS, CRON_QUERIES
 from backend.database import save_global_jobs, deactivate_old_jobs, get_global_stats
 
 from backend.scrapers.nigeria import NigerianJobScraper
@@ -12,6 +11,7 @@ from backend.scrapers.international import InternationalJobScraper
 from backend.scrapers.highimpact import HighImpactScraper
 
 _MAX_JOBS = 1000
+_BOARD_TIMEOUT = 45  # seconds max per board (all queries combined)
 
 SCRAPER_MAP = {
     "nigeria": NigerianJobScraper(),
@@ -50,20 +50,24 @@ def run_nightly_scrape() -> dict:
 
     print(f"[cron] Nightly scrape starting at {datetime.now().isoformat()}")
 
+    board_yields = {}
     for cat, name, cfg in PUBLIC_BOARDS:
         if not cfg.get("enabled", True):
             continue
         board_got_jobs = False
+        board_start = time.time()
         for query in queries:
             if len(all_jobs) >= _MAX_JOBS * 2:
+                break
+            if time.time() - board_start > _BOARD_TIMEOUT:
+                print(f"[cron] Timeout for {name} ({cat}) after {_BOARD_TIMEOUT}s")
                 break
             jobs = _scrape_board(name, cat, query)
             if jobs:
                 all_jobs.extend(jobs)
                 board_got_jobs = True
-                # If this board returned jobs via text heuristic, one query is enough
-                # (text heuristic ignores the query and returns the same results)
-                if board_got_jobs and len(queries) > 1:
+                board_yields[name] = board_yields.get(name, 0) + len(jobs)
+                if board_got_jobs:
                     break
 
     # Dedup by URL
@@ -79,6 +83,11 @@ def run_nightly_scrape() -> dict:
 
     # Save to global pool
     saved = save_global_jobs(unique)
+
+    # Log per-board yield
+    print(f"[cron] Board yields:")
+    for bname, cnt in sorted(board_yields.items(), key=lambda x: -x[1]):
+        print(f"  {bname}: {cnt}")
 
     # Clean old jobs
     removed = deactivate_old_jobs(7)
@@ -119,12 +128,11 @@ def setup_scheduler(app):
             replace_existing=True,
         )
 
-        # Also run once on startup (after 30s delay)
-        from datetime import datetime, timedelta
+        # Also run once on startup (after 60s delay — lets the server warm up)
         scheduler.add_job(
             run_nightly_scrape,
             trigger="date",
-            run_date=datetime.now() + timedelta(seconds=30),
+            run_date=datetime.now() + timedelta(seconds=60),
             id="startup_scrape",
             replace_existing=True,
             max_instances=1,
