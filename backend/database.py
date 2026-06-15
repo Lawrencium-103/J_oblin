@@ -45,6 +45,12 @@ def _start_of_day_sql():
     return "datetime('now', 'start of day')"
 
 
+def _date_col(col: str):
+    if _is_pg():
+        return f"{col}::timestamp"
+    return col
+
+
 def _fix_sql(sql: str) -> str:
     if not _is_pg():
         return sql
@@ -98,7 +104,7 @@ CREATE TABLE IF NOT EXISTS global_jobs (
     board_category TEXT,
     job_category TEXT DEFAULT 'other',
     posted_date TEXT,
-    date_found TEXT DEFAULT CURRENT_TIMESTAMP,
+    date_found TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_active INTEGER DEFAULT 1,
     is_graduate INTEGER DEFAULT 0,
     has_full_info INTEGER DEFAULT 0,
@@ -269,6 +275,11 @@ def init_db():
         with get_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(_PG_DDL)
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("ALTER TABLE global_jobs ALTER COLUMN date_found TYPE TIMESTAMP USING date_found::timestamp")
+            except Exception:
+                pass
             _seed_categories(conn)
             _seed_admin_user(conn)
     else:
@@ -681,7 +692,7 @@ def get_global_stats():
 
         recent = _exec(
             conn,
-            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_now_offset_sql('-1 day')}",
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND {_date_col('date_found')} >= {_now_offset_sql('-1 day')}",
         ).fetchone()
         recent_cnt = recent["cnt"] if recent else 0
 
@@ -690,13 +701,13 @@ def get_global_stats():
 
         today = _exec(
             conn,
-            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_start_of_day_sql()}",
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND {_date_col('date_found')} >= {_start_of_day_sql()}",
         ).fetchone()
         today_cnt = today["cnt"] if today else 0
 
         yesterday = _exec(
             conn,
-            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_now_offset_sql('-1 day')}",
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND {_date_col('date_found')} >= {_now_offset_sql('-1 day')}",
         ).fetchone()
         yesterday_cnt = yesterday["cnt"] if yesterday else 0
 
@@ -717,7 +728,7 @@ def deactivate_old_jobs(days: int = 7):
     with get_db() as conn:
         c = _exec(
             conn,
-            f"UPDATE global_jobs SET is_active = 0 WHERE date_found < {_now_offset_param(days)}",
+            f"UPDATE global_jobs SET is_active = 0 WHERE {_date_col('date_found')} < {_now_offset_param(days)}",
         )
         removed = c.rowcount
         _exec(
