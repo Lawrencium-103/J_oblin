@@ -1,105 +1,286 @@
 import hashlib
 import secrets
-import sqlite3
 import json
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from backend.config import DATABASE_PATH
 
+import os as _os
+_DATABASE_URL = _os.environ.get("DATABASE_URL", "")
+
+if _DATABASE_URL:
+    import psycopg2 as _psycopg2
+    from psycopg2.extras import RealDictCursor as _RealDictCursor
+else:
+    import sqlite3 as _sqlite3
+
+
+def _is_pg():
+    return bool(_DATABASE_URL)
+
+
+def _p():
+    return "%s" if _is_pg() else "?"
+
+
+def _now_sql():
+    return "CURRENT_TIMESTAMP" if _is_pg() else "datetime('now')"
+
+
+def _now_offset_sql(days_expr: str):
+    if _is_pg():
+        return f"CURRENT_TIMESTAMP - INTERVAL '{days_expr}'"
+    return f"datetime('now', '{days_expr}')"
+
+
+def _now_offset_param(days: int):
+    if _is_pg():
+        return f"CURRENT_TIMESTAMP - INTERVAL '{days} days'"
+    return f"datetime('now', '-{days} days')"
+
+
+def _start_of_day_sql():
+    if _is_pg():
+        return "DATE_TRUNC('day', CURRENT_TIMESTAMP)"
+    return "datetime('now', 'start of day')"
+
+
+def _fix_sql(sql: str) -> str:
+    if not _is_pg():
+        return sql
+    sql = sql.replace("?", "%s")
+    sql = sql.replace("excluded.", "EXCLUDED.")
+    sql = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO")
+    return sql
+
+
+def _insert_on_conflict(sql: str, conflict_cols: str) -> str:
+    if not _is_pg():
+        return sql
+    stripped = sql.replace("INSERT OR IGNORE INTO", "INSERT INTO").rstrip(";")
+    return stripped + f" ON CONFLICT ({conflict_cols}) DO NOTHING"
+
+
+# DDL for each engine
+_PG_DDL = """
+CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT DEFAULT '',
+    is_admin INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS api_keys (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    provider TEXT NOT NULL,
+    api_key TEXT NOT NULL,
+    UNIQUE(user_id, provider)
+);
+
+CREATE TABLE IF NOT EXISTS user_cv (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER UNIQUE NOT NULL,
+    cv_json TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS global_jobs (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    company TEXT,
+    location TEXT,
+    description TEXT,
+    url TEXT UNIQUE,
+    source TEXT,
+    board_category TEXT,
+    job_category TEXT DEFAULT 'other',
+    posted_date TEXT,
+    date_found TEXT DEFAULT CURRENT_TIMESTAMP,
+    is_active INTEGER DEFAULT 1,
+    is_graduate INTEGER DEFAULT 0,
+    has_full_info INTEGER DEFAULT 0,
+    match_score REAL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER PRIMARY KEY,
+    use_default_api INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS user_job_links (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    job_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'new',
+    tailored_cv_path TEXT,
+    tailored_cover_path TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS reset_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS job_categories (
+    id SERIAL PRIMARY KEY,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '',
+    keywords TEXT NOT NULL,
+    color TEXT DEFAULT '#059669'
+);
+"""
+
+_SQLITE_DDL = """
+CREATE TABLE IF NOT EXISTS users (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    email TEXT UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
+    name TEXT DEFAULT '',
+    is_admin INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS api_keys (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    provider TEXT NOT NULL,
+    api_key TEXT NOT NULL,
+    UNIQUE(user_id, provider)
+);
+
+CREATE TABLE IF NOT EXISTS user_cv (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL,
+    cv_json TEXT NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS global_jobs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    company TEXT,
+    location TEXT,
+    description TEXT,
+    url TEXT UNIQUE,
+    source TEXT,
+    board_category TEXT,
+    job_category TEXT DEFAULT 'other',
+    posted_date TEXT,
+    date_found TEXT DEFAULT (datetime('now')),
+    is_active INTEGER DEFAULT 1,
+    is_graduate INTEGER DEFAULT 0,
+    has_full_info INTEGER DEFAULT 0,
+    match_score REAL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS user_settings (
+    user_id INTEGER PRIMARY KEY,
+    use_default_api INTEGER DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS user_job_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    job_id INTEGER NOT NULL,
+    status TEXT DEFAULT 'new',
+    tailored_cv_path TEXT,
+    tailored_cover_path TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, job_id)
+);
+
+CREATE TABLE IF NOT EXISTS reset_tokens (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    token_hash TEXT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS job_categories (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    slug TEXT UNIQUE NOT NULL,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '',
+    keywords TEXT NOT NULL,
+    color TEXT DEFAULT '#059669'
+);
+"""
+
+
+@contextmanager
+def get_db():
+    if _is_pg():
+        conn = _psycopg2.connect(_DATABASE_URL, cursor_factory=_RealDictCursor)
+        try:
+            yield conn
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            raise
+        finally:
+            conn.close()
+    else:
+        conn = _sqlite3.connect(str(DATABASE_PATH))
+        conn.row_factory = _sqlite3.Row
+        conn.execute("PRAGMA foreign_keys = ON")
+        try:
+            yield conn
+            conn.commit()
+        finally:
+            conn.close()
+
+
+def _exec(conn, sql: str, params=()):
+    return conn.execute(_fix_sql(sql), params)
+
+
+def _exec_lastid(conn, sql: str, params=()):
+    if _is_pg():
+        cur = conn.execute(_fix_sql(sql) + " RETURNING id", params)
+        row = cur.fetchone()
+        return row["id"] if row else None
+    cur = conn.execute(sql, params)
+    return cur.lastrowid
+
+
+def _total_changes(conn):
+    if _is_pg():
+        return conn.statusmessage.split()[-1] if conn.statusmessage else 0
+    return conn.total_changes
+
+
+# ── Init ─────────────────────────────────────────────────────────────────────
 
 def init_db():
-    with get_db() as conn:
-        conn.executescript("""
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                name TEXT DEFAULT '',
-                is_admin INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS api_keys (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                provider TEXT NOT NULL,
-                api_key TEXT NOT NULL,
-                UNIQUE(user_id, provider)
-            );
-
-            CREATE TABLE IF NOT EXISTS user_cv (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER UNIQUE NOT NULL,
-                cv_json TEXT NOT NULL,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-
-            -- Global shared job pool (all scraped jobs go here)
-            CREATE TABLE IF NOT EXISTS global_jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                company TEXT,
-                location TEXT,
-                description TEXT,
-                url TEXT UNIQUE,
-                source TEXT,
-                board_category TEXT,
-                job_category TEXT DEFAULT 'other',
-                posted_date TEXT,
-                date_found TEXT DEFAULT (datetime('now')),
-                is_active INTEGER DEFAULT 1,
-                is_graduate INTEGER DEFAULT 0,
-                has_full_info INTEGER DEFAULT 0,
-                match_score REAL DEFAULT 0
-            );
-
-            -- User settings (default API toggle, etc.)
-            CREATE TABLE IF NOT EXISTS user_settings (
-                user_id INTEGER PRIMARY KEY,
-                use_default_api INTEGER DEFAULT 1
-            );
-
-            -- Per-user job interactions (bridge table)
-            CREATE TABLE IF NOT EXISTS user_job_links (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                job_id INTEGER NOT NULL,
-                status TEXT DEFAULT 'new',
-                tailored_cv_path TEXT,
-                tailored_cover_path TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(user_id, job_id)
-            );
-
-            -- Password reset tokens
-            CREATE TABLE IF NOT EXISTS reset_tokens (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_id INTEGER NOT NULL,
-                token_hash TEXT NOT NULL,
-                expires_at TIMESTAMP NOT NULL,
-                used INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (user_id) REFERENCES users(id)
-            );
-
-            -- Job category definitions
-            CREATE TABLE IF NOT EXISTS job_categories (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                slug TEXT UNIQUE NOT NULL,
-                name TEXT NOT NULL,
-                icon TEXT DEFAULT '',
-                keywords TEXT NOT NULL,
-                color TEXT DEFAULT '#059669'
-            );
-        """)
-
-        try:
-            conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
-        except sqlite3.OperationalError:
-            pass
-
-        _seed_categories(conn)
-        _seed_admin_user(conn)
+    if _is_pg():
+        with get_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(_PG_DDL)
+            _seed_categories(conn)
+            _seed_admin_user(conn)
+    else:
+        with get_db() as conn:
+            conn.executescript(_SQLITE_DDL)
+            try:
+                conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
+            except _sqlite3.OperationalError:
+                pass
+            _seed_categories(conn)
+            _seed_admin_user(conn)
 
 
 def _seed_categories(conn):
@@ -125,10 +306,14 @@ def _seed_categories(conn):
         ("content-writing", "Content & Writing", "edit", "content writer,copywriter,technical writer,editor,proofreader,content strategist,seo writer,ghostwriter,blog writer,writer,content creator,journalist,editorial", "#ec4899"),
     ]
     for slug, name, icon, keywords, color in categories:
-        conn.execute(
+        sql = _insert_on_conflict(
             "INSERT OR IGNORE INTO job_categories (slug, name, icon, keywords, color) VALUES (?, ?, ?, ?, ?)",
-            (slug, name, icon, keywords, color),
+            "slug",
         )
+        if _is_pg():
+            conn.execute(_fix_sql(sql), (slug, name, icon, keywords, color))
+        else:
+            conn.execute(sql, (slug, name, icon, keywords, color))
 
 
 def _seed_admin_user(conn):
@@ -136,23 +321,16 @@ def _seed_admin_user(conn):
     password = "Lawrencium-103@"
     import bcrypt as _bcrypt
     pw_hash = _bcrypt.hashpw(password.encode("utf-8"), _bcrypt.gensalt()).decode("utf-8")
-    conn.execute(
+    sql = _insert_on_conflict(
         "INSERT OR IGNORE INTO users (email, password_hash, name, is_admin) VALUES (?, ?, ?, 1)",
-        (email, pw_hash, "Super Admin"),
+        "email",
     )
-    conn.execute("UPDATE users SET is_admin = 1, password_hash = ? WHERE email = ?", (pw_hash, email))
-
-
-@contextmanager
-def get_db():
-    conn = sqlite3.connect(str(DATABASE_PATH))
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    try:
-        yield conn
-        conn.commit()
-    finally:
-        conn.close()
+    if _is_pg():
+        conn.execute(_fix_sql(sql), (email, pw_hash, "Super Admin"))
+        conn.execute("UPDATE users SET is_admin = 1, password_hash = %s WHERE email = %s", (pw_hash, email))
+    else:
+        conn.execute(sql, (email, pw_hash, "Super Admin"))
+        conn.execute("UPDATE users SET is_admin = 1, password_hash = ? WHERE email = ?", (pw_hash, email))
 
 
 # ── Users ───────────────────────────────────────────────────────────────────
@@ -160,25 +338,28 @@ def get_db():
 def create_user(email: str, password_hash: str, name: str = "") -> dict | None:
     with get_db() as conn:
         try:
-            cur = conn.execute(
+            uid = _exec_lastid(
+                conn,
                 "INSERT INTO users (email, password_hash, name) VALUES (?, ?, ?)",
                 (email, password_hash, name),
             )
-            return {"id": cur.lastrowid, "email": email, "name": name}
-        except sqlite3.IntegrityError:
+            if uid is None:
+                return None
+            return {"id": uid, "email": email, "name": name}
+        except Exception:
             return None
 
 
 def get_user_by_email(email: str) -> dict | None:
     with get_db() as conn:
-        row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
-        return dict(row) if row else None
+        rows = _exec(conn, "SELECT * FROM users WHERE email = ?", (email,)).fetchall()
+        return dict(rows[0]) if rows else None
 
 
 def get_user_by_id(user_id: int) -> dict | None:
     with get_db() as conn:
-        row = conn.execute("SELECT id, email, name, is_admin, created_at FROM users WHERE id = ?", (user_id,)).fetchone()
-        return dict(row) if row else None
+        rows = _exec(conn, "SELECT id, email, name, is_admin, created_at FROM users WHERE id = ?", (user_id,)).fetchall()
+        return dict(rows[0]) if rows else None
 
 
 # ── Password Reset ──────────────────────────────────────────────────────────
@@ -191,36 +372,32 @@ def create_reset_token(email: str) -> str | None:
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=15)).isoformat()
     with get_db() as conn:
-        conn.execute(
-            "DELETE FROM reset_tokens WHERE user_id = ?", (user["id"],)
-        )
-        conn.execute(
-            "INSERT INTO reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)",
-            (user["id"], token_hash, expires_at),
-        )
+        _exec(conn, "DELETE FROM reset_tokens WHERE user_id = ?", (user["id"],))
+        _exec(conn, "INSERT INTO reset_tokens (user_id, token_hash, expires_at) VALUES (?, ?, ?)", (user["id"], token_hash, expires_at))
     return raw_token
 
 
 def get_valid_token(raw_token: str) -> dict | None:
     token_hash = hashlib.sha256(raw_token.encode()).hexdigest()
     with get_db() as conn:
-        row = conn.execute(
-            """SELECT rt.*, u.email FROM reset_tokens rt
+        rows = _exec(
+            conn,
+            f"""SELECT rt.*, u.email FROM reset_tokens rt
                JOIN users u ON u.id = rt.user_id
-               WHERE rt.token_hash = ? AND rt.used = 0 AND rt.expires_at > datetime('now')""",
+               WHERE rt.token_hash = ? AND rt.used = 0 AND rt.expires_at > {_now_sql()}""",
             (token_hash,),
-        ).fetchone()
-        return dict(row) if row else None
+        ).fetchall()
+        return dict(rows[0]) if rows else None
 
 
 def mark_token_used(token_id: int) -> None:
     with get_db() as conn:
-        conn.execute("UPDATE reset_tokens SET used = 1 WHERE id = ?", (token_id,))
+        _exec(conn, "UPDATE reset_tokens SET used = 1 WHERE id = ?", (token_id,))
 
 
 def update_password(user_id: int, password_hash: str) -> None:
     with get_db() as conn:
-        conn.execute("UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
+        _exec(conn, "UPDATE users SET password_hash = ? WHERE id = ?", (password_hash, user_id))
 
 
 # ── API Keys ────────────────────────────────────────────────────────────────
@@ -228,53 +405,53 @@ def update_password(user_id: int, password_hash: str) -> None:
 def save_api_keys(user_id: int, keys: dict) -> None:
     with get_db() as conn:
         for provider, api_key in keys.items():
-            conn.execute(
-                """INSERT INTO api_keys (user_id, provider, api_key)
-                   VALUES (?, ?, ?)
-                   ON CONFLICT(user_id, provider) DO UPDATE SET api_key = excluded.api_key""",
+            _exec(
+                conn,
+                "INSERT INTO api_keys (user_id, provider, api_key) VALUES (?, ?, ?) "
+                "ON CONFLICT(user_id, provider) DO UPDATE SET api_key = excluded.api_key",
                 (user_id, provider, api_key),
             )
 
 
 def get_user_settings(user_id: int) -> dict:
     with get_db() as conn:
-        row = conn.execute(
-            "SELECT use_default_api FROM user_settings WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        if not row:
-            conn.execute("INSERT OR IGNORE INTO user_settings (user_id, use_default_api) VALUES (?, 1)", (user_id,))
+        rows = _exec(conn, "SELECT use_default_api FROM user_settings WHERE user_id = ?", (user_id,)).fetchall()
+        if not rows:
+            sql = _insert_on_conflict(
+                "INSERT OR IGNORE INTO user_settings (user_id, use_default_api) VALUES (?, 1)",
+                "user_id",
+            )
+            if _is_pg():
+                conn.execute(_fix_sql(sql), (user_id,))
+            else:
+                conn.execute(sql, (user_id,))
             return {"use_default_api": True}
-        return {"use_default_api": bool(row["use_default_api"])}
+        return {"use_default_api": bool(rows[0]["use_default_api"])}
 
 
 def save_user_settings(user_id: int, settings: dict) -> None:
     use_default = settings.get("use_default_api", True)
     with get_db() as conn:
-        conn.execute(
-            """INSERT INTO user_settings (user_id, use_default_api)
-               VALUES (?, ?)
-               ON CONFLICT(user_id) DO UPDATE SET use_default_api = excluded.use_default_api""",
+        _exec(
+            conn,
+            "INSERT INTO user_settings (user_id, use_default_api) VALUES (?, ?) "
+            "ON CONFLICT(user_id) DO UPDATE SET use_default_api = excluded.use_default_api",
             (user_id, 1 if use_default else 0),
         )
 
 
 def get_api_keys(user_id: int) -> dict:
     with get_db() as conn:
-        rows = conn.execute(
-            "SELECT provider, api_key FROM api_keys WHERE user_id = ?", (user_id,)
-        ).fetchall()
+        rows = _exec(conn, "SELECT provider, api_key FROM api_keys WHERE user_id = ?", (user_id,)).fetchall()
         return {r["provider"]: r["api_key"] for r in rows}
 
 
 def get_effective_api_keys(user_id: int) -> dict:
-    """Return user's API keys. If use_default_api is true, use default NVIDIA key (OpenRouter)."""
     from backend.config import DEFAULT_NVIDIA_KEY
     keys = get_api_keys(user_id)
     settings = get_user_settings(user_id)
-
     if settings.get("use_default_api", True):
         keys["nvidia"] = DEFAULT_NVIDIA_KEY
-
     return keys
 
 
@@ -282,20 +459,18 @@ def get_effective_api_keys(user_id: int) -> dict:
 
 def save_cv(user_id: int, cv_json: str) -> None:
     with get_db() as conn:
-        conn.execute(
-            """INSERT INTO user_cv (user_id, cv_json)
-               VALUES (?, ?)
-               ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, updated_at = datetime('now')""",
+        _exec(
+            conn,
+            f"INSERT INTO user_cv (user_id, cv_json) VALUES (?, ?) "
+            f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, updated_at = {_now_sql()}",
             (user_id, cv_json),
         )
 
 
 def get_cv(user_id: int) -> str | None:
     with get_db() as conn:
-        row = conn.execute(
-            "SELECT cv_json FROM user_cv WHERE user_id = ?", (user_id,)
-        ).fetchone()
-        return row["cv_json"] if row else None
+        rows = _exec(conn, "SELECT cv_json FROM user_cv WHERE user_id = ?", (user_id,)).fetchall()
+        return rows[0]["cv_json"] if rows else None
 
 
 def get_cv_default() -> dict:
@@ -320,28 +495,30 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     len(job.get("description", "") or "") > 100
                     and job.get("company", "")
                 ) else 0
-                conn.execute(
-                    """INSERT OR IGNORE INTO global_jobs
-                       (title, company, location, description, url, source, board_category,
-                        job_category, posted_date, has_full_info, is_graduate)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (
-                        job.get("title", ""),
-                        job.get("company", ""),
-                        job.get("location", ""),
-                        (job.get("description", "") or "")[:2000],
-                        job.get("url", ""),
-                        job.get("source", ""),
-                        job.get("category", ""),
-                        category,
-                        job.get("posted_date", ""),
-                        has_full_info,
-                        is_graduate,
-                    ),
+                sql = "INSERT OR IGNORE INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                p = (
+                    job.get("title", ""),
+                    job.get("company", ""),
+                    job.get("location", ""),
+                    (job.get("description", "") or "")[:2000],
+                    job.get("url", ""),
+                    job.get("source", ""),
+                    job.get("category", ""),
+                    category,
+                    job.get("posted_date", ""),
+                    has_full_info,
+                    is_graduate,
                 )
-                if conn.total_changes > 0:
-                    saved += 1
-            except Exception as e:
+                if _is_pg():
+                    pg_sql = "INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING"
+                    cur = conn.execute(pg_sql, p)
+                    if cur.rowcount > 0:
+                        saved += 1
+                else:
+                    conn.execute(sql, p)
+                    if conn.total_changes > 0:
+                        saved += 1
+            except Exception:
                 pass
     return saved
 
@@ -364,10 +541,8 @@ def classify_job_title(title: str, description: str = "") -> str:
 
 def _is_graduate_job(title: str, description: str, category: str = "") -> int:
     text = f"{title} {description}".lower()
-
     if category == "graduate-entry":
         return 1
-
     strong = ["graduate trainee", "graduate intern", "graduate programme",
               "graduate program", "nysc", "corper", "corps member",
               "fresh graduate", "recent graduate", "entry level", "entry-level",
@@ -376,7 +551,6 @@ def _is_graduate_job(title: str, description: str, category: str = "") -> int:
     for kw in strong:
         if kw in text:
             return 1
-
     moderate = ["graduate", "intern", "internship", "trainee",
                 "junior", "apprentice", "apprenticeship",
                 "early career", "emerging talent", "newly qualified",
@@ -391,7 +565,6 @@ def _is_graduate_job(title: str, description: str, category: str = "") -> int:
             if any(s in text for s in senior):
                 continue
             return 1
-
     return 0
 
 
@@ -422,20 +595,21 @@ def get_global_jobs(
             params.append(1 if is_graduate else 0)
 
         order = "date_found DESC, posted_date DESC" if sort == "date" else "match_score DESC, date_found DESC"
-        query = f"SELECT * FROM global_jobs WHERE {' AND '.join(conditions)} ORDER BY {order} LIMIT ? OFFSET ?"
-        params.extend([limit, offset])
-        rows = conn.execute(query, params).fetchall()
-        total = conn.execute(
-            f"SELECT COUNT(*) FROM global_jobs WHERE {' AND '.join(conditions)}",
-            params[:-2] if params[:-2] else [],
-        ).fetchone()[0]
+        where = " AND ".join(conditions)
+        query = f"SELECT * FROM global_jobs WHERE {where} ORDER BY {order} LIMIT ? OFFSET ?"
+        count_query = f"SELECT COUNT(*) as cnt FROM global_jobs WHERE {where}"
+
+        all_params = params + [limit, offset]
+        rows = _exec(conn, query, all_params).fetchall()
+        total_row = _exec(conn, count_query, params).fetchone()
+        total = total_row["cnt"] if total_row else 0
         return [dict(r) for r in rows], total
 
 
 def get_global_job(job_id: int):
     with get_db() as conn:
-        row = conn.execute("SELECT * FROM global_jobs WHERE id = ?", (job_id,)).fetchone()
-        return dict(row) if row else None
+        rows = _exec(conn, "SELECT * FROM global_jobs WHERE id = ?", (job_id,)).fetchall()
+        return dict(rows[0]) if rows else None
 
 
 # ── User-Job Links ──────────────────────────────────────────────────────────
@@ -443,10 +617,14 @@ def get_global_job(job_id: int):
 def link_user_job(user_id: int, job_id: int) -> bool:
     with get_db() as conn:
         try:
-            conn.execute(
+            sql = _insert_on_conflict(
                 "INSERT OR IGNORE INTO user_job_links (user_id, job_id) VALUES (?, ?)",
-                (user_id, job_id),
+                "user_id, job_id",
             )
+            if _is_pg():
+                conn.execute(_fix_sql(sql), (user_id, job_id))
+            else:
+                conn.execute(sql, (user_id, job_id))
             return True
         except Exception:
             return False
@@ -454,20 +632,22 @@ def link_user_job(user_id: int, job_id: int) -> bool:
 
 def get_user_job_link(user_id: int, job_id: int):
     with get_db() as conn:
-        row = conn.execute(
+        rows = _exec(
+            conn,
             """SELECT ujl.*, gj.title, gj.company, gj.description, gj.url, gj.source,
                       gj.job_category, gj.posted_date, gj.match_score
                FROM user_job_links ujl
                JOIN global_jobs gj ON gj.id = ujl.job_id
                WHERE ujl.user_id = ? AND ujl.job_id = ?""",
             (user_id, job_id),
-        ).fetchone()
-        return dict(row) if row else None
+        ).fetchall()
+        return dict(rows[0]) if rows else None
 
 
 def get_user_linked_jobs(user_id: int, limit: int = 50):
     with get_db() as conn:
-        rows = conn.execute(
+        rows = _exec(
+            conn,
             """SELECT ujl.*, gj.title, gj.company, gj.description, gj.url, gj.source,
                       gj.job_category, gj.posted_date, gj.match_score
                FROM user_job_links ujl
@@ -481,10 +661,9 @@ def get_user_linked_jobs(user_id: int, limit: int = 50):
 
 def update_link_tailoring(user_id: int, job_id: int, cv_path: str, cover_path: str):
     with get_db() as conn:
-        conn.execute(
-            """UPDATE user_job_links SET
-               tailored_cv_path = ?, tailored_cover_path = ?, status = 'tailored'
-               WHERE user_id = ? AND job_id = ?""",
+        _exec(
+            conn,
+            "UPDATE user_job_links SET tailored_cv_path = ?, tailored_cover_path = ?, status = 'tailored' WHERE user_id = ? AND job_id = ?",
             (cv_path, cover_path, user_id, job_id),
         )
 
@@ -493,7 +672,7 @@ def update_link_tailoring(user_id: int, job_id: int, cv_path: str, cover_path: s
 
 def get_categories():
     with get_db() as conn:
-        rows = conn.execute("SELECT * FROM job_categories ORDER BY name").fetchall()
+        rows = _exec(conn, "SELECT * FROM job_categories ORDER BY name").fetchall()
         return [dict(r) for r in rows]
 
 
@@ -501,37 +680,48 @@ def get_categories():
 
 def get_global_stats():
     with get_db() as conn:
-        total = conn.execute("SELECT COUNT(*) FROM global_jobs WHERE is_active = 1").fetchone()[0]
-        by_cat = conn.execute(
-            "SELECT job_category, COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 GROUP BY job_category ORDER BY cnt DESC"
+        total = _exec(conn, "SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1").fetchone()
+        total_cnt = total["cnt"] if total else 0
+
+        by_cat = _exec(
+            conn,
+            "SELECT job_category, COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 GROUP BY job_category ORDER BY cnt DESC",
         ).fetchall()
-        by_source = conn.execute(
-            "SELECT source, COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 GROUP BY source ORDER BY cnt DESC"
+
+        by_source = _exec(
+            conn,
+            "SELECT source, COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 GROUP BY source ORDER BY cnt DESC",
         ).fetchall()
-        recent = conn.execute(
-            "SELECT COUNT(*) FROM global_jobs WHERE is_active = 1 AND date_found >= datetime('now', '-1 day')"
-        ).fetchone()[0]
 
-        last_found = conn.execute(
-            "SELECT MAX(date_found) as last_scraped FROM global_jobs"
-        ).fetchone()["last_scraped"]
+        recent = _exec(
+            conn,
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_now_offset_sql('-1 day')}",
+        ).fetchone()
+        recent_cnt = recent["cnt"] if recent else 0
 
-        new_since_midnight = conn.execute(
-            "SELECT COUNT(*) FROM global_jobs WHERE is_active = 1 AND date_found >= datetime('now', 'start of day')"
-        ).fetchone()[0]
+        last_row = _exec(conn, "SELECT MAX(date_found) as last_scraped FROM global_jobs").fetchone()
+        last_scraped = last_row["last_scraped"] if last_row else None
 
-        new_since_yesterday = conn.execute(
-            "SELECT COUNT(*) FROM global_jobs WHERE is_active = 1 AND date_found >= datetime('now', '-1 day')"
-        ).fetchone()[0]
+        today = _exec(
+            conn,
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_start_of_day_sql()}",
+        ).fetchone()
+        today_cnt = today["cnt"] if today else 0
+
+        yesterday = _exec(
+            conn,
+            f"SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND date_found >= {_now_offset_sql('-1 day')}",
+        ).fetchone()
+        yesterday_cnt = yesterday["cnt"] if yesterday else 0
 
         return {
-            "total": total,
+            "total": total_cnt,
             "by_category": {r["job_category"]: r["cnt"] for r in by_cat},
             "by_source": {r["source"]: r["cnt"] for r in by_source},
-            "recent_24h": recent,
-            "last_scraped": last_found,
-            "new_today": new_since_midnight,
-            "new_24h": new_since_yesterday,
+            "recent_24h": recent_cnt,
+            "last_scraped": last_scraped,
+            "new_today": today_cnt,
+            "new_24h": yesterday_cnt,
         }
 
 
@@ -539,13 +729,18 @@ def get_global_stats():
 
 def deactivate_old_jobs(days: int = 7):
     with get_db() as conn:
-        conn.execute(
-            "UPDATE global_jobs SET is_active = 0 WHERE date_found < datetime('now', ?)",
-            (f"-{days} days",),
+        _exec(
+            conn,
+            f"UPDATE global_jobs SET is_active = 0 WHERE date_found < {_now_offset_param(days)}",
         )
-        removed = conn.total_changes
-        # Also clean orphaned user_job_links
-        conn.execute(
-            "DELETE FROM user_job_links WHERE job_id IN (SELECT id FROM global_jobs WHERE is_active = 0)"
+        removed = _total_changes(conn)
+        if _is_pg() and isinstance(removed, str):
+            try:
+                removed = int(removed)
+            except (ValueError, TypeError):
+                removed = 0
+        _exec(
+            conn,
+            "DELETE FROM user_job_links WHERE job_id IN (SELECT id FROM global_jobs WHERE is_active = 0)",
         )
         return removed

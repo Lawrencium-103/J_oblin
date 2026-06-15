@@ -10,7 +10,12 @@ TEMPLATES_DIR = BASE_DIR / "backend" / "templates"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
 
-DATABASE_PATH = DATA_DIR / "joblin.db"
+_DATABASE_URL_ENV = os.environ.get("DATABASE_URL", "")
+if _DATABASE_URL_ENV:
+    DATABASE_PATH = None  # PostgreSQL — no local SQLite file
+else:
+    DATABASE_PATH = DATA_DIR / "joblin.db"
+
 GENERATED_DIR = DATA_DIR / "generated"
 GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
