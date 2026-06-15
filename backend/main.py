@@ -209,7 +209,6 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
         raise HTTPException(500, f"Failed to save CV: {str(e)}")
 
     # Generate preview text + documents
-    from docx_generator import generate_cv_preview_text, generate_cv_docx, generate_cv_pdf
     preview = generate_cv_preview_text(cv_data)
 
     name = (cv_data.get("personal_info") or {}).get("name", "")
@@ -781,7 +780,6 @@ def health():
 def cleanup_old_jobs(token: str = Query("")):
     if CRON_TOKEN and token != CRON_TOKEN:
         raise HTTPException(403, "Invalid token")
-    from database import deactivate_old_jobs
     removed = deactivate_old_jobs(7)
     return {"removed": removed, "status": "ok"}
 
