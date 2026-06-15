@@ -473,12 +473,20 @@ def get_effective_api_keys(user_id: int) -> dict:
 
 def save_cv(user_id: int, cv_json: str, raw_text: str = "") -> None:
     with get_db() as conn:
-        _exec(
-            conn,
-            f"INSERT INTO user_cv (user_id, cv_json, raw_text) VALUES (?, ?, ?) "
-            f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, raw_text = excluded.raw_text, updated_at = {_now_sql()}",
-            (user_id, cv_json, raw_text),
-        )
+        if raw_text:
+            _exec(
+                conn,
+                f"INSERT INTO user_cv (user_id, cv_json, raw_text) VALUES (?, ?, ?) "
+                f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, raw_text = excluded.raw_text, updated_at = {_now_sql()}",
+                (user_id, cv_json, raw_text),
+            )
+        else:
+            _exec(
+                conn,
+                f"INSERT INTO user_cv (user_id, cv_json) VALUES (?, ?) "
+                f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, updated_at = {_now_sql()}",
+                (user_id, cv_json),
+            )
 
 
 def save_cv_raw_text(user_id: int, raw_text: str) -> None:
