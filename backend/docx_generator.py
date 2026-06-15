@@ -625,6 +625,9 @@ def _add_referees_pdf(pdf, referees: list = None):
                 pdf._body(line)
     else:
         pdf._body("Available upon request.")
+
+
+def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None) -> str:
     pdf = _CvPdf(profile)
     pdf.add_page()
     personal = tailored_cv.get("personal_info", {})
