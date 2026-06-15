@@ -252,6 +252,7 @@ def tailor_application(
     category: str = "",
     feedback: str = "",
     attempt: int = 1,
+    raw_text: str = "",
 ) -> dict:
     api_keys = api_keys or {}
     jd_keywords = top_keywords(job_description)
@@ -397,6 +398,12 @@ def tailor_application(
         f"Certifications:\n{cert_str}\n"
         f"Projects:\n{proj_str}\n"
         f"Languages: {lang_str}\n"
+        + (
+            f"\n## RAW CV TEXT ##\n{raw_text[:4000]}\n## END RAW CV TEXT ##\n\n"
+            "The above is the candidate's unprocessed CV text. Use it to extract any nuance, "
+            "context, or detail not captured in the structured sections above.\n"
+            if raw_text else ""
+        )
         + cert_boost
         + transferable_boost
         + bridging_suggestions

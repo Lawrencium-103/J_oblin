@@ -579,7 +579,7 @@ def extract_job_url(url: str = Body(..., embed=True)):
 
 
 # ── Tailor Routes ───────────────────────────────────────────────────────────
-def _tailor_with_quality(job_title, job_description, company, cv_data, api_keys, category):
+def _tailor_with_quality(job_title, job_description, company, cv_data, api_keys, category, raw_text=""):
     """Tailor with quality gate + up to 3 regeneration attempts."""
     MAX_ATTEMPTS = 3
     best_result = None
@@ -596,6 +596,7 @@ def _tailor_with_quality(job_title, job_description, company, cv_data, api_keys,
             category=category,
             feedback=feedback,
             attempt=attempt,
+            raw_text=raw_text,
         )
 
         tailored_cv = dict(cv_data)
@@ -640,6 +641,7 @@ def tailor_from_job_data(
     if not api_keys:
         raise HTTPException(400, "No API keys found. Add keys in Settings or enable default AI.")
 
+    raw_text = get_cv_raw_text(user_id)
     target_type = job.get("target_type", "local")
 
     tailored = _tailor_with_quality(
@@ -649,6 +651,7 @@ def tailor_from_job_data(
         cv_data=cv_data,
         api_keys=api_keys,
         category=job.get("category", ""),
+        raw_text=raw_text,
     )
     result, tailored_cv, quality = tailored
 
@@ -700,6 +703,8 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
     if not api_keys:
         raise HTTPException(400, "No API keys found. Add keys in Settings or enable default AI.")
 
+    raw_text = get_cv_raw_text(user_id)
+
     # Link job to user if not already
     link_user_job(user_id, job_id)
 
@@ -712,6 +717,7 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
         cv_data=cv_data,
         api_keys=api_keys,
         category=job.get("job_category", ""),
+        raw_text=raw_text,
     )
     result, tailored_cv, quality = tailored
 
