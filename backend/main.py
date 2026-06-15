@@ -788,9 +788,8 @@ def cleanup_old_jobs(token: str = Query("")):
 
 @app.get("/api/config")
 def get_config():
-    from config import JOB_BOARDS as JB
     boards = {}
-    for cat, cat_boards in JB.items():
+    for cat, cat_boards in JOB_BOARDS.items():
         boards[cat] = {name: {"name": name, "region": cfg.get("region", ""), "type": cfg.get("type", "public"), "enabled": cfg.get("enabled", True)} for name, cfg in cat_boards.items()}
     categories = get_categories()
     return {"boards": boards, "categories": categories}
