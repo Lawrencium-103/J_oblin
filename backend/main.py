@@ -768,7 +768,12 @@ def export_excel(
 
 @app.get("/api/stats")
 def stats():
-    return get_global_stats()
+    try:
+        return get_global_stats()
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Stats error: {type(e).__name__}: {e}")
 
 
 @app.get("/api/health")
