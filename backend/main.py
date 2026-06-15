@@ -22,7 +22,7 @@ from backend.database import (
     create_reset_token, get_valid_token, mark_token_used, update_password,
 )
 from backend.auth import hash_password, verify_password, create_access_token, get_current_user
-from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch
+from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text
 from backend.cv_quality import score_cv_quality
 from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
@@ -180,6 +180,13 @@ def put_raw_text(data: dict = Body(...), current_user: dict = Depends(get_curren
         return {"status": "ok"}
     except Exception as e:
         raise HTTPException(500, detail=f"Failed to save raw text: {str(e)}")
+
+
+@app.post("/api/cv/parse")
+def parse_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
+    api_keys = get_effective_api_keys(current_user["user_id"])
+    cv = parse_cv_text(req.raw_text, api_keys)
+    return cv
 
 
 # ── Make CV from Scratch (for users without a CV) ──────────────────────────

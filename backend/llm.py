@@ -1227,6 +1227,85 @@ def make_cv_from_scratch(
     return fallback, provider
 
 
+def parse_cv_text(raw_text: str, api_keys: dict = None) -> dict:
+    api_keys = api_keys or {}
+    prompt = (
+        "You are a CV parser. Extract structured information from the following CV text.\n\n"
+        "Output ONLY valid JSON with this exact structure:\n"
+        '{\n'
+        '  "personal_info": {"name": "", "email": "", "phone": "", "location": "", "linkedin": "", "website": ""},\n'
+        '  "professional_summary": "",\n'
+        '  "skills": ["Skill1", "Skill2", ...],\n'
+        '  "experience": [\n'
+        '    {"title": "", "company": "", "start_date": "", "end_date": "", "current": false, "description": "", "achievements": []}\n'
+        '  ],\n'
+        '  "education": [\n'
+        '    {"degree": "", "institution": "", "start_date": "", "end_date": "", "gpa": ""}\n'
+        '  ],\n'
+        '  "certifications": ["Cert1", ...],\n'
+        '  "languages": ["Lang1", ...],\n'
+        '  "projects": [{"name": "", "description": "", "technologies": [], "url": ""}],\n'
+        '  "volunteer_experience": [],\n'
+        '  "professional_memberships": []\n'
+        '}\n\n'
+        "RULES:\n"
+        "- Extract ALL experience entries (each with title, company, dates, and achievements)\n"
+        "- Split achievements into individual bullet points\n"
+        "- Extract ALL skills mentioned, not just the first few\n"
+        "- Extract education entries with degree, institution, dates\n"
+        "- If a field is missing from the CV, use empty string or empty array\n"
+        "- Do NOT fabricate or guess information not present in the text\n"
+        "- Do NOT include 'References available upon request'\n"
+        "- Return ONLY valid JSON, no explanation\n\n"
+        "CV TEXT:\n" + raw_text[:8000]
+    )
+
+    raw = _call_any(prompt, api_keys, max_tokens=3000)
+    if raw:
+        result = _parse_json(raw)
+        if result:
+            return result
+
+    # Fallback: basic regex extraction
+    cv = {
+        "personal_info": {"name": "", "email": "", "phone": "", "location": "", "linkedin": "", "website": ""},
+        "professional_summary": "", "skills": [], "experience": [], "education": [],
+        "certifications": [], "languages": [], "projects": [],
+        "volunteer_experience": [], "professional_memberships": [],
+    }
+    name_match = re.search(r"(?:^|\n)([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,3})(?:\n|$)", raw_text[:300])
+    if name_match:
+        cv["personal_info"]["name"] = name_match.group(1).strip()
+    email_match = re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", raw_text)
+    if email_match:
+        cv["personal_info"]["email"] = email_match.group()
+    phone_match = re.search(r"(\+?\d[\d\s\-().]{7,15})", raw_text)
+    if phone_match:
+        cv["personal_info"]["phone"] = phone_match.group().strip()
+
+    lines = raw_text.split("\n")
+    mode = "header"
+    for line in lines:
+        u = line.strip().upper()
+        if not u:
+            continue
+        if re.match(r"^(SKILLS|CORE COMPETENCIES|TECHNICAL SKILLS)", u):
+            mode = "skills"
+        elif re.match(r"^(EXPERIENCE|WORK|PROFESSIONAL EXPERIENCE|EMPLOYMENT)", u):
+            mode = "experience"
+        elif re.match(r"^(EDUCATION|ACADEMIC)", u):
+            mode = "education"
+        elif re.match(r"^(CERTIFICATION|LICENSES|CERT)", u):
+            mode = "certs"
+        elif re.match(r"^(PROJECT|PORTFOLIO)", u):
+            mode = "projects"
+        elif mode == "skills" and not re.match(r"^(SKILLS|CORE|TECHNICAL)", u):
+            parts = re.sub(r"^[-\u2022*#]\s*", "", line.strip()).split(",")
+            cv["skills"].extend(p.strip() for p in parts if p.strip())
+    cv["skills"] = list(dict.fromkeys(s for s in cv["skills"] if s))
+    return cv
+
+
 def score_job_match(job_title: str, job_description: str, user_cv: dict) -> int:
     skills_str = " ".join(user_cv.get("skills", [])).lower()
     jd_kw = top_keywords(job_description)
