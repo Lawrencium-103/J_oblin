@@ -184,7 +184,7 @@ def _add_section_title_docx(doc, title: str, profile: dict = None):
     pBdr = pPr.makeelement(qn("w:pBdr"), {})
     bottom = pBdr.makeelement(qn("w:bottom"), {
         qn("w:val"): "single", qn("w:sz"): "4", qn("w:space"): "1",
-        qn("w:color"): "{:02x}{:02x}{:02x}".format(col.red, col.green, col.blue),
+        qn("w:color"): "{:02x}{:02x}{:02x}".format(col[0], col[1], col[2]),
     })
     pBdr.append(bottom)
     pPr.append(pBdr)
@@ -571,9 +571,8 @@ class _CvPdf(FPDF):
         self.profile = profile or CV_PROFILES[0]
         self.set_auto_page_break(auto=True, margin=14)
         self.set_margins(14, 14, 14)
-        self._accent_rgb = (
-            self.profile.get("accent", RGBColor(0x1a, 0x1a, 0x1a))
-        )
+        accent = self.profile.get("accent", RGBColor(0x1a, 0x1a, 0x1a))
+        self._accent_rgb = (accent[0], accent[1], accent[2])
         self._font_name = self.profile.get("font", "Helvetica")
         self._font_pdf = self._pdf_font_name()
 
@@ -586,7 +585,7 @@ class _CvPdf(FPDF):
     def _section_title(self, title: str):
         self.set_x(self.l_margin)
         self.set_font(self._font_pdf, "B", 9)
-        r, g, b = self._accent_rgb.red, self._accent_rgb.green, self._accent_rgb.blue
+        r, g, b = self._accent_rgb
         self.set_text_color(r, g, b)
         self.cell(0, 5, _safe(title.upper()), new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
