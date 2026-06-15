@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS user_cv (
     id SERIAL PRIMARY KEY,
     user_id INTEGER UNIQUE NOT NULL,
     cv_json TEXT NOT NULL,
+    raw_text TEXT DEFAULT '',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -169,6 +170,7 @@ CREATE TABLE IF NOT EXISTS user_cv (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER UNIQUE NOT NULL,
     cv_json TEXT NOT NULL,
+    raw_text TEXT DEFAULT '',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -280,6 +282,11 @@ def init_db():
                     cur.execute("ALTER TABLE global_jobs ALTER COLUMN date_found TYPE TIMESTAMP USING date_found::timestamp")
             except Exception:
                 pass
+            try:
+                with conn.cursor() as cur:
+                    cur.execute("ALTER TABLE user_cv ADD COLUMN raw_text TEXT DEFAULT ''")
+            except Exception:
+                pass
             _seed_categories(conn)
             _seed_admin_user(conn)
     else:
@@ -287,6 +294,10 @@ def init_db():
             conn.executescript(_SQLITE_DDL)
             try:
                 conn.execute("ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0")
+            except _sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE user_cv ADD COLUMN raw_text TEXT DEFAULT ''")
             except _sqlite3.OperationalError:
                 pass
             _seed_categories(conn)
@@ -457,13 +468,22 @@ def get_effective_api_keys(user_id: int) -> dict:
 
 # ── CV ──────────────────────────────────────────────────────────────────────
 
-def save_cv(user_id: int, cv_json: str) -> None:
+def save_cv(user_id: int, cv_json: str, raw_text: str = "") -> None:
     with get_db() as conn:
         _exec(
             conn,
-            f"INSERT INTO user_cv (user_id, cv_json) VALUES (?, ?) "
-            f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, updated_at = {_now_sql()}",
-            (user_id, cv_json),
+            f"INSERT INTO user_cv (user_id, cv_json, raw_text) VALUES (?, ?, ?) "
+            f"ON CONFLICT(user_id) DO UPDATE SET cv_json = excluded.cv_json, raw_text = excluded.raw_text, updated_at = {_now_sql()}",
+            (user_id, cv_json, raw_text),
+        )
+
+
+def save_cv_raw_text(user_id: int, raw_text: str) -> None:
+    with get_db() as conn:
+        _exec(
+            conn,
+            f"UPDATE user_cv SET raw_text = ?, updated_at = {_now_sql()} WHERE user_id = ?",
+            (raw_text, user_id),
         )
 
 
@@ -471,6 +491,12 @@ def get_cv(user_id: int) -> str | None:
     with get_db() as conn:
         rows = _exec(conn, "SELECT cv_json FROM user_cv WHERE user_id = ?", (user_id,)).fetchall()
         return rows[0]["cv_json"] if rows else None
+
+
+def get_cv_raw_text(user_id: int) -> str:
+    with get_db() as conn:
+        rows = _exec(conn, "SELECT raw_text FROM user_cv WHERE user_id = ?", (user_id,)).fetchall()
+        return rows[0]["raw_text"] if rows else ""
 
 
 def get_cv_default() -> dict:

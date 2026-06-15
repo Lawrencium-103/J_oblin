@@ -143,10 +143,33 @@ def _call_gemini(prompt: str, api_key: str, max_tokens: int = 512) -> str | None
         return None
 
 
+def _call_gemma(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
+    if not api_key:
+        return None
+    try:
+        url = (
+            f"https://generativelanguage.googleapis.com/v1beta/models/"
+            f"gemma-3-27b-it:generateContent?key={api_key}"
+        )
+        resp = _req.post(
+            url,
+            json={
+                "contents": [{"parts": [{"text": prompt}]}],
+                "generationConfig": {"temperature": 0.7, "maxOutputTokens": max_tokens},
+            },
+            timeout=30,
+        )
+        return resp.json()["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        print(f"[llm/gemma] {e}")
+        return None
+
+
 def _call_any(prompt: str, api_keys: dict, max_tokens: int = 512) -> str | None:
     return _call_nim(prompt, api_keys.get("nvidia", ""), max_tokens) or \
            _call_groq(prompt, api_keys.get("groq", ""), max_tokens) or \
-           _call_gemini(prompt, api_keys.get("gemini", ""), max_tokens)
+           _call_gemini(prompt, api_keys.get("gemini", ""), max_tokens) or \
+           _call_gemma(prompt, api_keys.get("gemini", ""), max_tokens)
 
 
 SKILL_TAXONOMY = {
@@ -303,6 +326,30 @@ def tailor_application(
             else:
                 related_groups.append(group_name)
 
+    # Detect if candidate's past titles are different from target role
+    target_title_lower = job_title.lower()
+    past_titles = [e.get("title", "").lower() for e in exp_entries_raw if e.get("title")]
+    is_role_switch = True
+    for pt in past_titles:
+        if any(kw in pt for kw in target_title_lower.split()):
+            is_role_switch = False
+            break
+    transferable_boost = ""
+    if is_role_switch and past_titles:
+        transferable_boost = (
+            "\n## TRANSFERABLE SKILLS BRIDGE ##\n"
+            f"The candidate has never held a '{job_title}' role before (past roles: {', '.join(past_titles[:3])}).\n"
+            "CRITICAL: You MUST identify transferable skills from their existing experience that map to the target role.\n"
+            "- Find achievements in their current roles that demonstrate skills needed for the target role\n"
+            "- Rewrite bullets to emphasize the RELEVANT SKILL for the target role, not the original context\n"
+            "- Example: 'Managed team of 5 field officers' targeting a data role → 'Coordinated data collection across 5 field officers, ensuring 98% reporting compliance'\n"
+            "- Example: 'Processed invoices for 200+ vendors' targeting a project management role → 'Managed cross-functional workflows across 200+ stakeholders, delivering on-time processing'\n"
+            "- NEVER fabricate job titles, companies, or dates\n"
+            "- NEVER claim the candidate held the target title already\n"
+            "- In the summary, name the transfer explicitly: 'Bringing [X years] of [domain] experience, with proven transferable skills in [skill1], [skill2], and [skill3] directly applicable to the [target role] role.'\n"
+            "- Cover letter MUST address the career pivot directly: 'While my background is in [past domain], my experience in [transferable skill] maps directly to [JD requirement].'\n"
+        )
+
     bridging_suggestions = ""
     if missing_groups:
         bridging_suggestions = (
@@ -351,6 +398,7 @@ def tailor_application(
         f"Projects:\n{proj_str}\n"
         f"Languages: {lang_str}\n"
         + cert_boost
+        + transferable_boost
         + bridging_suggestions
         + feedback_section
         + "\n\n## OUTPUT INSTRUCTIONS ##\n"
@@ -410,7 +458,9 @@ def tailor_application(
     )
 
     raw = _call_any(prompt, api_keys, max_tokens=2000)
-    provider = "groq" if api_keys.get("groq") else ("nim" if api_keys.get("nvidia") else "rule-based")
+    provider = "groq" if api_keys.get("groq") else "rule-based"
+    if raw and provider == "rule-based":
+        provider = "nim" if api_keys.get("nvidia") else "rule-based"
 
     if raw:
         result = _parse_json(raw)
@@ -1095,7 +1145,11 @@ def make_cv_from_scratch(
     )
 
     raw = _call_any(prompt, api_keys, max_tokens=3000)
-    provider = "groq" if api_keys.get("groq") else ("nim" if api_keys.get("nvidia") else "rule-based")
+    provider = "rule-based"
+    if raw:
+        provider = "groq" if api_keys.get("groq") else "gemini"
+        if provider == "gemini" and api_keys.get("nvidia"):
+            provider = "nim"
 
     if raw:
         result = _parse_json(raw)
@@ -1104,10 +1158,10 @@ def make_cv_from_scratch(
             result["_target_type"] = target_type
             return result, provider
 
-    # Fallback: return a minimal template
+    # Fallback: parse raw text into basic structure
     fallback = {
         "personal_info": {"name": "", "email": "", "phone": "", "location": "", "linkedin": "", "website": ""},
-        "professional_summary": "Professional with background in " + targets + ".",
+        "professional_summary": "",
         "skills": [],
         "experience": [],
         "education": [],
@@ -1118,6 +1172,58 @@ def make_cv_from_scratch(
         "_generated_for": targets,
         "_target_type": target_type,
     }
+
+    # Try to extract names, emails, phones from raw text
+    name_match = re.search(r"(?:My name is |I(?:')?m |I am )([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)", raw_text[:500])
+    if name_match:
+        fallback["personal_info"]["name"] = name_match.group(1).strip()
+    email_match = re.search(r"[\w.+-]+@[\w-]+\.[\w.]+", raw_text)
+    if email_match:
+        fallback["personal_info"]["email"] = email_match.group()
+    phone_match = re.search(r"(\+?\d[\d\s\-().]{7,15})", raw_text)
+    if phone_match:
+        fallback["personal_info"]["phone"] = phone_match.group().strip()
+
+    # Detect skills mentioned
+    skill_set = set()
+    for skill in POWER_SKILLS:
+        if skill in raw_text.lower():
+            skill_set.add(skill.title() if len(skill) > 3 else skill.upper())
+    if skill_set:
+        fallback["skills"] = sorted(skill_set)[:12]
+
+    # Build summary from available data
+    name = fallback["personal_info"]["name"] or "Candidate"
+    skill_str = ", ".join(list(skill_set)[:5]) if skill_set else targets
+    fallback["professional_summary"] = (
+        f"{name} brings practical experience in {skill_str}, "
+        f"with a focus on delivering measurable results. "
+        f"Combines technical skills with a structured approach to problem-solving "
+        f"and a commitment to producing accurate, decision-ready work."
+    )
+
+    # Try to extract education
+    edu_keywords = ["studied", "university", "college", "degree", "bachelor", "master", "phd", "diploma",
+                    "bs", "ba", "ms", "ma", "mba", "b.sc", "m.sc", "b.eng", "m.eng"]
+    sentences = re.split(r'[.!?\n]+', raw_text)
+    for s in sentences:
+        s_lower = s.lower().strip()
+        if any(kw in s_lower for kw in edu_keywords) and len(s) > 20:
+            # Extract institution name (capitalized words after known keywords)
+            for kw in ["at ", "from ", "of "]:
+                idx = s_lower.find(kw)
+                if idx >= 0:
+                    after = s[idx + len(kw):].strip().rstrip(".,")
+                    if after:
+                        fallback["education"].append({
+                            "degree": s.strip()[:100],
+                            "institution": after[:80],
+                            "start_date": "", "end_date": "",
+                        })
+                        break
+            if fallback["education"]:
+                break
+
     return fallback, provider
 
 

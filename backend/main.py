@@ -14,7 +14,7 @@ from backend.database import (
     init_db, create_user, get_user_by_email, get_user_by_id,
     save_api_keys, get_api_keys, get_effective_api_keys,
     save_user_settings, get_user_settings,
-    save_cv, get_cv, get_cv_default,
+    save_cv, get_cv, get_cv_default, save_cv_raw_text, get_cv_raw_text,
     save_global_jobs, get_global_jobs, get_global_job, get_global_stats,
     get_categories, classify_job_title,
     link_user_job, get_user_job_link, get_user_linked_jobs, update_link_tailoring,
@@ -24,7 +24,7 @@ from backend.database import (
 from backend.auth import hash_password, verify_password, create_access_token, get_current_user
 from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch
 from backend.cv_quality import score_cv_quality
-from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text
+from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
 
 def _file_slug(name: str, title: str, company: str = "", number: str = "00") -> str:
@@ -168,6 +168,20 @@ def put_user_cv(data: dict = Body(...), current_user: dict = Depends(get_current
         raise HTTPException(500, detail=f"Failed to save CV: {str(e)}")
 
 
+@app.get("/api/cv/raw-text")
+def get_raw_text(current_user: dict = Depends(get_current_user)):
+    return {"raw_text": get_cv_raw_text(current_user["user_id"])}
+
+
+@app.put("/api/cv/raw-text")
+def put_raw_text(data: dict = Body(...), current_user: dict = Depends(get_current_user)):
+    try:
+        save_cv_raw_text(current_user["user_id"], data.get("raw_text", ""))
+        return {"status": "ok"}
+    except Exception as e:
+        raise HTTPException(500, detail=f"Failed to save raw text: {str(e)}")
+
+
 # ── Make CV from Scratch (for users without a CV) ──────────────────────────
 
 class MakeCVRequest(BaseModel):
@@ -202,9 +216,9 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
         api_keys=api_keys,
     )
 
-    # Save the generated CV
+    # Save the generated CV and raw text
     try:
-        save_cv(user_id, json.dumps(cv_data, ensure_ascii=False))
+        save_cv(user_id, json.dumps(cv_data, ensure_ascii=False), raw_text=req.raw_text)
     except Exception as e:
         raise HTTPException(500, f"Failed to save CV: {str(e)}")
 
@@ -215,8 +229,9 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
     slug = _file_slug(name, req.target_jobs[0] if req.target_jobs else "CV", "", number="00")
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
-    generate_cv_docx(cv_data, cv_path, target_type=req.target_type)
-    generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type)
+    profile = get_cv_profile(str(user_id))
+    generate_cv_docx(cv_data, cv_path, target_type=req.target_type, profile=profile)
+    generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile)
 
     return {
         "status": "ok",
@@ -633,10 +648,11 @@ def tailor_from_job_data(
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
     cover_pdf_path = str(GENERATED_DIR / f"{slug}_cover.pdf")
-    generate_cv_docx(tailored_cv, cv_path, target_type=target_type)
-    generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""))
-    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type)
-    generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""))
+    profile = get_cv_profile(str(user_id))
+    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile)
+    generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
+    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile)
+    generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
 
     return {
         "status": "ok",
@@ -696,10 +712,11 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
     cover_pdf_path = str(GENERATED_DIR / f"{slug}_cover.pdf")
 
-    generate_cv_docx(tailored_cv, cv_path, target_type=target_type)
-    generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""))
-    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type)
-    generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""))
+    profile = get_cv_profile(str(user_id))
+    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile)
+    generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
+    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile)
+    generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
 
     update_link_tailoring(user_id, job_id, cv_path, cover_path)
 

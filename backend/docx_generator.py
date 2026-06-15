@@ -1,10 +1,70 @@
 import re
+import hashlib
 from pathlib import Path
 from fpdf import FPDF
 from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
+
+
+CV_PROFILES = [
+    {
+        "font": "Calibri", "size": 10, "name_size": 16,
+        "section_font": "Calibri", "section_size": 10,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x1a, 0x3a, 0x5c),
+        "margins": (0.75, 0.75, 0.75, 0.75),
+        "line_spacing": 1.15, "contact_sep": " | ", "name": "modern-blue",
+    },
+    {
+        "font": "Arial", "size": 10, "name_size": 15,
+        "section_font": "Arial", "section_size": 10,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x2d, 0x50, 0x16),
+        "margins": (0.7, 0.7, 0.7, 0.7),
+        "line_spacing": 1.1, "contact_sep": " \u2022 ", "name": "classic-green",
+    },
+    {
+        "font": "Georgia", "size": 10, "name_size": 17,
+        "section_font": "Georgia", "section_size": 10.5,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x5c, 0x1a, 0x1a),
+        "margins": (0.8, 0.8, 0.8, 0.8),
+        "line_spacing": 1.15, "contact_sep": "  |  ", "name": "serif-maroon",
+    },
+    {
+        "font": "Tahoma", "size": 10, "name_size": 14,
+        "section_font": "Tahoma", "section_size": 10,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x1a, 0x1a, 0x5c),
+        "margins": (0.65, 0.65, 0.65, 0.65),
+        "line_spacing": 1.1, "contact_sep": " \u2014 ", "name": "compact-navy",
+    },
+    {
+        "font": "Garamond", "size": 11, "name_size": 18,
+        "section_font": "Garamond", "section_size": 11,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x5c, 0x3a, 0x1a),
+        "margins": (0.8, 0.8, 0.8, 0.8),
+        "line_spacing": 1.2, "contact_sep": " | ", "name": "classic-warm",
+    },
+    {
+        "font": "Verdana", "size": 9.5, "name_size": 15,
+        "section_font": "Verdana", "section_size": 9.5,
+        "color": RGBColor(0x1a, 0x1a, 0x1a),
+        "accent": RGBColor(0x3a, 0x1a, 0x5c),
+        "margins": (0.7, 0.7, 0.7, 0.7),
+        "line_spacing": 1.15, "contact_sep": " \u2022 ", "name": "wide-purple",
+    },
+]
+
+
+def get_cv_profile(seed_str: str = "") -> dict:
+    if not seed_str:
+        return CV_PROFILES[0]
+    idx = int(hashlib.md5(seed_str.encode()).hexdigest(), 16) % len(CV_PROFILES)
+    return CV_PROFILES[idx]
 
 
 def _safe(text: str) -> str:
@@ -40,11 +100,11 @@ def _is_grouped_skills(skills: list) -> bool:
     return bool(skills) and isinstance(skills[0], dict) and "domain" in skills[0]
 
 
-def _render_skills_docx(doc, skills: list, max_groups: int = 6):
+def _render_skills_docx(doc, skills: list, max_groups: int = 6, profile: dict = None):
     """Render skills in DOCX — handles both flat strings and grouped dicts."""
     if not skills:
         return
-    _add_section_title_docx(doc, "Core Competencies")
+    _add_section_title_docx(doc, "Core Competencies", profile)
     if _is_grouped_skills(skills):
         for group in skills[:max_groups]:
             domain = group.get("domain", group.get("name", ""))
@@ -69,7 +129,7 @@ def _render_skills_docx(doc, skills: list, max_groups: int = 6):
                 run.font.size = Pt(9)
 
 
-def _render_skills_pdf(pdf, skills: list, max_groups: int = 6):
+def _render_skills_pdf(pdf, skills: list, max_groups: int = 6, profile: dict = None):
     """Render skills in PDF — handles both flat strings and grouped dicts."""
     if not skills:
         return
@@ -111,25 +171,27 @@ def _render_skills_text(skills: list, max_groups: int = 6) -> list:
     return lines
 
 
-def _add_section_title_docx(doc, title: str):
+def _add_section_title_docx(doc, title: str, profile: dict = None):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(8)
     p.paragraph_format.space_after = Pt(4)
     run = p.add_run(title.upper())
     run.bold = True
-    run.font.size = Pt(10)
-    run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
+    run.font.size = Pt(profile.get("section_size", 10)) if profile else Pt(10)
+    col = profile.get("accent", RGBColor(0x1a, 0x1a, 0x1a)) if profile else RGBColor(0x1a, 0x1a, 0x1a)
+    run.font.color.rgb = col
     pPr = p._p.get_or_add_pPr()
     pBdr = pPr.makeelement(qn("w:pBdr"), {})
     bottom = pBdr.makeelement(qn("w:bottom"), {
-        qn("w:val"): "single", qn("w:sz"): "4", qn("w:space"): "1", qn("w:color"): "1a1a1a",
+        qn("w:val"): "single", qn("w:sz"): "4", qn("w:space"): "1",
+        qn("w:color"): "{:02x}{:02x}{:02x}".format(col.red, col.green, col.blue),
     })
     pBdr.append(bottom)
     pPr.append(pBdr)
 
 
-def _add_referees_docx(doc, referees: list = None):
-    _add_section_title_docx(doc, "Referees")
+def _add_referees_docx(doc, referees: list = None, profile: dict = None):
+    _add_section_title_docx(doc, "Referees", profile)
     if referees and any(r.get("name", "") for r in referees):
         for r in referees[:3]:
             parts = [r.get("name", ""), r.get("title", ""), r.get("company", ""), r.get("email", ""), r.get("phone", "")]
@@ -142,22 +204,25 @@ def _add_referees_docx(doc, referees: list = None):
     p.paragraph_format.space_after = Pt(3)
 
 
-def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "local") -> str:
+def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None) -> str:
+    if profile is None:
+        profile = CV_PROFILES[0]
     doc = Document()
+    m = profile.get("margins", (0.75, 0.75, 0.75, 0.75))
     for section in doc.sections:
-        section.top_margin = Inches(0.75)
-        section.bottom_margin = Inches(0.75)
-        section.left_margin = Inches(0.75)
-        section.right_margin = Inches(0.75)
+        section.top_margin = Inches(m[0])
+        section.bottom_margin = Inches(m[1])
+        section.left_margin = Inches(m[2])
+        section.right_margin = Inches(m[3])
 
     style = doc.styles["Normal"]
     font = style.font
-    font.name = "Calibri"
-    font.size = Pt(10)
+    font.name = profile["font"]
+    font.size = Pt(profile["size"])
     sp = style.paragraph_format
     sp.space_after = Pt(2)
     sp.space_before = Pt(0)
-    sp.line_spacing = 1.15
+    sp.line_spacing = profile["line_spacing"]
 
     personal = tailored_cv.get("personal_info", {})
     name = personal.get("name", "")
@@ -172,8 +237,8 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     header.alignment = WD_ALIGN_PARAGRAPH.LEFT
     run = header.add_run(name)
     run.bold = True
-    run.font.size = Pt(16)
-    run.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
+    run.font.size = Pt(profile["name_size"])
+    run.font.color.rgb = profile.get("accent", profile["color"])
 
     # Contact line
     contact_parts = [p for p in [phone, email, location] if p]
@@ -181,28 +246,29 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     if contact_parts:
         c = doc.add_paragraph()
         c.paragraph_format.space_after = Pt(4)
-        run = c.add_run(" | ".join(contact_parts))
-        run.font.size = Pt(8.5)
+        run = c.add_run(profile["contact_sep"].join(contact_parts))
+        run.font.size = Pt(profile["size"] - 1.5)
         run.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
         if linkedin_parts:
-            run2 = c.add_run("  |  " + " | ".join(linkedin_parts))
-            run2.font.size = Pt(8.5)
+            run2 = c.add_run("  |  " + profile["contact_sep"].join(linkedin_parts))
+            run2.font.size = Pt(profile["size"] - 1.5)
             run2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
     # PROFESSIONAL SUMMARY
     summary = tailored_cv.get("professional_summary", "")
     if summary:
-        _add_section_title_docx(doc, "Professional Summary")
+        _add_section_title_docx(doc, "Professional Summary", profile)
         p = doc.add_paragraph(summary)
         p.paragraph_format.space_after = Pt(4)
 
     # CORE COMPETENCIES
-    _render_skills_docx(doc, tailored_cv.get("skills", []))
+    _render_skills_docx(doc, tailored_cv.get("skills", []), profile=profile)
 
     # PROFESSIONAL EXPERIENCE
     experience = tailored_cv.get("experience", [])
     if experience:
-        _add_section_title_docx(doc, "Professional Experience")
+        _add_section_title_docx(doc, "Professional Experience", profile)
+        sz = profile["size"]
         for exp in experience[:3]:
             end = "Present" if exp.get("current") else exp.get("end_date", "")
             date_str = f"{exp.get('start_date', '')} - {end}" if exp.get("start_date") else ""
@@ -213,7 +279,8 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
             title_company = _dedup_company(exp.get("title", ""), exp.get("company", ""))
             run = p.add_run(title_company)
             run.bold = True
-            run.font.size = Pt(10)
+            run.font.size = Pt(sz)
+            run.font.name = profile["font"]
             if date_str:
                 _add_right_tab_stop(p, Inches(7.0))
                 run3 = p.add_run(f"\t{date_str}")
@@ -231,7 +298,7 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     # EDUCATION
     education = tailored_cv.get("education", [])
     if education:
-        _add_section_title_docx(doc, "Education")
+        _add_section_title_docx(doc, "Education", profile)
         for edu in education[:3]:
             p = doc.add_paragraph()
             p.paragraph_format.space_after = Pt(1)
@@ -250,7 +317,7 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     # CERTIFICATIONS
     certifications = tailored_cv.get("certifications", [])
     if certifications:
-        _add_section_title_docx(doc, "Certifications")
+        _add_section_title_docx(doc, "Certifications", profile)
         certs = [c if isinstance(c, str) else c.get("name", "") for c in certifications[:5]]
         for c in certs:
             bp = doc.add_paragraph(c, style="List Bullet")
@@ -263,7 +330,7 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     # PROJECTS
     projects = tailored_cv.get("projects", [])
     if projects:
-        _add_section_title_docx(doc, "Projects")
+        _add_section_title_docx(doc, "Projects", profile)
         for proj in projects[:4]:
             tech = f" [{', '.join(proj.get('technologies', []))}]" if proj.get("technologies") else ""
             link = f" ({proj['url']})" if proj.get("url") else ""
@@ -276,7 +343,7 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
     # VOLUNTEER EXPERIENCE
     volunteer = tailored_cv.get("volunteer_experience", tailored_cv.get("volunteer", []))
     if volunteer:
-        _add_section_title_docx(doc, "Volunteer Experience")
+        _add_section_title_docx(doc, "Volunteer Experience", profile)
         for v in volunteer[:3]:
             if isinstance(v, str):
                 bp = doc.add_paragraph(v, style="List Bullet")
@@ -298,24 +365,27 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
 
     # REFEREES (local only)
     if target_type == "local":
-        _add_referees_docx(doc, tailored_cv.get("referees"))
+        _add_referees_docx(doc, tailored_cv.get("referees"), profile)
 
     doc.save(output_path)
     return str(output_path)
 
 
-def generate_cover_docx(letter_text: str, output_path: str, personal_info: dict = None, company: str = "") -> str:
+def generate_cover_docx(letter_text: str, output_path: str, personal_info: dict = None, company: str = "", profile: dict = None) -> str:
+    if profile is None:
+        profile = CV_PROFILES[0]
     doc = Document()
+    m = profile.get("margins", (1.0, 1.0, 1.0, 1.0))
     for section in doc.sections:
-        section.top_margin = Inches(1.0)
-        section.bottom_margin = Inches(1.0)
-        section.left_margin = Inches(1.0)
-        section.right_margin = Inches(1.0)
+        section.top_margin = Inches(m[0])
+        section.bottom_margin = Inches(m[1])
+        section.left_margin = Inches(m[2])
+        section.right_margin = Inches(m[3])
 
     style = doc.styles["Normal"]
     font = style.font
-    font.name = "Calibri"
-    font.size = Pt(11)
+    font.name = profile["font"]
+    font.size = Pt(profile["size"] + 1)
     style.paragraph_format.space_after = Pt(6)
     style.paragraph_format.line_spacing = 1.15
 
@@ -333,20 +403,20 @@ def generate_cover_docx(letter_text: str, output_path: str, personal_info: dict 
         p_name.paragraph_format.space_after = Pt(2)
         run_name = p_name.add_run(name)
         run_name.bold = True
-        run_name.font.size = Pt(14)
-        run_name.font.color.rgb = RGBColor(0x1a, 0x1a, 0x1a)
+        run_name.font.size = Pt(profile["name_size"])
+        run_name.font.color.rgb = profile.get("accent", profile["color"])
 
         # Contact line
         contact_parts = [p for p in [phone, email, location] if p]
         linkedin_parts = [p for p in [linkedin, website] if p]
         p_contact = doc.add_paragraph()
         p_contact.paragraph_format.space_after = Pt(8)
-        run_contact = p_contact.add_run(" | ".join(contact_parts))
-        run_contact.font.size = Pt(9)
+        run_contact = p_contact.add_run(profile["contact_sep"].join(contact_parts))
+        run_contact.font.size = Pt(profile["size"] - 1)
         run_contact.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
         if linkedin_parts:
-            run_link = p_contact.add_run("  |  " + " | ".join(linkedin_parts))
-            run_link.font.size = Pt(9)
+            run_link = p_contact.add_run("  |  " + profile["contact_sep"].join(linkedin_parts))
+            run_link.font.size = Pt(profile["size"] - 1)
             run_link.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
         # Horizontal Rule
@@ -496,18 +566,31 @@ def generate_cv_preview_text(tailored_cv: dict) -> str:
 
 
 class _CvPdf(FPDF):
-    def __init__(self):
+    def __init__(self, profile: dict = None):
         super().__init__()
+        self.profile = profile or CV_PROFILES[0]
         self.set_auto_page_break(auto=True, margin=14)
         self.set_margins(14, 14, 14)
+        self._accent_rgb = (
+            self.profile.get("accent", RGBColor(0x1a, 0x1a, 0x1a))
+        )
+        self._font_name = self.profile.get("font", "Helvetica")
+        self._font_pdf = self._pdf_font_name()
+
+    def _pdf_font_name(self):
+        name = self._font_name
+        if name in ("Calibri", "Verdana", "Tahoma", "Garamond", "Georgia"):
+            return "Helvetica"
+        return name
 
     def _section_title(self, title: str):
         self.set_x(self.l_margin)
-        self.set_font("Helvetica", "B", 9)
-        self.set_text_color(26, 26, 26)
+        self.set_font(self._font_pdf, "B", 9)
+        r, g, b = self._accent_rgb.red, self._accent_rgb.green, self._accent_rgb.blue
+        self.set_text_color(r, g, b)
         self.cell(0, 5, _safe(title.upper()), new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
-        self.set_draw_color(26, 26, 26)
+        self.set_draw_color(r, g, b)
         self.line(self.l_margin, y, self.w - self.r_margin, y)
         self.ln(1.5)
 
@@ -542,10 +625,7 @@ def _add_referees_pdf(pdf, referees: list = None):
                 pdf._body(line)
     else:
         pdf._body("Available upon request.")
-
-
-def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "local") -> str:
-    pdf = _CvPdf()
+    pdf = _CvPdf(profile)
     pdf.add_page()
     personal = tailored_cv.get("personal_info", {})
     name = personal.get("name", "")
@@ -571,7 +651,7 @@ def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "loc
         pdf._body(summary)
         pdf.ln(1.5)
 
-    _render_skills_pdf(pdf, tailored_cv.get("skills", []))
+    _render_skills_pdf(pdf, tailored_cv.get("skills", []), profile=pdf.profile)
 
     experience = tailored_cv.get("experience", [])
     if experience:
@@ -634,8 +714,8 @@ def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "loc
     return str(output_path)
 
 
-def generate_cover_pdf(letter_text: str, output_path: str, personal_info: dict = None, company: str = "") -> str:
-    pdf = _CvPdf()
+def generate_cover_pdf(letter_text: str, output_path: str, personal_info: dict = None, company: str = "", profile: dict = None) -> str:
+    pdf = _CvPdf(profile)
     pdf.add_page()
 
     # 1. Header (Sender's details)

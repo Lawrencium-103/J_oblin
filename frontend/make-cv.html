@@ -371,6 +371,7 @@ let cvType = "local";
 let recognition = null;
 let generatedCv = null;
 let generatedPaths = null;
+let rawTextSaveTimer = null;
 
 // ── Voice Narration ──────────────────────────────────────────────────────
 
@@ -473,6 +474,26 @@ function setCvType(type) {
 
 function updateCharCount() {
   document.getElementById("charCount").textContent = document.getElementById("rawText").value.length;
+  autoSaveRawText();
+}
+
+function autoSaveRawText() {
+  clearTimeout(rawTextSaveTimer);
+  rawTextSaveTimer = setTimeout(async () => {
+    try {
+      await apiFetch("PUT", "/api/cv/raw-text", { raw_text: document.getElementById("rawText").value });
+    } catch (e) { /* silent */ }
+  }, 2000);
+}
+
+async function loadRawText() {
+  try {
+    const result = await apiFetch("GET", "/api/cv/raw-text");
+    if (result && result.raw_text) {
+      document.getElementById("rawText").value = result.raw_text;
+      updateCharCount();
+    }
+  } catch (e) { /* silent */ }
 }
 document.getElementById("rawText").addEventListener("input", updateCharCount);
 
@@ -564,6 +585,7 @@ async function downloadFile(format) {
 if (!getToken()) window.location.href = "login.html";
 updateHeader();
 renderTargets();
+loadRawText();
 </script>
 </body>
 </html>
