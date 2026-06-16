@@ -528,8 +528,8 @@ def extract_job_url(url: str = Body(..., embed=True)):
                 desc = desc_soup.get_text("\n", strip=True)
             break
 
-        meta_title = soup.find("meta", property="og:title") or soup.find("meta", name="twitter:title")
-        meta_desc = soup.find("meta", property="og:description") or soup.find("meta", name="twitter:description") or soup.find("meta", name="description")
+        meta_title = soup.find("meta", property="og:title") or soup.find("meta", attrs={"name": "twitter:title"})
+        meta_desc = soup.find("meta", property="og:description") or soup.find("meta", attrs={"name": "twitter:description"}) or soup.find("meta", attrs={"name": "description"})
         
         if not title:
             if meta_title:
