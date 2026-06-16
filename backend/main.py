@@ -268,9 +268,14 @@ def get_user_keys(current_user: dict = Depends(get_current_user)):
 @app.put("/api/keys")
 def put_user_keys(keys: KeysRequest, current_user: dict = Depends(get_current_user)):
     data = {k: v.strip() for k, v in {"groq": keys.groq, "nvidia": keys.nvidia, "gemini": keys.gemini}.items() if v and v.strip()}
+    print(f"[keys] saving for user {current_user['user_id']}: providers={list(data.keys())}")
     save_api_keys(current_user["user_id"], data)
     save_user_settings(current_user["user_id"], {"use_default_api": keys.use_default_api})
-    return {"status": "ok"}
+    saved = get_api_keys(current_user["user_id"])
+    settings = get_user_settings(current_user["user_id"])
+    saved["use_default_api"] = settings.get("use_default_api", True)
+    print(f"[keys] after save for user {current_user['user_id']}: {saved}")
+    return saved
 
 
 # ── Scrape Routes ───────────────────────────────────────────────────────────

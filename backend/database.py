@@ -428,6 +428,7 @@ def update_password(user_id: int, password_hash: str) -> None:
 
 def save_api_keys(user_id: int, keys: dict) -> None:
     with get_db() as conn:
+        _exec(conn, "DELETE FROM api_keys WHERE user_id = ?", (user_id,))
         for provider, api_key in keys.items():
             _exec(
                 conn,

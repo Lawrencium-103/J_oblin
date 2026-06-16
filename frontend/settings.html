@@ -191,15 +191,20 @@ async function saveKeys() {
   const btn = document.getElementById("keysBtn");
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
   try {
-    await apiFetch("PUT", "/api/keys", {
+    const res = await apiFetch("PUT", "/api/keys", {
       groq: document.getElementById("groqKey").value.trim(),
       nvidia: document.getElementById("nvidiaKey").value.trim(),
       gemini: document.getElementById("geminiKey").value.trim(),
       use_default_api: document.getElementById("useDefaultApi").checked,
     });
-    updateStatus("groqStatus", !!document.getElementById("groqKey").value.trim());
-    updateStatus("nvidiaStatus", !!document.getElementById("nvidiaKey").value.trim());
-    updateStatus("geminiStatus", !!document.getElementById("geminiKey").value.trim());
+    document.getElementById("groqKey").value = res.groq || "";
+    document.getElementById("nvidiaKey").value = res.nvidia || "";
+    document.getElementById("geminiKey").value = res.gemini || "";
+    document.getElementById("useDefaultApi").checked = res.use_default_api !== false;
+    updateStatus("groqStatus", !!res.groq);
+    updateStatus("nvidiaStatus", !!res.nvidia);
+    updateStatus("geminiStatus", !!res.gemini);
+    togglePersonalSection();
     showToast("Settings saved");
   } catch (err) { showToast(err.message, "error"); }
   btn.disabled = false; btn.textContent = "Save Settings";
