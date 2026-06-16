@@ -176,10 +176,11 @@ class InternationalJobScraper(BaseScraper):
             company  = self.first_text(card, [".ui-company","[class*='company']","[class*='employer']"])
             location = self.first_text(card, [".ui-location","[class*='location']"], "UK")
             salary   = self.first_text(card, [".ui-salary","[class*='salary']"])
+            posted   = self.first_text(card, _DATE_SELS)
             desc     = self.first_text(card, [".max-snippet-height","[class*='snippet']"])
             if salary and "JOBSWORTH" not in salary.upper():
                 desc = f"Salary: {salary} | {desc}"[:500]
-            jobs.append(self._make_job(title, company, location, desc, href, "adzuna", CAT))
+            jobs.append(self._make_job(title, company, location, desc, href, "adzuna", CAT, posted))
         if not jobs:
             return self._extract_from_text(soup, "adzuna", "https://www.adzuna.co.uk", CAT)
         return self.filter_fresh(jobs)
@@ -343,12 +344,17 @@ class InternationalJobScraper(BaseScraper):
             url_val = item.get("url", "")
             if not url_val:
                 continue
+            posted_raw = item.get("date", "") or ""
+            posted = posted_raw[:10] if posted_raw else ""
+            if not posted:
+                pub_date = item.get("publication_date", "") or ""
+                posted = pub_date[:10] if pub_date else ""
             jobs.append(self._make_job(
                 title, item.get("company_name", ""),
                 item.get("location", "Remote"),
                 re.sub(r"<[^>]+>", "", (item.get("description", "") or ""))[:400],
                 url_val, "workingnomads", CAT,
-                "",
+                posted,
             ))
         return jobs[:25]
 
@@ -379,8 +385,9 @@ class InternationalJobScraper(BaseScraper):
                     "[class*='company_name']","[class*='company']","strong",
                 ])
                 location = self.first_text(card, _LOCATION_SELS, "Remote")
+                posted = self.first_text(card, _DATE_SELS)
                 desc = self.first_text(card, _DESC_SELS)
-                jobs.append(self._make_job(title, company, location, desc, href, "skipthedrive", CAT, ""))
+                jobs.append(self._make_job(title, company, location, desc, href, "skipthedrive", CAT, posted))
             except Exception:
                 continue
         if not jobs:
@@ -388,6 +395,9 @@ class InternationalJobScraper(BaseScraper):
         return jobs[:25]
 
     # ── Playwright scrapers (JS-heavy / login sites) ───────────────────────
+
+    def scrape_linkedin(self, query: str) -> list[dict]:
+        return []
 
     async def scrape_indeed_playwright(self, page, query: str) -> list[dict]:
         from bs4 import BeautifulSoup
@@ -436,13 +446,33 @@ class InternationalJobScraper(BaseScraper):
                     seen.add(job_url)
                     company  = self.first_text(card, _COMPANY_SELS)
                     location = self.first_text(card, _LOCATION_SELS)
-                    jobs.append(self._make_job(title, company, location, "", job_url, "linkedin", CAT))
+                    posted   = self.first_text(card, _DATE_SELS)
+                    jobs.append(self._make_job(title, company, location, "", job_url, "linkedin", CAT, posted))
                 except Exception:
                     continue
             return self.filter_fresh(jobs)
         except Exception as e:
             print(f"[linkedin] playwright error: {e}")
         return []
+
+    # ── Rigzone (Oil & Gas) ─────────────────────────────────────────────────
+    def scrape_rigzone(self, query: str) -> list[dict]:
+        url  = f"https://www.rigzone.com/jobs/?searchterm={quote(query)}"
+        soup = self.fetch_soup(url)
+        if not soup:
+            return []
+        ld = self.fetch_json_ld(soup)
+        if ld:
+            for j in ld: j.update({"source": "rigzone", "category": CAT})
+            return self.filter_fresh(ld[:20])
+        cards = self.multi_select(soup, [
+            "div.job-row","div[class*='job-card']","tr.job","div[class*='listing']",
+            "article.job","div[class*='result']","article","li",
+        ])
+        result = self._parse_cards(cards, "rigzone", "https://www.rigzone.com")
+        if not result:
+            return self._extract_from_text(soup, "rigzone", "https://www.rigzone.com", CAT)
+        return result
 
     # ── Shared multi-selector card parser ─────────────────────────────────
     def _parse_cards(self, cards: list, source: str, base: str, limit: int = 25) -> list[dict]:

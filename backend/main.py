@@ -45,6 +45,8 @@ from backend.scrapers.nigeria import NigerianJobScraper
 from backend.scrapers.ngos import NGOJobScraper
 from backend.scrapers.international import InternationalJobScraper
 from backend.scrapers.highimpact import HighImpactScraper
+from backend.scrapers.web3 import Web3JobScraper
+from backend.scrapers.ats import ATSJobScraper
 
 
 @asynccontextmanager
@@ -286,6 +288,8 @@ SCRAPER_MAP = {
     "ngo": NGOJobScraper(),
     "international": InternationalJobScraper(),
     "highimpact": HighImpactScraper(),
+    "web3": Web3JobScraper(),
+    "ats": ATSJobScraper(),
 }
 
 def _scrape_board(board_name: str, cat: str, query: str) -> list[dict]:

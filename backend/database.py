@@ -295,6 +295,7 @@ def init_db():
             _safe_alter(conn, "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS cv_gen_count INTEGER DEFAULT 0")
             _seed_categories(conn)
             _seed_admin_user(conn)
+            _backfill_match_scores(conn)
     else:
         with get_db() as conn:
             conn.executescript(_SQLITE_DDL)
@@ -312,6 +313,7 @@ def init_db():
                 pass
             _seed_categories(conn)
             _seed_admin_user(conn)
+            _backfill_match_scores(conn)
 
 
 def _seed_categories(conn):
@@ -342,6 +344,17 @@ def _seed_categories(conn):
             "slug",
         )
         _exec(conn, sql, (slug, name, icon, keywords, color))
+
+
+def _backfill_match_scores(conn):
+    try:
+        rows = _exec(conn, "SELECT id, title, description, company, job_category FROM global_jobs WHERE match_score IS NULL OR match_score = 0").fetchall()
+        for row in rows:
+            job = {"title": row[1], "description": row[2], "company": row[3]}
+            score = _compute_match_score(job, row[4] or "other")
+            _exec(conn, "UPDATE global_jobs SET match_score = ? WHERE id = ?", (score, row[0]))
+    except Exception:
+        pass
 
 
 def _seed_admin_user(conn):
@@ -540,6 +553,20 @@ def get_cv_default() -> dict:
 
 # ── Global Jobs Pool ────────────────────────────────────────────────────────
 
+def _compute_match_score(job: dict, category: str) -> float:
+    score = 0.0
+    if job.get("company", ""):
+        score += 15.0
+    desc = job.get("description", "") or ""
+    if len(desc) > 100:
+        score += 15.0
+    text = f"{job.get('title', '')} {desc}".lower()
+    from backend.config import JOB_CATEGORIES
+    cat_info = JOB_CATEGORIES.get(category, {})
+    matches = sum(text.count(kw) for kw in cat_info.get("keywords", []))
+    score += min(matches * 3.0, 70.0)
+    return round(min(score, 100.0), 1)
+
 def save_global_jobs(jobs: list[dict]) -> int:
     saved = 0
     with get_db() as conn:
@@ -551,7 +578,8 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     len(job.get("description", "") or "") > 100
                     and job.get("company", "")
                 ) else 0
-                sql = "INSERT OR IGNORE INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                match_score = _compute_match_score(job, category)
+                sql = "INSERT OR IGNORE INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate, match_score) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 p = (
                     job.get("title", ""),
                     job.get("company", ""),
@@ -564,10 +592,11 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     job.get("posted_date", ""),
                     has_full_info,
                     is_graduate,
+                    match_score,
                 )
                 if _is_pg():
                     c = conn.cursor()
-                    c.execute("INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING", p)
+                    c.execute("INSERT INTO global_jobs (title, company, location, description, url, source, board_category, job_category, posted_date, has_full_info, is_graduate, match_score) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (url) DO NOTHING", p)
                     if c.rowcount > 0:
                         saved += 1
                 else:

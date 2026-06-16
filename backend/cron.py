@@ -9,6 +9,8 @@ from backend.scrapers.nigeria import NigerianJobScraper
 from backend.scrapers.ngos import NGOJobScraper
 from backend.scrapers.international import InternationalJobScraper
 from backend.scrapers.highimpact import HighImpactScraper
+from backend.scrapers.web3 import Web3JobScraper
+from backend.scrapers.ats import ATSJobScraper
 
 _MAX_JOBS = 1000
 _BOARD_TIMEOUT = 45  # seconds max per board (all queries combined)
@@ -18,6 +20,8 @@ SCRAPER_MAP = {
     "ngo": NGOJobScraper(),
     "international": InternationalJobScraper(),
     "highimpact": HighImpactScraper(),
+    "web3": Web3JobScraper(),
+    "ats": ATSJobScraper(),
 }
 
 

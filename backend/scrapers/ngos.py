@@ -155,7 +155,8 @@ class NGOJobScraper(BaseScraper):
                 if not title or href in seen: continue
                 seen.add(href)
                 location = self.first_text(card, _LOCATION_SELS)
-                jobs.append(self._make_job(title, "UNICEF", location, "", href, "unicef", CAT))
+                posted   = self.first_text(card, _DATE_SELS)
+                jobs.append(self._make_job(title, "UNICEF", location, "", href, "unicef", CAT, posted))
             if jobs:
                 return self.filter_fresh(jobs)
             result = self._extract_from_text(soup, "unicef", url.split("/en-us")[0], CAT)
@@ -189,7 +190,8 @@ class NGOJobScraper(BaseScraper):
                 if not title or href in seen: continue
                 seen.add(href)
                 location = self.first_text(card, _LOCATION_SELS)
-                jobs.append(self._make_job(title, "WHO", location, "", href, "who", CAT))
+                posted   = self.first_text(card, _DATE_SELS)
+                jobs.append(self._make_job(title, "WHO", location, "", href, "who", CAT, posted))
             if jobs:
                 return self.filter_fresh(jobs)
             result = self._extract_from_text(soup, "who", base, CAT)

@@ -156,6 +156,21 @@ JOB_BOARDS = {
             "search_url": "https://jobs.smartyacad.com/wp-json/wp/v2/posts?categories=10&per_page=50",
             "type": "public", "region": "Nigeria", "icon": "ng", "enabled": True,
         },
+        "naijajobportal": {
+            "base_url": "https://www.naijajobportal.com.ng",
+            "search_url": "https://www.naijajobportal.com.ng/jobs?q={query}",
+            "type": "public", "region": "Nigeria", "icon": "ng", "enabled": True,
+        },
+        "leep": {
+            "base_url": "https://jobs.leep.gov.ng",
+            "search_url": "https://jobs.leep.gov.ng/?s={query}",
+            "type": "public", "region": "Nigeria/Government", "icon": "ng", "enabled": True,
+        },
+        "oilandgas": {
+            "base_url": "https://www.myjobmag.com/jobs-by-industry/oil-and-gas",
+            "search_url": "",
+            "type": "public", "region": "Nigeria/Oil & Gas", "icon": "ng", "enabled": True,
+        },
     },
     "ngo": {
         "myngojob": {
@@ -275,35 +290,10 @@ JOB_BOARDS = {
             "search_url": "https://remotework.ng/?s={query}",
             "type": "public", "region": "Africa/Remote", "icon": "global", "enabled": True,
         },
-        "bruntwork": {
-            "base_url": "https://bruntwork.io",
-            "search_url": "https://bruntwork.io/jobs?search={query}",
-            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
-        },
-        "scalearmy": {
-            "base_url": "https://scalearmy.com",
-            "search_url": "https://scalearmy.com/jobs?search={query}",
-            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
-        },
-        "cryptocurrencyjobs": {
-            "base_url": "https://cryptocurrencyjobs.co",
-            "search_url": "https://cryptocurrencyjobs.co/?search={query}",
-            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
-        },
-        "web3career": {
-            "base_url": "https://web3.career",
-            "search_url": "https://web3.career/search?q={query}",
-            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
-        },
-        "remote3": {
-            "base_url": "https://remote3.co",
-            "search_url": "https://remote3.co/jobs?q={query}",
-            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
-        },
-        "blockchainwork": {
-            "base_url": "https://blockchain.work",
-            "search_url": "https://blockchain.work/jobs?q={query}",
-            "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
+        "rigzone": {
+            "base_url": "https://www.rigzone.com",
+            "search_url": "https://www.rigzone.com/jobs/?searchterm={query}",
+            "type": "public", "region": "Global/Oil & Gas", "icon": "global", "enabled": True,
         },
         "workingnomads": {
             "base_url": "https://www.workingnomads.com",
@@ -323,6 +313,7 @@ JOB_BOARDS = {
 # Using all 133 queries × 29 boards = 3,857 requests (takes 30+ min).
 CRON_QUERIES = [
     "Data Analyst", "Project Manager", "Software Engineer",
+    "Blockchain Developer", "Smart Contract", "Solidity",
 ]
 
 JOB_BOARDS["highimpact"] = {
@@ -340,6 +331,42 @@ JOB_BOARDS["highimpact"] = {
         "base_url": "https://www.anthropic.com",
         "search_url": "https://www.anthropic.com/careers?query={query}",
         "type": "public", "region": "Global/AI", "icon": "ai", "enabled": True,
+    },
+}
+
+JOB_BOARDS["ats"] = {
+    "ashby": {
+        "base_url": "https://api.ashbyhq.com",
+        "search_url": "",
+        "type": "public", "region": "Global/Tech", "icon": "global", "enabled": True,
+    },
+    "greenhouse": {
+        "base_url": "https://boards-api.greenhouse.io",
+        "search_url": "",
+        "type": "public", "region": "Global/Tech", "icon": "global", "enabled": True,
+    },
+}
+
+JOB_BOARDS["web3"] = {
+    "jobsolana": {
+        "base_url": "https://jobs.solana.com",
+        "search_url": "https://jobs.solana.com/jobs",
+        "type": "public", "region": "Global/Solana Ecosystem", "icon": "web3", "enabled": True,
+    },
+    "cryptocurrencyjobs": {
+        "base_url": "https://cryptocurrencyjobs.co",
+        "search_url": "https://cryptocurrencyjobs.co/",
+        "type": "public", "region": "Global/Web3", "icon": "web3", "enabled": True,
+    },
+    "web3career": {
+        "base_url": "https://web3.career",
+        "search_url": "https://web3.career/",
+        "type": "public", "region": "Global/Web3", "icon": "web3", "enabled": True,
+    },
+    "cryptojobslist": {
+        "base_url": "https://cryptojobslist.com",
+        "search_url": "https://cryptojobslist.com/",
+        "type": "public", "region": "Global/Web3", "icon": "web3", "enabled": True,
     },
 }
 

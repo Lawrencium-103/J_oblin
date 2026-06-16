@@ -7,6 +7,83 @@ from .base import BaseScraper
 
 CAT = "nigeria"
 
+# ── MyJobMag Industry Sectors (39 categories) ──────────────────────────────
+MYJOBMAG_SECTORS = [
+    ("advertising-branding", "Advertising / Branding / PR"),
+    ("agriculture", "Agriculture / Agro-Allied"),
+    ("aviation", "Aviation / Airline"),
+    ("banking-financial-services", "Banking / Financial Services"),
+    ("blockchain", "Blockchain"),
+    ("building-construction", "Building / Construction"),
+    ("consulting", "Consulting"),
+    ("creative", "Creative / Arts"),
+    ("education", "Education / Teaching"),
+    ("engineering", "Engineering / Technical"),
+    ("food-services", "Food Services"),
+    ("general", "General"),
+    ("government", "Government"),
+    ("medical", "Healthcare / Medical"),
+    ("hospitality", "Hotels & Restaurants"),
+    ("ict-telecommunications", "ICT / Telecommunication"),
+    ("insurance", "Insurance"),
+    ("internet-e-commerce", "Internet / E-commerce"),
+    ("janitorial-services", "Janitorial Services / Environment"),
+    ("legal", "Law / Legal"),
+    ("logistics-and-transportation", "Logistics and Transportation"),
+    ("manufacturing", "Manufacturing / Production / FMCG"),
+    ("marine-shipping", "Marine and Shipping"),
+    ("broadcasting", "Media / Radio / TV"),
+    ("sales-marketing", "Merchandising, Retail & eCommerce"),
+    ("ngo", "NGO / Non-Profit Associations"),
+    ("oil-and-gas", "Oil and Gas"),
+    ("online-sales-marketing", "Online Sales / Marketing"),
+    ("pharmaceuticals", "Pharmaceuticals"),
+    ("power-energy", "Power / Energy"),
+    ("professional-social-associations", "Professional / Social Associations"),
+    ("raffle", "Raffle"),
+    ("real-estate", "Real Estate"),
+    ("religious", "Religious"),
+    ("research", "Research"),
+    ("science", "Science"),
+    ("security", "Security"),
+    ("travel-and-tours", "Travel and Tourism"),
+]
+
+SECTOR_SLUGS = [s[0] for s in MYJOBMAG_SECTORS]
+SECTOR_BY_SLUG = dict(MYJOBMAG_SECTORS)
+
+# Keyword terms for boards without native category filtering
+SECTOR_SEARCH_TERMS = {
+    "oil-and-gas": "oil+gas+petroleum+energy",
+    "insurance": "insurance+underwriting",
+    "banking-financial-services": "banking+finance+financial+investment",
+    "ict-telecommunications": "ICT+telecommunications+telecom+network",
+    "manufacturing": "manufacturing+FMCG+production+factory",
+    "power-energy": "power+energy+electricity+renewable",
+    "medical": "medical+healthcare+health+pharmaceutical",
+    "building-construction": "construction+building+civil+engineering+infrastructure",
+    "ngo": "NGO+nonprofit+development+humanitarian",
+    "education": "education+teaching+academic+training",
+    "government": "government+civil+service+public+sector",
+    "legal": "legal+law+compliance+regulatory",
+    "consulting": "consulting+advisory+strategy",
+    "engineering": "engineering+technical+maintenance+installation",
+    "logistics-and-transportation": "logistics+transportation+supply+chain+fleet",
+    "agriculture": "agriculture+farming+agro+allied",
+    "real-estate": "real+estate+property+housing+facility",
+    "hospitality": "hospitality+hotel+restaurant+tourism+travel",
+    "creative": "creative+design+arts+multimedia+graphic",
+    "broadcasting": "media+broadcasting+radio+TV+journalism",
+    "sales-marketing": "sales+marketing+merchandising+retail+ecommerce",
+    "online-sales-marketing": "digital+marketing+online+sales+social+media",
+    "security": "security+safety+guard+surveillance",
+    "research": "research+analysis+data+monitoring+evaluation",
+    "science": "science+laboratory+lab+research+scientist",
+    "human-resources": "HR+human+resources+recruitment+talent+payroll",
+    "accounting-finance": "accounting+audit+tax+treasury+finance+accounts",
+}
+
+
 _TITLE_SELS    = ["h2 a","h3 a","h4 a","a.job-title","[class*='title'] a",
                   "a[class*='title']","a[class*='job']",".job-name a","a[rel='bookmark']",
                   "h2.entry-title a","h3.entry-title a",".job_title a",".job-title a",
@@ -64,14 +141,30 @@ class NigerianJobScraper(BaseScraper):
     # ── MyJobMag ────────────────────────────────────────────────────────────
     def scrape_myjobmag(self, query: str) -> list[dict]:
         url  = f"https://www.myjobmag.com/search?q={quote(query)}"
+        return self._parse_myjobmag(url, "myjobmag")
+
+    def scrape_myjobmag_by_industry(self, slug: str, pages: int = 2) -> list[dict]:
+        """Scrape MyJobMag by industry category slug (e.g. 'oil-and-gas')."""
+        all_jobs = []
+        for page in range(1, pages + 1):
+            if page == 1:
+                url = f"https://www.myjobmag.com/jobs-by-industry/{slug}"
+            else:
+                url = f"https://www.myjobmag.com/jobs-by-industry/{slug}/page/{page}"
+            jobs = self._parse_myjobmag(url, f"myjobmag/{slug}")
+            if not jobs:
+                break
+            all_jobs.extend(jobs)
+        return self.filter_fresh(all_jobs[:30])
+
+    def _parse_myjobmag(self, url: str, source: str) -> list[dict]:
         soup = self.fetch_soup(url)
         if not soup:
             return []
         ld = self.fetch_json_ld(soup)
         if ld:
-            for j in ld: j.update({"source": "myjobmag", "category": CAT})
+            for j in ld: j.update({"source": source, "category": CAT})
             return self.filter_fresh(ld[:20])
-        # Try common card selectors first, then site-specific
         cards = self.multi_select(soup, [
             "li.job-list-li",
             "article.job-item","div.job-item","li.job-item",
@@ -81,10 +174,28 @@ class NigerianJobScraper(BaseScraper):
             "div.listing-item","div.post-item","li.listing-item",
             "tr","div.row","div[class*='list'] > div","article",
         ])
-        result = self._parse_cards(cards, "myjobmag", "https://www.myjobmag.com", 20)
+        result = self._parse_cards(cards, source, "https://www.myjobmag.com", 20)
         if not result:
-            return self._extract_from_text(soup, "myjobmag", "https://www.myjobmag.com", CAT)
+            return self._extract_from_text(soup, source, "https://www.myjobmag.com", CAT)
         return result
+
+    # ── Sector-scrape all boards for given sectors ──────────────────────────
+    def scrape_sectors(self, sector_slugs: list[str]) -> list[dict]:
+        """Scrape all applicable Nigerian boards for specific industry sectors."""
+        all_jobs = []
+        for slug in sector_slugs:
+            sector_name = SECTOR_BY_SLUG.get(slug, slug.replace("-", " "))
+            # MyJobMag has native industry pages
+            jobs = self.scrape_myjobmag_by_industry(slug, pages=1)
+            all_jobs.extend(jobs or [])
+            # Keyword-board sectors: jobzilla
+            search_term = SECTOR_SEARCH_TERMS.get(slug, slug.replace("-", "+"))
+            jobs_z = self.scrape_jobzilla(search_term)
+            all_jobs.extend(jobs_z or [])
+            # NaijaJobPortal
+            jobs_n = self.scrape_naijajobportal(search_term)
+            all_jobs.extend(jobs_n or [])
+        return self.filter_fresh(all_jobs)
 
     # ── Jobberman ───────────────────────────────────────────────────────────
     def scrape_jobberman(self, query: str) -> list[dict]:
@@ -188,6 +299,87 @@ class NigerianJobScraper(BaseScraper):
         if not result:
             return self._extract_from_text(soup, "jobzilla", "https://www.jobzilla.ng", CAT)
         return result
+
+    # ── NaijaJobPortal ───────────────────────────────────────────────────────
+    def scrape_naijajobportal(self, query: str) -> list[dict]:
+        url = f"https://www.naijajobportal.com.ng/jobs?q={quote(query)}"
+        soup = self.fetch_soup(url)
+        if not soup:
+            return []
+        ld = self.fetch_json_ld(soup)
+        if ld:
+            for j in ld: j.update({"source": "naijajobportal", "category": CAT})
+            return self.filter_fresh(ld[:20])
+        cards = soup.select("article.bj-job-card")
+        if not cards:
+            return self._extract_from_text(soup, "naijajobportal",
+                                            "https://www.naijajobportal.com.ng", CAT)
+        jobs, seen = [], set()
+        for card in cards[:25]:
+            try:
+                title_el = card.select_one("h2.bj-job-title a")
+                if not title_el:
+                    continue
+                title = self._clean_text(title_el.get_text())
+                href = title_el.get("href", "")
+                full_url = self._full_url("https://www.naijajobportal.com.ng", href)
+                if not title or not full_url or full_url in seen:
+                    continue
+                seen.add(full_url)
+                company = self._clean_text(
+                    card.select_one("p.bj-company a").get_text()
+                ) if card.select_one("p.bj-company a") else ""
+                location = ""
+                loc_el = card.select_one("span.bj-chip i.fa-map-marker-alt")
+                if loc_el:
+                    location = self._clean_text(loc_el.parent.get_text()) if loc_el.parent else ""
+                posted = self._clean_text(
+                    card.select_one("p.bj-posted").get_text()
+                ) if card.select_one("p.bj-posted") else ""
+                desc = self._clean_text(
+                    card.select_one("p.bj-desc").get_text()
+                ) if card.select_one("p.bj-desc") else ""
+                if not company:
+                    logo = card.select_one("img.bj-logo")
+                    if logo and logo.get("alt"):
+                        company = logo["alt"].strip()
+                jobs.append(self._make_job(title, company, location, desc,
+                                            full_url, "naijajobportal", CAT, posted))
+            except Exception:
+                continue
+        return self.filter_fresh(jobs)
+
+    # ── Oil & Gas (Nigerian boards via sector) ──────────────────────────────
+    def scrape_oilandgas(self, query: str = "") -> list[dict]:
+        """Scrape O&G roles from MyJobMag industry page + keyword boards."""
+        return self.scrape_sectors(["oil-and-gas"])
+
+    # ── LEEP Jobs (Nigerian Government Portal) ──────────────────────────────
+    def scrape_leep(self, query: str) -> list[dict]:
+        url  = f"https://jobs.leep.gov.ng/?s={quote(query)}"
+        soup = self.fetch_soup(url)
+        if not soup:
+            return []
+        ld = self.fetch_json_ld(soup)
+        if ld:
+            for j in ld: j.update({"source": "leep", "category": CAT})
+            return self.filter_fresh(ld[:20])
+        cards = self.multi_select(soup, [
+            "article.job","div.job-listing","div.job-card",
+            "li.job_listing","div.search-result","article.post",
+            "div[class*='job']","article","li.post",
+        ])
+        result = self._parse_cards(cards, "leep", "https://jobs.leep.gov.ng", 20)
+        if not result:
+            return self._extract_from_text(soup, "leep", "https://jobs.leep.gov.ng", CAT)
+        return result
+
+    def _full_url(self, base: str, path: str) -> str:
+        if not path:
+            return ""
+        if path.startswith("http"):
+            return path
+        return base.rstrip("/") + "/" + path.lstrip("/")
 
     # ── Shared card parser ──────────────────────────────────────────────────
     def _parse_cards(self, cards: list, source: str, base: str, limit: int) -> list[dict]:

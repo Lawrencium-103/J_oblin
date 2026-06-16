@@ -67,6 +67,12 @@ function toggleAdminMode() {
   localStorage.setItem("admin_mode", newVal);
   location.reload();
 }
+function togglePwd(id, el) {
+  const inp = document.getElementById(id);
+  const isPwd = inp.type === "password";
+  inp.type = isPwd ? "text" : "password";
+  el.innerHTML = isPwd ? "&#128064;" : "&#128065;";
+}
 function logout() { localStorage.removeItem("joblin_token"); localStorage.removeItem("joblin_user"); localStorage.removeItem("admin_mode"); window.location.href = "/login.html"; }
 function escHtml(s) { if (!s) return ""; return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 
@@ -104,7 +110,8 @@ function renderQualityScores(scores) {
 }
 
 function renderJobScore(score) {
-  const pct = Math.round(score || 0);
+  if (!score || score <= 0) return "";
+  const pct = Math.round(score);
   let color = "var(--text-subtle)";
   if (pct >= 70) color = "var(--color-primary-500)";
   else if (pct >= 40) color = "var(--color-warning-500)";

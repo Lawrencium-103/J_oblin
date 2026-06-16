@@ -466,6 +466,16 @@ class BaseScraper:
                         if lt and len(lt) < 60:
                             location = lt
                             break
+                # Try to get posted date from nearby text
+                posted = ""
+                for sel in ["time", "[class*='date']", "[class*='posted']",
+                            "[class*='ago']", "[class*='published']", "[datetime]"]:
+                    el = parent.select_one(sel)
+                    if el:
+                        dt = el.get("datetime", "") or self._clean_text(el.get_text())
+                        if dt:
+                            posted = dt[:20]
+                            break
                 # Try to get description from nearby text
                 for sel in ["p", "[class*='desc']", "[class*='summary']",
                             "[class*='excerpt']", ".text", ".content"]:
@@ -476,7 +486,7 @@ class BaseScraper:
                             desc = dt[:400]
                             break
 
-            jobs.append(self._make_job(text, company, location, desc, full_url, source, cat))
+            jobs.append(self._make_job(text, company, location, desc, full_url, source, cat, posted))
             if len(jobs) >= limit:
                 break
         if jobs:

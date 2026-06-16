@@ -13,7 +13,6 @@
         <div class="auth-brand-icon">J</div>
         <h1>Job<span>lin</span></h1>
       </a>
-    <h1>Job<span>lin</span></h1>
     <p class="subtitle">Create your account</p>
     <form id="registerForm">
       <div class="form-group">
@@ -36,14 +35,6 @@
     <p class="footer-link">Already have an account? <a href="login.html">Sign in</a></p>
   </div>
 </div>
-<script>
-function togglePwd(id, el) {
-  const inp = document.getElementById(id);
-  const isPwd = inp.type === "password";
-  inp.type = isPwd ? "text" : "password";
-  el.innerHTML = isPwd ? "&#128064;" : "&#128065;";
-}
-</script>
 <script src="app.js"></script>
 <script>
 const btn = document.getElementById("registerBtn");
@@ -67,6 +58,8 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
   }
 });
 if (getToken()) window.location.href = "dashboard.html";
+const params = new URLSearchParams(window.location.search);
+if (params.get("email")) document.getElementById("email").value = params.get("email");
 </script>
 </body>
 </html>
