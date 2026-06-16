@@ -1,4 +1,4 @@
-import json, os, re, random, threading
+import json, os, re, random, threading, hashlib
 from pathlib import Path
 from contextlib import asynccontextmanager
 from datetime import datetime, timedelta
@@ -37,7 +37,6 @@ def _file_slug(name: str, company: str = "", counter: int = 0) -> str:
             parts.append(scompany)
     suffix = hashlib.md5(f"{counter}_{name}_{company}".encode()).hexdigest()[:6]
     return "_".join(parts) + f"_{suffix}" if parts else f"{str(counter).zfill(2)}_{suffix}_cv"
-import hashlib
 from backend.cv_diversity import randomize_tailored_cv
 from backend.excel_export import export_jobs_to_excel
 
@@ -462,123 +461,126 @@ def extract_job_url(url: str = Body(..., embed=True)):
     if not url:
         raise HTTPException(400, "URL required")
     
-    # Try multiple ways to fetch the HTML
+    import traceback as _tb
+    print(f"[extract-url] fetching: {url[:100]}")
     html = None
     
-    # Method 1: Using the BaseScraper (respects robots.txt, has delays)
     try:
         html = _scraper_base.fetch(url, timeout=15)
-    except Exception:
-        pass
+    except Exception as e:
+        print(f"[extract-url] method1 failed: {e}")
+        _tb.print_exc()
         
-    # Method 2: Direct requests with a common UA (bypass robots.txt check if it's the bottleneck)
     if not html:
         try:
-            import requests
-            resp = requests.get(url, headers={
+            import requests as _req2
+            resp = _req2.get(url, headers={
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
             }, timeout=15)
             if resp.status_code == 200:
                 html = resp.text
-        except Exception:
-            pass
+        except Exception as e:
+            print(f"[extract-url] method2 failed: {e}")
+            _tb.print_exc()
 
     if not html:
         raise HTTPException(400, "Could not fetch URL. The site might be blocking automated access. Try pasting details manually.")
 
-    from bs4 import BeautifulSoup
-    import json as _json
-    soup = BeautifulSoup(html, "html.parser")
+    try:
+        from bs4 import BeautifulSoup
+        import json as _json
+        soup = BeautifulSoup(html, "html.parser")
 
-    # Priority 0: Parse LD+JSON structured data (most reliable if available)
-    title = ""
-    company = ""
-    location = ""
-    desc = ""
-    for script in soup.find_all("script", type="application/ld+json"):
-        text = script.string or ""
-        if not text.strip(): continue
-        try:
-            data = _json.loads(text)
-        except _json.JSONDecodeError:
-            continue
-        if not isinstance(data, dict) or data.get("@type") != "JobPosting":
-            continue
-        if data.get("title"):
-            title = data["title"]
-        ho = data.get("hiringOrganization") or {}
-        if isinstance(ho, dict) and ho.get("name"):
-            company = ho["name"]
-        jl = data.get("jobLocation") or {}
-        if isinstance(jl, dict):
-            addr = jl.get("address") or jl
-            parts = []
-            for key in ("addressLocality", "addressRegion", "addressCountry"):
-                v = addr.get(key, "") if isinstance(addr, dict) else ""
-                if v: parts.append(v)
-            if parts: location = ", ".join(parts)
-        if data.get("description"):
-            import html as _html
-            from bs4 import BeautifulSoup as _BS
-            desc_text = _html.unescape(data["description"])
-            desc_soup = _BS(desc_text, "html.parser")
-            for br in desc_soup.find_all("br"): br.replace_with("\n")
-            for p_tag in desc_soup.find_all("p"): p_tag.append("\n")
-            desc = desc_soup.get_text("\n", strip=True)
-        break  # Use first JobPosting found
+        title = ""
+        company = ""
+        location = ""
+        desc = ""
+        for script in soup.find_all("script", type="application/ld+json"):
+            text = script.string or ""
+            if not text.strip(): continue
+            try:
+                data = _json.loads(text)
+            except _json.JSONDecodeError:
+                continue
+            if not isinstance(data, dict) or data.get("@type") != "JobPosting":
+                continue
+            if data.get("title"):
+                title = data["title"]
+            ho = data.get("hiringOrganization") or {}
+            if isinstance(ho, dict) and ho.get("name"):
+                company = ho["name"]
+            jl = data.get("jobLocation") or {}
+            if isinstance(jl, dict):
+                addr = jl.get("address") or jl
+                parts = []
+                for key in ("addressLocality", "addressRegion", "addressCountry"):
+                    v = addr.get(key, "") if isinstance(addr, dict) else ""
+                    if v: parts.append(v)
+                if parts: location = ", ".join(parts)
+            if data.get("description"):
+                import html as _html
+                from bs4 import BeautifulSoup as _BS
+                desc_text = _html.unescape(data["description"])
+                desc_soup = _BS(desc_text, "html.parser")
+                for br in desc_soup.find_all("br"): br.replace_with("\n")
+                for p_tag in desc_soup.find_all("p"): p_tag.append("\n")
+                desc = desc_soup.get_text("\n", strip=True)
+            break
 
-    # Fallback to HTML scraping if LD+JSON didn't yield enough
-    meta_title = soup.find("meta", property="og:title") or soup.find("meta", name="twitter:title")
-    meta_desc = soup.find("meta", property="og:description") or soup.find("meta", name="twitter:description") or soup.find("meta", name="description")
-    
-    if not title:
-        if meta_title:
-            title = meta_title.get("content", "")
+        meta_title = soup.find("meta", property="og:title") or soup.find("meta", name="twitter:title")
+        meta_desc = soup.find("meta", property="og:description") or soup.find("meta", name="twitter:description") or soup.find("meta", name="description")
+        
         if not title:
-            for sel in ["h1", "h2", "title", "[class*='title'] h1", "[class*='job-title']", "[data-testid='job-title']", ".job-header h1"]:
+            if meta_title:
+                title = meta_title.get("content", "")
+            if not title:
+                for sel in ["h1", "h2", "title", "[class*='title'] h1", "[class*='job-title']", "[data-testid='job-title']", ".job-header h1"]:
+                    el = soup.select_one(sel)
+                    if el:
+                        title = el.get_text(strip=True)
+                        break
+
+        if not desc:
+            for sel in ["[class*='description']", "[class*='job-description']", "[data-testid='job-description']",
+                        ".job-details", ".vacancy-desc", "article", "main", "[role='main']"]:
                 el = soup.select_one(sel)
                 if el:
-                    title = el.get_text(strip=True)
+                    for br in el.find_all("br"): br.replace_with("\n")
+                    for p_tag in el.find_all("p"): p_tag.append("\n")
+                    desc = el.get_text("\n", strip=True)
+                    break
+            if not desc and meta_desc:
+                desc = meta_desc.get("content", "")
+
+        if not company:
+            for sel in ["[class*='company']", "[class*='employer']", "[class*='org']",
+                        "[data-testid='company-name']", ".hiring-org", "meta[name='author']"]:
+                el = soup.select_one(sel)
+                if el:
+                    company = el.get("content", el.get_text(strip=True))
                     break
 
-    if not desc:
-        for sel in ["[class*='description']", "[class*='job-description']", "[data-testid='job-description']",
-                    ".job-details", ".vacancy-desc", "article", "main", "[role='main']"]:
-            el = soup.select_one(sel)
-            if el:
-                for br in el.find_all("br"): br.replace_with("\n")
-                for p_tag in el.find_all("p"): p_tag.append("\n")
-                desc = el.get_text("\n", strip=True)
-                break
-        if not desc and meta_desc:
-            desc = meta_desc.get("content", "")
+        if not location:
+            for sel in ["[class*='location']", "[class*='place']", "[class*='city']", "[class*='country']", ".job-location"]:
+                el = soup.select_one(sel)
+                if el:
+                    location = el.get_text(strip=True)
+                    break
 
-    if not company:
-        for sel in ["[class*='company']", "[class*='employer']", "[class*='org']",
-                    "[data-testid='company-name']", ".hiring-org", "meta[name='author']"]:
-            el = soup.select_one(sel)
-            if el:
-                company = el.get("content", el.get_text(strip=True))
-                break
-
-    if not location:
-        for sel in ["[class*='location']", "[class*='place']", "[class*='city']", "[class*='country']", ".job-location"]:
-            el = soup.select_one(sel)
-            if el:
-                location = el.get_text(strip=True)
-                break
-
-    job_data = {
-        "title": title or "Unknown Position",
-        "company": company or "",
-        "location": location or "",
-        "description": (desc or "")[:5000] if desc else "No description extracted",
-        "url": url,
-        "source": "manual",
-        "category": classify_job_title(title, desc or ""),
-    }
-    return job_data
+        job_data = {
+            "title": title or "Unknown Position",
+            "company": company or "",
+            "location": location or "",
+            "description": (desc or "")[:5000] if desc else "No description extracted",
+            "url": url,
+            "source": "manual",
+            "category": classify_job_title(title, desc or ""),
+        }
+        return job_data
+    except Exception as e:
+        _tb.print_exc()
+        raise HTTPException(400, f"Failed to parse job page: {e}")
 
 
 # ── Tailor Routes ───────────────────────────────────────────────────────────
