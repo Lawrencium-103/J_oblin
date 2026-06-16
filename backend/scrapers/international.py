@@ -324,6 +324,69 @@ class InternationalJobScraper(BaseScraper):
             return self._extract_from_text(soup, "remoteworkng", "https://remotework.ng", CAT)
         return result
 
+    # ── WorkingNomads — JSON API ────────────────────────────────────────────
+    def scrape_workingnomads(self, query: str) -> list[dict]:
+        data = self.fetch_json("https://www.workingnomads.com/api/exposed_jobs/")
+        if not isinstance(data, list):
+            return []
+        q_words = set(query.lower().split())
+        jobs = []
+        for item in data:
+            title = item.get("title", "")
+            combined = (
+                title.lower() + " "
+                + (item.get("tags", "") or "").lower() + " "
+                + (item.get("category_name", "") or "").lower()
+            )
+            if not title or not q_words & set(combined.split()):
+                continue
+            url_val = item.get("url", "")
+            if not url_val:
+                continue
+            jobs.append(self._make_job(
+                title, item.get("company_name", ""),
+                item.get("location", "Remote"),
+                re.sub(r"<[^>]+>", "", (item.get("description", "") or ""))[:400],
+                url_val, "workingnomads", CAT,
+                "",
+            ))
+        return jobs[:25]
+
+    # ── SkipTheDrive — HTML ──────────────────────────────────────────────────
+    def scrape_skipthedrive(self, query: str) -> list[dict]:
+        url = f"https://www.skipthedrive.com/?s={quote(query)}"
+        soup = self.fetch_soup(url)
+        if not soup:
+            return []
+        ld = self.fetch_json_ld(soup)
+        if ld:
+            for j in ld: j.update({"source": "skipthedrive", "category": CAT})
+            return ld[:25]
+        cards = self.multi_select(soup, [
+            "article.post","article.job","div.job-listing","li.job-listing",
+            "div[class*='job-card']","article","li",
+        ])
+        jobs, seen = [], set()
+        for card in cards[:25]:
+            try:
+                title = self.first_text(card, ["h2 a","h3 a","a[class*='title']","strong a","a"])
+                href = self.first_href(card, ["h2 a","h3 a","a[class*='title']","strong a","a"], "https://www.skipthedrive.com")
+                if not title or not href or href in seen:
+                    continue
+                seen.add(href)
+                company = self.first_text(card, [
+                    "span.custom_fields_company_name_display_search_results",
+                    "[class*='company_name']","[class*='company']","strong",
+                ])
+                location = self.first_text(card, _LOCATION_SELS, "Remote")
+                desc = self.first_text(card, _DESC_SELS)
+                jobs.append(self._make_job(title, company, location, desc, href, "skipthedrive", CAT, ""))
+            except Exception:
+                continue
+        if not jobs:
+            return self._extract_from_text(soup, "skipthedrive", "https://www.skipthedrive.com", CAT)
+        return jobs[:25]
+
     # ── Playwright scrapers (JS-heavy / login sites) ───────────────────────
 
     async def scrape_indeed_playwright(self, page, query: str) -> list[dict]:

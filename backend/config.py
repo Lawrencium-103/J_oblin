@@ -305,6 +305,16 @@ JOB_BOARDS = {
             "search_url": "https://blockchain.work/jobs?q={query}",
             "type": "public", "region": "Remote/Web3", "icon": "global", "enabled": True,
         },
+        "workingnomads": {
+            "base_url": "https://www.workingnomads.com",
+            "search_url": "https://www.workingnomads.com/api/exposed_jobs/",
+            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
+        },
+        "skipthedrive": {
+            "base_url": "https://www.skipthedrive.com",
+            "search_url": "https://www.skipthedrive.com/?s={query}",
+            "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
+        },
     },
 }
 
