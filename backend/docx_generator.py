@@ -10,52 +10,52 @@ from docx.oxml.ns import qn
 
 CV_PROFILES = [
     {
-        "font": "Calibri", "size": 10, "name_size": 16,
-        "section_font": "Calibri", "section_size": 10,
+        "font": "Calibri", "size": 11, "name_size": 20,
+        "section_font": "Calibri", "section_size": 11.5,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x1a, 0x3a, 0x5c),
         "margins": (0.75, 0.75, 0.75, 0.75),
-        "line_spacing": 1.15, "contact_sep": " | ", "name": "modern-blue",
+        "line_spacing": 1.2, "contact_sep": " | ", "name": "modern-blue",
     },
     {
-        "font": "Arial", "size": 10, "name_size": 15,
-        "section_font": "Arial", "section_size": 10,
+        "font": "Arial", "size": 11, "name_size": 19,
+        "section_font": "Arial", "section_size": 11.5,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x2d, 0x50, 0x16),
         "margins": (0.7, 0.7, 0.7, 0.7),
-        "line_spacing": 1.1, "contact_sep": " \u2022 ", "name": "classic-green",
+        "line_spacing": 1.15, "contact_sep": " \u2022 ", "name": "classic-green",
     },
     {
-        "font": "Georgia", "size": 10, "name_size": 17,
-        "section_font": "Georgia", "section_size": 10.5,
+        "font": "Georgia", "size": 11, "name_size": 21,
+        "section_font": "Georgia", "section_size": 11.5,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x5c, 0x1a, 0x1a),
         "margins": (0.8, 0.8, 0.8, 0.8),
-        "line_spacing": 1.15, "contact_sep": "  |  ", "name": "serif-maroon",
+        "line_spacing": 1.2, "contact_sep": "  |  ", "name": "serif-maroon",
     },
     {
-        "font": "Tahoma", "size": 10, "name_size": 14,
-        "section_font": "Tahoma", "section_size": 10,
+        "font": "Tahoma", "size": 11, "name_size": 18,
+        "section_font": "Tahoma", "section_size": 11.5,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x1a, 0x1a, 0x5c),
         "margins": (0.65, 0.65, 0.65, 0.65),
-        "line_spacing": 1.1, "contact_sep": " \u2014 ", "name": "compact-navy",
+        "line_spacing": 1.15, "contact_sep": " \u2014 ", "name": "compact-navy",
     },
     {
-        "font": "Garamond", "size": 11, "name_size": 18,
-        "section_font": "Garamond", "section_size": 11,
+        "font": "Garamond", "size": 11.5, "name_size": 22,
+        "section_font": "Garamond", "section_size": 12,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x5c, 0x3a, 0x1a),
         "margins": (0.8, 0.8, 0.8, 0.8),
-        "line_spacing": 1.2, "contact_sep": " | ", "name": "classic-warm",
+        "line_spacing": 1.25, "contact_sep": " | ", "name": "classic-warm",
     },
     {
-        "font": "Verdana", "size": 9.5, "name_size": 15,
-        "section_font": "Verdana", "section_size": 9.5,
+        "font": "Verdana", "size": 11, "name_size": 20,
+        "section_font": "Verdana", "section_size": 11.5,
         "color": RGBColor(0x1a, 0x1a, 0x1a),
         "accent": RGBColor(0x3a, 0x1a, 0x5c),
         "margins": (0.7, 0.7, 0.7, 0.7),
-        "line_spacing": 1.15, "contact_sep": " \u2022 ", "name": "wide-purple",
+        "line_spacing": 1.2, "contact_sep": " \u2022 ", "name": "wide-purple",
     },
 ]
 
@@ -105,6 +105,7 @@ def _render_skills_docx(doc, skills: list, max_groups: int = 6, profile: dict = 
     if not skills:
         return
     _add_section_title_docx(doc, "Core Competencies", profile)
+    sz = (profile.get("size", 11) - 1) if profile else 10
     if _is_grouped_skills(skills):
         for group in skills[:max_groups]:
             domain = group.get("domain", group.get("name", ""))
@@ -118,7 +119,7 @@ def _render_skills_docx(doc, skills: list, max_groups: int = 6, profile: dict = 
             bp.paragraph_format.space_before = Pt(0)
             bp.paragraph_format.left_indent = Inches(0.25)
             for run in bp.runs:
-                run.font.size = Pt(9)
+                run.font.size = Pt(sz)
     else:
         for s in skills[:8]:
             bp = doc.add_paragraph(s, style="List Bullet")
@@ -126,7 +127,7 @@ def _render_skills_docx(doc, skills: list, max_groups: int = 6, profile: dict = 
             bp.paragraph_format.space_before = Pt(0)
             bp.paragraph_format.left_indent = Inches(0.25)
             for run in bp.runs:
-                run.font.size = Pt(9)
+                run.font.size = Pt(sz)
 
 
 def _render_skills_pdf(pdf, skills: list, max_groups: int = 6, profile: dict = None):
@@ -177,7 +178,7 @@ def _add_section_title_docx(doc, title: str, profile: dict = None):
     p.paragraph_format.space_after = Pt(4)
     run = p.add_run(title.upper())
     run.bold = True
-    run.font.size = Pt(profile.get("section_size", 10)) if profile else Pt(10)
+    run.font.size = Pt((profile.get("section_size", 11) + 0.5)) if profile else Pt(11.5)
     col = profile.get("accent", RGBColor(0x1a, 0x1a, 0x1a)) if profile else RGBColor(0x1a, 0x1a, 0x1a)
     run.font.color.rgb = col
     pPr = p._p.get_or_add_pPr()
@@ -287,13 +288,13 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
                 run3.font.size = Pt(9)
                 run3.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
-            for ach in exp.get("achievements", [])[:5]:
+            for ach in exp.get("achievements", [])[:7]:
                 bp = doc.add_paragraph(ach, style="List Bullet")
                 bp.paragraph_format.space_after = Pt(0)
                 bp.paragraph_format.space_before = Pt(0)
                 bp.paragraph_format.left_indent = Inches(0.25)
                 for run_b in bp.runs:
-                    run_b.font.size = Pt(9.5)
+                    run_b.font.size = Pt(sz - 0.5)
 
     # EDUCATION
     education = tailored_cv.get("education", [])
@@ -305,13 +306,13 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
             p.paragraph_format.space_before = Pt(1)
             degree_inst = f"{edu.get('degree', '')} \u2014 {edu.get('institution', '')}"
             run = p.add_run(degree_inst)
-            run.font.size = Pt(10)
+            run.font.size = Pt(sz)
             run.bold = True
             if edu.get("start_date"):
                 yr = f"{edu['start_date']} - {edu.get('end_date', '')}"
                 _add_right_tab_stop(p, Inches(7.0))
                 run2 = p.add_run(f"\t{yr}")
-                run2.font.size = Pt(9)
+                run2.font.size = Pt(sz - 1)
                 run2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
     # CERTIFICATIONS
@@ -584,34 +585,34 @@ class _CvPdf(FPDF):
 
     def _section_title(self, title: str):
         self.set_x(self.l_margin)
-        self.set_font(self._font_pdf, "B", 9)
+        self.set_font(self._font_pdf, "B", 10)
         r, g, b = self._accent_rgb
         self.set_text_color(r, g, b)
-        self.cell(0, 5, _safe(title.upper()), new_x="LMARGIN", new_y="NEXT")
+        self.cell(0, 5.5, _safe(title.upper()), new_x="LMARGIN", new_y="NEXT")
         y = self.get_y()
         self.set_draw_color(r, g, b)
         self.line(self.l_margin, y, self.w - self.r_margin, y)
-        self.ln(1.5)
+        self.ln(2)
 
-    def _body(self, text: str, size=9):
+    def _body(self, text: str, size=10):
         self.set_x(self.l_margin)
         self.set_font("Helvetica", "", size)
         self.set_text_color(30, 30, 30)
-        self.multi_cell(w=0, h=4, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
+        self.multi_cell(w=0, h=4.5, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
 
     def _bold_line(self, text: str):
         self.set_x(self.l_margin)
-        self.set_font("Helvetica", "B", 9)
+        self.set_font("Helvetica", "B", 10)
         self.set_text_color(26, 26, 26)
-        self.multi_cell(w=0, h=4.5, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
+        self.multi_cell(w=0, h=5, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
 
     def _bullet(self, text: str):
-        self.set_font("Helvetica", "", 8.5)
+        self.set_font("Helvetica", "", 9.5)
         self.set_text_color(30, 30, 30)
         indent = 4
-        self.cell(indent, 4, "- ")
+        self.cell(indent, 4.5, "- ")
         x = self.get_x()
-        self.multi_cell(w=0, h=4, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
+        self.multi_cell(w=0, h=4.5, text=_safe(text), new_x="LMARGIN", new_y="NEXT")
 
 
 def _add_referees_pdf(pdf, referees: list = None):
@@ -636,16 +637,16 @@ def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "loc
     location = personal.get("location", "")
 
     # Name
-    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_font("Helvetica", "B", 18)
     pdf.set_text_color(26, 26, 26)
-    pdf.cell(0, 7, name, new_x="LMARGIN", new_y="NEXT")
+    pdf.cell(0, 8, name, new_x="LMARGIN", new_y="NEXT")
     # Contact
     contact_parts = [p for p in [phone, email, location] if p]
     if contact_parts:
-        pdf.set_font("Helvetica", "", 7.5)
+        pdf.set_font("Helvetica", "", 9)
         pdf.set_text_color(85, 85, 85)
-        pdf.cell(0, 4, " | ".join(contact_parts), new_x="LMARGIN", new_y="NEXT")
-    pdf.ln(2)
+        pdf.cell(0, 5, " | ".join(contact_parts), new_x="LMARGIN", new_y="NEXT")
+    pdf.ln(3)
 
     summary = tailored_cv.get("professional_summary", "")
     if summary:
@@ -665,7 +666,7 @@ def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "loc
             if date_str:
                 title_line += f"  ({date_str})"
             pdf._bold_line(title_line)
-            for ach in exp.get("achievements", [])[:5]:
+            for ach in exp.get("achievements", [])[:7]:
                 pdf._bullet(ach)
             pdf.ln(1)
 
