@@ -22,7 +22,7 @@ from backend.database import (
     create_reset_token, get_valid_token, mark_token_used, update_password,
 )
 from backend.auth import hash_password, verify_password, create_access_token, get_current_user
-from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text
+from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text, generate_hr_email
 from backend.cv_quality import score_cv_quality
 from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
@@ -756,6 +756,44 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
         "cv_pdf_path": cv_pdf_path,
         "cover_pdf_path": cover_pdf_path,
     }
+
+
+@app.post("/api/jobs/{job_id}/email-hr")
+def email_hr(job_id: int, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["user_id"]
+    job = get_global_job(job_id)
+    if not job:
+        raise HTTPException(404, "Job not found")
+
+    user_cv_json = get_cv(user_id)
+    if not user_cv_json:
+        raise HTTPException(400, "No CV found. Save your CV first.")
+    cv_data = json.loads(user_cv_json)
+
+    api_keys = get_effective_api_keys(user_id)
+    if not api_keys:
+        raise HTTPException(400, "No API keys found. Add keys in Settings or enable default AI.")
+
+    personal = cv_data.get("personal_info") or {}
+    target_type = "international" if job.get("category", "") in ("international", "remote") else "local"
+
+    email = generate_hr_email(
+        job_title=job.get("title", ""),
+        company=job.get("company", ""),
+        job_description=job.get("description", ""),
+        candidate_name=personal.get("name", "Candidate"),
+        summary=cv_data.get("professional_summary", ""),
+        skills=cv_data.get("skills", []),
+        experiences=cv_data.get("experience", []),
+        education=cv_data.get("education", []),
+        api_keys=api_keys,
+        target_type=target_type,
+    )
+
+    if not email:
+        raise HTTPException(502, "Failed to generate email — AI provider unavailable.")
+
+    return {"status": "ok", "email": email.strip()}
 
 
 # ── Download Routes ─────────────────────────────────────────────────────────

@@ -110,6 +110,21 @@
         </div>
         <div id="tailorResult" style="margin-top:12px"></div>
       </div>
+
+      <div class="card" id="emailSection" style="display:none">
+        <div class="card-title">
+          <div class="card-icon">&#9993;</div>
+          Email the Hiring Manager
+        </div>
+        <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
+          Generate a creative, straight-to-point email you can send directly to the hiring manager.
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary" onclick="generateEmail()" id="emailBtn">Generate Email</button>
+          <button class="btn btn-secondary" id="copyEmailBtn" style="display:none" onclick="copyEmail()">Copy to Clipboard</button>
+        </div>
+        <div id="emailResult" style="margin-top:12px"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -142,6 +157,7 @@ async function loadJob() {
       </div>
       <div class="description">${escHtml(j.description || "No description available.")}</div>`;
     document.getElementById("tailorSection").style.display = "block";
+    document.getElementById("emailSection").style.display = "block";
   } catch (err) {
     document.getElementById("jobContent").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${escHtml(err.message)}</p></div>`;
   }
@@ -182,6 +198,29 @@ async function tailorJob() {
     resultDiv.innerHTML = `<div style="color:var(--color-danger-500);font-size:13px;padding:12px;background:rgba(239,68,68,0.08);border-radius:6px">${escHtml(err.message)}</div>`;
   }
   btn.disabled = false; btn.textContent = "Generate CV & Cover Letter";
+}
+
+async function generateEmail() {
+  const btn = document.getElementById("emailBtn");
+  const resultDiv = document.getElementById("emailResult");
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Generating...';
+  resultDiv.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner spinner-lg"></div><p style="margin-top:12px;font-size:13px;color:var(--text-muted)">Crafting your email...</p></div>';
+
+  try {
+    const result = await apiFetch("POST", `/api/jobs/${jobId}/email-hr`);
+    resultDiv.innerHTML = `<div class="email-preview" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;white-space:pre-wrap;font-size:13px;line-height:1.7;font-family:sans-serif">${escHtml(result.email)}</div>`;
+    document.getElementById("copyEmailBtn").style.display = "inline-flex";
+    showToast("Email generated!");
+  } catch (err) {
+    resultDiv.innerHTML = `<div style="color:var(--color-danger-500);font-size:13px;padding:12px;background:rgba(239,68,68,0.08);border-radius:6px">${escHtml(err.message)}</div>`;
+  }
+  btn.disabled = false; btn.textContent = "Generate Email";
+}
+
+function copyEmail() {
+  const text = document.querySelector(".email-preview")?.textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => showToast("Copied to clipboard!")).catch(() => showToast("Failed to copy", "error"));
 }
 
 async function downloadFile(type) {

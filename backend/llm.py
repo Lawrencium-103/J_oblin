@@ -1342,3 +1342,73 @@ def score_job_match(job_title: str, job_description: str, user_cv: dict) -> int:
     jd_kw = top_keywords(job_description)
     hits = sum(1 for k in jd_kw if k in skills_str)
     return min(100, int(hits / max(len(jd_kw), 1) * 100))
+
+
+def generate_hr_email(
+    job_title: str,
+    company: str,
+    job_description: str,
+    candidate_name: str,
+    summary: str,
+    skills: list,
+    experiences: list,
+    education: list,
+    api_keys: dict,
+    target_type: str = "local",
+) -> str | None:
+
+    skills_flat = []
+    for s in (skills or []):
+        if isinstance(s, dict):
+            skills_flat.extend(s.get("items", []))
+        elif isinstance(s, str):
+            skills_flat.append(s)
+    skills_str = ", ".join(skills_flat[:12])
+
+    exp_brief = []
+    for e in (experiences or [])[:3]:
+        title = e.get("title", "")
+        company_e = e.get("company", "")
+        ach = e.get("achievements", [])
+        top_ach = ach[0] if ach else e.get("description", "")[:120]
+        exp_brief.append(f"- {title} @ {company_e}: {top_ach}")
+    exp_str = "\n".join(exp_brief) if exp_brief else "No experience data"
+
+    edu_str = "; ".join(
+        e.get("degree", e.get("title", "")) for e in (education or [])[:2]
+    ) or "Not specified"
+
+    tone_instruction = (
+        "Keep the tone warm, professional, and direct. Be confident but not arrogant."
+        if target_type == "local"
+        else "Keep the tone polished and globally competitive. Emphasize adaptability and international exposure."
+    )
+
+    prompt = (
+        "You are a career communications expert. Write a short, creative, straight-to-point email "
+        "from a candidate to the hiring manager at a company they are applying to.\n\n"
+        "## RULES ##\n"
+        "- MAX 150 words. Be concise.\n"
+        "- Start with a strong, specific hook about the company or role — not a generic greeting.\n"
+        "- Immediately state who you are and the role you're applying for.\n"
+        "- Include a bullet list (2-3 bullets) of specific selling points with real project examples and numbers.\n"
+        "- No generic phrases. No 'I am writing to apply'. No 'I am excited'. No 'passionate'.\n"
+        "- Use the candidate's real experience, metrics, and tools from the data below.\n"
+        "- End with a clear, action-geared call to action (e.g. 'I would love to discuss how my experience in X can help Y achieve Z').\n"
+        "- Sign off with the candidate's name.\n"
+        "- Do NOT use placeholders or brackets. Every fact must come from the data provided.\n"
+        f"- {tone_instruction}\n"
+        "- Return ONLY the email body text. No subject line. No explanation. No JSON. No markdown.\n\n"
+        "## CANDIDATE DATA ##\n"
+        f"Name: {candidate_name}\n"
+        f"Summary: {summary[:400]}\n"
+        f"Key Skills: {skills_str}\n"
+        f"Education: {edu_str}\n"
+        f"Experience:\n{exp_str}\n\n"
+        f"## TARGET ROLE ##\n"
+        f"Title: {job_title}\n"
+        f"Company: {company}\n"
+        f"Description (keywords): {job_description[:800]}\n"
+    )
+
+    return _call_any(prompt, api_keys, max_tokens=600)
