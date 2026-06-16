@@ -60,10 +60,11 @@ CV_PROFILES = [
 ]
 
 
-def get_cv_profile(seed_str: str = "") -> dict:
+def get_cv_profile(seed_str: str = "", counter: int = 0) -> dict:
     if not seed_str:
         return CV_PROFILES[0]
-    idx = int(hashlib.md5(seed_str.encode()).hexdigest(), 16) % len(CV_PROFILES)
+    full_seed = f"{seed_str}_gen{counter}_{__import__('random').randint(0, 9999)}"
+    idx = int(hashlib.md5(full_seed.encode()).hexdigest(), 16) % len(CV_PROFILES)
     return CV_PROFILES[idx]
 
 
@@ -81,6 +82,20 @@ def _safe(text: str) -> str:
 
 
 SECTIONS_ORDER = ["summary", "skills", "experience", "education", "certifications", "projects", "languages"]
+
+
+def _shuffled_sections(seed_str: str = "") -> list:
+    """Return sections in a seeded random order for visual diversity."""
+    order = list(SECTIONS_ORDER)
+    if not seed_str:
+        return order
+    import hashlib
+    rnd = int(hashlib.md5(seed_str.encode()).hexdigest(), 16)
+    # Use Fisher-Yates with deterministic randomness
+    for i in range(len(order) - 1, 0, -1):
+        rnd, ri = divmod(rnd, i + 1)
+        order[i], order[ri] = order[ri], order[i]
+    return order
 
 
 def _dedup_company(title: str, company: str) -> str:
@@ -205,7 +220,7 @@ def _add_referees_docx(doc, referees: list = None, profile: dict = None):
     p.paragraph_format.space_after = Pt(3)
 
 
-def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None) -> str:
+def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None, cv_seed: str = "") -> str:
     if profile is None:
         profile = CV_PROFILES[0]
     doc = Document()
@@ -255,94 +270,98 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
             run2.font.size = Pt(profile["size"] - 1.5)
             run2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
-    # PROFESSIONAL SUMMARY
+    # Render sections in shuffled order for diversity
+    sz = profile["size"]
     summary = tailored_cv.get("professional_summary", "")
-    if summary:
-        _add_section_title_docx(doc, "Professional Summary", profile)
-        p = doc.add_paragraph(summary)
-        p.paragraph_format.space_after = Pt(4)
-
-    # CORE COMPETENCIES
-    _render_skills_docx(doc, tailored_cv.get("skills", []), profile=profile)
-
-    # PROFESSIONAL EXPERIENCE
     experience = tailored_cv.get("experience", [])
-    if experience:
-        _add_section_title_docx(doc, "Professional Experience", profile)
-        sz = profile["size"]
-        for exp in experience[:3]:
-            end = "Present" if exp.get("current") else exp.get("end_date", "")
-            date_str = f"{exp.get('start_date', '')} - {end}" if exp.get("start_date") else ""
+    education = tailored_cv.get("education", [])
+    certifications = tailored_cv.get("certifications", [])
+    projects = tailored_cv.get("projects", [])
+    volunteer = tailored_cv.get("volunteer_experience", tailored_cv.get("volunteer", []))
+    skills_data = tailored_cv.get("skills", [])
 
-            p = doc.add_paragraph()
-            p.paragraph_format.space_before = Pt(4)
-            p.paragraph_format.space_after = Pt(1)
-            title_company = _dedup_company(exp.get("title", ""), exp.get("company", ""))
-            run = p.add_run(title_company)
-            run.bold = True
-            run.font.size = Pt(sz)
-            run.font.name = profile["font"]
-            if date_str:
-                _add_right_tab_stop(p, Inches(7.0))
-                run3 = p.add_run(f"\t{date_str}")
-                run3.font.size = Pt(9)
-                run3.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
-
-            for ach in exp.get("achievements", [])[:7]:
-                bp = doc.add_paragraph(ach, style="List Bullet")
+    def _render_section(section_name: str):
+        if section_name == "summary" and summary:
+            _add_section_title_docx(doc, "Professional Summary", profile)
+            p = doc.add_paragraph(summary)
+            p.paragraph_format.space_after = Pt(4)
+        elif section_name == "skills" and skills_data:
+            _render_skills_docx(doc, skills_data, profile=profile)
+        elif section_name == "experience" and experience:
+            _add_section_title_docx(doc, "Professional Experience", profile)
+            for exp in experience[:3]:
+                end = "Present" if exp.get("current") else exp.get("end_date", "")
+                date_str = f"{exp.get('start_date', '')} - {end}" if exp.get("start_date") else ""
+                p = doc.add_paragraph()
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.space_after = Pt(1)
+                title_company = _dedup_company(exp.get("title", ""), exp.get("company", ""))
+                run = p.add_run(title_company)
+                run.bold = True
+                run.font.size = Pt(sz)
+                run.font.name = profile["font"]
+                if date_str:
+                    _add_right_tab_stop(p, Inches(7.0))
+                    run3 = p.add_run(f"\t{date_str}")
+                    run3.font.size = Pt(9)
+                    run3.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+                for ach in exp.get("achievements", [])[:7]:
+                    bp = doc.add_paragraph(ach, style="List Bullet")
+                    bp.paragraph_format.space_after = Pt(0)
+                    bp.paragraph_format.space_before = Pt(0)
+                    bp.paragraph_format.left_indent = Inches(0.25)
+                    for run_b in bp.runs:
+                        run_b.font.size = Pt(sz - 0.5)
+        elif section_name == "education" and education:
+            _add_section_title_docx(doc, "Education", profile)
+            for edu in education[:3]:
+                p = doc.add_paragraph()
+                p.paragraph_format.space_after = Pt(1)
+                p.paragraph_format.space_before = Pt(1)
+                degree_inst = f"{edu.get('degree', '')} \u2014 {edu.get('institution', '')}"
+                run = p.add_run(degree_inst)
+                run.font.size = Pt(sz)
+                run.bold = True
+                if edu.get("start_date"):
+                    yr = f"{edu['start_date']} - {edu.get('end_date', '')}"
+                    _add_right_tab_stop(p, Inches(7.0))
+                    run2 = p.add_run(f"\t{yr}")
+                    run2.font.size = Pt(sz - 1)
+                    run2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+        elif section_name == "certifications" and certifications:
+            _add_section_title_docx(doc, "Certifications", profile)
+            certs = [c if isinstance(c, str) else c.get("name", "") for c in certifications[:5]]
+            for c in certs:
+                bp = doc.add_paragraph(c, style="List Bullet")
                 bp.paragraph_format.space_after = Pt(0)
                 bp.paragraph_format.space_before = Pt(0)
                 bp.paragraph_format.left_indent = Inches(0.25)
-                for run_b in bp.runs:
-                    run_b.font.size = Pt(sz - 0.5)
+                for run_c in bp.runs:
+                    run_c.font.size = Pt(9.5)
+        elif section_name == "projects" and projects:
+            _add_section_title_docx(doc, "Projects", profile)
+            for proj in projects[:4]:
+                tech = f" [{', '.join(proj.get('technologies', []))}]" if proj.get("technologies") else ""
+                link = f" ({proj['url']})" if proj.get("url") else ""
+                p = doc.add_paragraph()
+                p.paragraph_format.space_after = Pt(2)
+                run_pname = p.add_run(f"{proj.get('name', '')}: ")
+                run_pname.bold = True
+                p.add_run(f"{proj.get('description', '')[:250]}{tech}{link}")
+        elif section_name == "languages":
+            langs = tailored_cv.get("languages", [])
+            if langs:
+                _add_section_title_docx(doc, "Languages", profile)
+                lang_str = ", ".join(l if isinstance(l, str) else l.get("name", l.get("language", "")) for l in langs[:4])
+                if lang_str:
+                    p = doc.add_paragraph(lang_str)
+                    p.paragraph_format.space_after = Pt(4)
 
-    # EDUCATION
-    education = tailored_cv.get("education", [])
-    if education:
-        _add_section_title_docx(doc, "Education", profile)
-        for edu in education[:3]:
-            p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(1)
-            p.paragraph_format.space_before = Pt(1)
-            degree_inst = f"{edu.get('degree', '')} \u2014 {edu.get('institution', '')}"
-            run = p.add_run(degree_inst)
-            run.font.size = Pt(sz)
-            run.bold = True
-            if edu.get("start_date"):
-                yr = f"{edu['start_date']} - {edu.get('end_date', '')}"
-                _add_right_tab_stop(p, Inches(7.0))
-                run2 = p.add_run(f"\t{yr}")
-                run2.font.size = Pt(sz - 1)
-                run2.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+    order = _shuffled_sections(cv_seed or profile.get("name", "cv"))
+    for s in order:
+        _render_section(s)
 
-    # CERTIFICATIONS
-    certifications = tailored_cv.get("certifications", [])
-    if certifications:
-        _add_section_title_docx(doc, "Certifications", profile)
-        certs = [c if isinstance(c, str) else c.get("name", "") for c in certifications[:5]]
-        for c in certs:
-            bp = doc.add_paragraph(c, style="List Bullet")
-            bp.paragraph_format.space_after = Pt(0)
-            bp.paragraph_format.space_before = Pt(0)
-            bp.paragraph_format.left_indent = Inches(0.25)
-            for run_c in bp.runs:
-                run_c.font.size = Pt(9.5)
-
-    # PROJECTS
-    projects = tailored_cv.get("projects", [])
-    if projects:
-        _add_section_title_docx(doc, "Projects", profile)
-        for proj in projects[:4]:
-            tech = f" [{', '.join(proj.get('technologies', []))}]" if proj.get("technologies") else ""
-            link = f" ({proj['url']})" if proj.get("url") else ""
-            p = doc.add_paragraph()
-            p.paragraph_format.space_after = Pt(2)
-            run_pname = p.add_run(f"{proj.get('name', '')}: ")
-            run_pname.bold = True
-            p.add_run(f"{proj.get('description', '')[:250]}{tech}{link}")
-
-    # VOLUNTEER EXPERIENCE
-    volunteer = tailored_cv.get("volunteer_experience", tailored_cv.get("volunteer", []))
+    # Volunteer and referees always at end (positional, non-negotiable)
     if volunteer:
         _add_section_title_docx(doc, "Volunteer Experience", profile)
         for v in volunteer[:3]:
@@ -364,7 +383,6 @@ def generate_cv_docx(tailored_cv: dict, output_path: str, target_type: str = "lo
                     bp2.paragraph_format.space_after = Pt(0)
                     bp2.paragraph_format.left_indent = Inches(0.35)
 
-    # REFEREES (local only)
     if target_type == "local":
         _add_referees_docx(doc, tailored_cv.get("referees"), profile)
 
@@ -627,7 +645,7 @@ def _add_referees_pdf(pdf, referees: list = None):
         pdf._body("Available upon request.")
 
 
-def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None) -> str:
+def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "local", profile: dict = None, cv_seed: str = "") -> str:
     pdf = _CvPdf(profile)
     pdf.add_page()
     personal = tailored_cv.get("personal_info", {})
@@ -649,54 +667,64 @@ def generate_cv_pdf(tailored_cv: dict, output_path: str, target_type: str = "loc
     pdf.ln(3)
 
     summary = tailored_cv.get("professional_summary", "")
-    if summary:
-        pdf._section_title("Professional Summary")
-        pdf._body(summary)
-        pdf.ln(1.5)
-
-    _render_skills_pdf(pdf, tailored_cv.get("skills", []), profile=pdf.profile)
-
     experience = tailored_cv.get("experience", [])
-    if experience:
-        pdf._section_title("Professional Experience")
-        for exp in experience[:3]:
-            end = "Present" if exp.get("current") else exp.get("end_date", "")
-            date_str = f"{exp.get('start_date', '')} - {end}" if exp.get("start_date") else ""
-            title_line = _dedup_company(exp.get("title", ""), exp.get("company", ""))
-            if date_str:
-                title_line += f"  ({date_str})"
-            pdf._bold_line(title_line)
-            for ach in exp.get("achievements", [])[:7]:
-                pdf._bullet(ach)
-            pdf.ln(1)
-
     education = tailored_cv.get("education", [])
-    if education:
-        pdf._section_title("Education")
-        for edu in education[:3]:
-            line = edu.get("degree", "")
-            if edu.get("institution"):
-                line += f" -- {edu['institution']}"
-            if edu.get("start_date"):
-                line += f"  ({edu['start_date']} - {edu.get('end_date', '')})"
-            pdf._bold_line(line)
-
     certifications = tailored_cv.get("certifications", [])
-    if certifications and pdf.get_y() < 250:
-        pdf._section_title("Certifications")
-        for c in certifications[:5]:
-            name_c = c if isinstance(c, str) else c.get("name", "")
-            pdf._bullet(name_c)
-
     projects = tailored_cv.get("projects", [])
-    if projects and pdf.get_y() < 230:
-        pdf._section_title("Projects")
-        for proj in projects[:4]:
-            tech = f" [{', '.join(proj.get('technologies', [])[:3])}]" if proj.get("technologies") else ""
-            link = f" ({proj['url']})" if proj.get("url") else ""
-            pdf._body(f"{proj.get('name', '')}: {proj.get('description', '')[:200]}{tech}{link}")
-
+    skills_data = tailored_cv.get("skills", [])
     volunteer = tailored_cv.get("volunteer_experience", tailored_cv.get("volunteer", []))
+
+    def _render_pdf_section(section_name: str):
+        if section_name == "summary" and summary:
+            pdf._section_title("Professional Summary")
+            pdf._body(summary)
+            pdf.ln(1.5)
+        elif section_name == "skills" and skills_data:
+            _render_skills_pdf(pdf, skills_data, profile=pdf.profile)
+        elif section_name == "experience" and experience:
+            pdf._section_title("Professional Experience")
+            for exp in experience[:3]:
+                end = "Present" if exp.get("current") else exp.get("end_date", "")
+                date_str = f"{exp.get('start_date', '')} - {end}" if exp.get("start_date") else ""
+                title_line = _dedup_company(exp.get("title", ""), exp.get("company", ""))
+                if date_str:
+                    title_line += f"  ({date_str})"
+                pdf._bold_line(title_line)
+                for ach in exp.get("achievements", [])[:7]:
+                    pdf._bullet(ach)
+                pdf.ln(1)
+        elif section_name == "education" and education:
+            pdf._section_title("Education")
+            for edu in education[:3]:
+                line = edu.get("degree", "")
+                if edu.get("institution"):
+                    line += f" -- {edu['institution']}"
+                if edu.get("start_date"):
+                    line += f"  ({edu['start_date']} - {edu.get('end_date', '')})"
+                pdf._bold_line(line)
+        elif section_name == "certifications" and certifications and pdf.get_y() < 250:
+            pdf._section_title("Certifications")
+            for c in certifications[:5]:
+                name_c = c if isinstance(c, str) else c.get("name", "")
+                pdf._bullet(name_c)
+        elif section_name == "projects" and projects and pdf.get_y() < 230:
+            pdf._section_title("Projects")
+            for proj in projects[:4]:
+                tech = f" [{', '.join(proj.get('technologies', [])[:3])}]" if proj.get("technologies") else ""
+                link = f" ({proj['url']})" if proj.get("url") else ""
+                pdf._body(f"{proj.get('name', '')}: {proj.get('description', '')[:200]}{tech}{link}")
+        elif section_name == "languages":
+            langs = tailored_cv.get("languages", [])
+            if langs and pdf.get_y() < 260:
+                pdf._section_title("Languages")
+                lang_str = ", ".join(l if isinstance(l, str) else l.get("name", l.get("language", "")) for l in langs[:4])
+                if lang_str:
+                    pdf._body(lang_str)
+
+    order = _shuffled_sections(cv_seed or profile.get("name", "cv")) if cv_seed else SECTIONS_ORDER
+    for s in order:
+        _render_pdf_section(s)
+
     if volunteer and pdf.get_y() < 230:
         pdf._section_title("Volunteer Experience")
         for v in volunteer[:3]:

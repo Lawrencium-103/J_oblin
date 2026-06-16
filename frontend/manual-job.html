@@ -110,12 +110,15 @@
           2. Review Extracted Info
         </div>
         <div id="extractedPreview" class="extracted-preview"></div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-primary" onclick="tailorFromData()" id="tailorManualBtn">Generate CV & Cover Letter</button>
           <button class="btn btn-secondary" id="downloadCvDocx" style="display:none" onclick="downloadManualFile('cv', 'docx')">Download CV (DOCX)</button>
           <button class="btn btn-secondary" id="downloadCvPdf" style="display:none" onclick="downloadManualFile('cv', 'pdf')">Download CV (PDF)</button>
           <button class="btn btn-secondary" id="downloadCoverDocx" style="display:none" onclick="downloadManualFile('cover', 'docx')">Download Cover (DOCX)</button>
           <button class="btn btn-secondary" id="downloadCoverPdf" style="display:none" onclick="downloadManualFile('cover', 'pdf')">Download Cover (PDF)</button>
+          <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:4px">
+            <input type="checkbox" id="emailCheckbox"> Also generate HR email
+          </label>
         </div>
         <div id="manualResult" style="margin-top:12px"></div>
       </div>
@@ -180,6 +183,8 @@ async function extractUrl() {
 
 async function tailorFromData() {
   if (!currentJobData) { showToast("Extract a job URL first", "error"); return; }
+  const genEmail = document.getElementById("emailCheckbox").checked;
+  if (genEmail) currentJobData.generate_email = true;
   await _doTailor(currentJobData, "tailorManualBtn", "manualResult");
 }
 
@@ -189,6 +194,8 @@ async function tailorManualText() {
   const desc = document.getElementById("manualDesc").value.trim();
   if (!title || !desc) { showToast("Title and description required", "error"); return; }
   const data = { title, company, description: desc, category: "other" };
+  const genEmail = document.getElementById("emailCheckbox").checked;
+  if (genEmail) data.generate_email = true;
   await _doTailor(data, null, "manualResult");
 }
 
@@ -199,7 +206,17 @@ async function _doTailor(jobData, btnId, resultId) {
   resultDiv.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner spinner-lg"></div><p style="margin-top:12px;font-size:13px;color:var(--text-muted)">Generating with AI...</p></div>';
 
   try {
+    const genEmail = document.getElementById("emailCheckbox").checked;
+    if (genEmail) jobData.generate_email = true;
     const result = await apiFetch("POST", "/api/tailor/from-data", jobData);
+    let emailHtml = "";
+    if (result.hr_email) {
+      emailHtml = `<div class="result-section">
+        <div class="result-section-title">HR Email <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(copy-paste ready)</span></div>
+        <div class="result-section-body" style="white-space:pre-wrap;font-family:sans-serif;font-size:13px;line-height:1.7;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:12px">${escHtml(result.hr_email)}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="navigator.clipboard.writeText(${JSON.stringify(result.hr_email)}).then(()=>showToast('Copied!')).catch(()=>showToast('Failed','error'))">Copy Email</button>
+      </div>`;
+    }
     resultDiv.innerHTML = `
       <div class="tailor-result">
         <div class="result-header">
@@ -218,6 +235,7 @@ async function _doTailor(jobData, btnId, resultId) {
           <div class="result-section-title">Cover Letter</div>
           <div class="result-section-body result-section-body--cover">${escHtml(result.cover_letter || result.professional_summary)}</div>
         </div>
+        ${emailHtml}
         ${renderQualityScores(result.quality_scores)}
         ${result.cv_preview ? `
         <details class="result-section" style="margin-top:12px;cursor:pointer">

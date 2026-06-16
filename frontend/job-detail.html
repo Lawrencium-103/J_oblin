@@ -103,10 +103,13 @@
         <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">
           Generate a tailored CV and cover letter for this specific job using your profile and API key.
         </p>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           <button class="btn btn-primary" onclick="tailorJob()" id="tailorBtn">Generate CV & Cover Letter</button>
           <button class="btn btn-secondary" id="downloadCvBtn" style="display:none" onclick="downloadFile('cv')">Download CV</button>
           <button class="btn btn-secondary" id="downloadCoverBtn" style="display:none" onclick="downloadFile('cover')">Download Cover Letter</button>
+          <label style="font-size:12px;color:var(--text-muted);display:flex;align-items:center;gap:4px;cursor:pointer;margin-left:4px">
+            <input type="checkbox" id="emailCheckbox"> Also generate HR email
+          </label>
         </div>
         <div id="tailorResult" style="margin-top:12px"></div>
       </div>
@@ -170,7 +173,16 @@ async function tailorJob() {
   resultDiv.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner spinner-lg"></div><p style="margin-top:12px;font-size:13px;color:var(--text-muted)">Tailoring your CV with AI...</p></div>';
 
   try {
-    const result = await apiFetch("POST", `/api/tailor/${jobId}`);
+    const genEmail = document.getElementById("emailCheckbox").checked;
+    const result = await apiFetch("POST", `/api/tailor/${jobId}${genEmail ? '?generate_email=true' : ''}`);
+    let emailHtml = "";
+    if (result.hr_email) {
+      emailHtml = `<div class="result-section">
+        <div class="result-section-title">HR Email <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(copy-paste ready)</span></div>
+        <div class="result-section-body" style="white-space:pre-wrap;font-family:sans-serif;font-size:13px;line-height:1.7;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:12px">${escHtml(result.hr_email)}</div>
+        <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="navigator.clipboard.writeText(${JSON.stringify(result.hr_email)}).then(()=>showToast('Copied!')).catch(()=>showToast('Failed','error'))">Copy Email</button>
+      </div>`;
+    }
     resultDiv.innerHTML = `
       <div class="tailor-result">
         <div class="result-header">
@@ -189,6 +201,7 @@ async function tailorJob() {
           <div class="result-section-title">Cover Letter Preview</div>
           <div class="result-section-body">${escHtml(result.cover_letter)}</div>
         </div>
+        ${emailHtml}
         ${renderQualityScores(result.quality_scores)}
       </div>`;
     document.getElementById("downloadCvBtn").style.display = "inline-flex";

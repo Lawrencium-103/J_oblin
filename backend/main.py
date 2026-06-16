@@ -35,7 +35,9 @@ def _file_slug(name: str, company: str = "", counter: int = 0) -> str:
         scompany = re.sub(r"[^a-zA-Z0-9]", "", company)[:10]
         if scompany:
             parts.append(scompany)
-    return "_".join(parts) if parts else f"{str(counter).zfill(2)}_cv"
+    suffix = hashlib.md5(f"{counter}_{name}_{company}".encode()).hexdigest()[:6]
+    return "_".join(parts) + f"_{suffix}" if parts else f"{str(counter).zfill(2)}_{suffix}_cv"
+import hashlib
 from backend.cv_diversity import randomize_tailored_cv
 from backend.excel_export import export_jobs_to_excel
 
@@ -237,9 +239,9 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
         slug = _file_slug(name, counter=counter)
         cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
         cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
-        profile = get_cv_profile(str(user_id))
-        generate_cv_docx(cv_data, cv_path, target_type=req.target_type, profile=profile)
-        generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile)
+        profile = get_cv_profile(str(user_id), counter=counter)
+        generate_cv_docx(cv_data, cv_path, target_type=req.target_type, profile=profile, cv_seed=f"{user_id}_cv_{counter}")
+        generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile, cv_seed=f"{user_id}_cv_{counter}")
     except Exception as e:
         raise HTTPException(500, f"Document generation failed: {type(e).__name__}: {e}")
 
@@ -656,21 +658,37 @@ def tailor_from_job_data(
     )
     result, tailored_cv, quality = tailored
 
-    if tailored_cv.get("experience"):
-        tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=user_id)
-
     name = (tailored_cv.get("personal_info") or {}).get("name", "")
     counter = get_and_increment_cv_gen_count(user_id)
+    diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
+    tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
+
     slug = _file_slug(name, job.get("company", ""), counter=counter)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
     cover_pdf_path = str(GENERATED_DIR / f"{slug}_cover.pdf")
-    profile = get_cv_profile(str(user_id))
-    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile)
+    profile = get_cv_profile(str(user_id), counter=counter)
+    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
     generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
-    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile)
+    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
     generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
+
+    hr_email = None
+    if job.get("generate_email"):
+        personal = cv_data.get("personal_info") or {}
+        hr_email = generate_hr_email(
+            job_title=job.get("title", ""),
+            company=job.get("company", ""),
+            job_description=job.get("description", ""),
+            candidate_name=personal.get("name", "Candidate"),
+            summary=cv_data.get("professional_summary", ""),
+            skills=cv_data.get("skills", []),
+            experiences=cv_data.get("experience", []),
+            education=cv_data.get("education", []),
+            api_keys=api_keys,
+            target_type=target_type,
+        )
 
     return {
         "status": "ok",
@@ -685,11 +703,12 @@ def tailor_from_job_data(
         "cover_path": cover_path,
         "cv_pdf_path": cv_pdf_path,
         "cover_pdf_path": cover_pdf_path,
+        "hr_email": hr_email,
     }
 
 
 @app.post("/api/tailor/{job_id}")
-def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
+def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), generate_email: bool = Query(False)):
     user_id = current_user["user_id"]
     job = get_global_job(job_id)
     if not job:
@@ -722,24 +741,40 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
     )
     result, tailored_cv, quality = tailored
 
-    if tailored_cv.get("experience"):
-        tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=user_id)
-
     name = (tailored_cv.get("personal_info") or {}).get("name", "")
     counter = get_and_increment_cv_gen_count(user_id)
+    diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
+    tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
+
     slug = _file_slug(name, job.get("company", ""), counter=counter)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
     cover_pdf_path = str(GENERATED_DIR / f"{slug}_cover.pdf")
 
-    profile = get_cv_profile(str(user_id))
-    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile)
+    profile = get_cv_profile(str(user_id), counter=counter)
+    generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
     generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
-    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile)
+    generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
     generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
 
     update_link_tailoring(user_id, job_id, cv_path, cover_path)
+
+    hr_email = None
+    if generate_email:
+        personal = cv_data.get("personal_info") or {}
+        hr_email = generate_hr_email(
+            job_title=job.get("title", ""),
+            company=job.get("company", ""),
+            job_description=job.get("description", ""),
+            candidate_name=personal.get("name", "Candidate"),
+            summary=cv_data.get("professional_summary", ""),
+            skills=cv_data.get("skills", []),
+            experiences=cv_data.get("experience", []),
+            education=cv_data.get("education", []),
+            api_keys=api_keys,
+            target_type=target_type,
+        )
 
     return {
         "status": "ok",
@@ -755,6 +790,7 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user)):
         "cover_path": cover_path,
         "cv_pdf_path": cv_pdf_path,
         "cover_pdf_path": cover_pdf_path,
+        "hr_email": hr_email,
     }
 
 

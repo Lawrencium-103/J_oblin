@@ -383,17 +383,22 @@ def tailor_application(
         "convinces HR in under 10 seconds. Every sentence must include a "
         "measurable outcome OR a specific strategic keyword from the job "
         "description. Never use AI buzzwords. Never be generic.\n\n"
-        "## UNIQUENESS DIRECTIVE ##\n"
+        "## UNIQUENESS DIRECTIVE — ANTI-SLOP ##\n"
         "CRITICAL: If 10 candidates with similar backgrounds apply to this same role, "
-        "their CVs MUST look completely different. You must find and lead with what makes "
-        "THIS candidate distinct. Follow these rules:\n"
+        "their CVs MUST look completely different — different examples, different sentence structures, "
+        "different metrics emphasized, different skills highlighted. You must find and lead with "
+        "what makes THIS candidate distinct. AI-generated templates are obvious and rejected instantly.\n\n"
+        "EVERY output will be checked for AI-slop patterns. If detected, the output will be discarded.\n\n"
+        "Concrete rules:\n"
         "- Vary sentence openings. Do not start two bullets with the same verb.\n"
         "- Never use the same example or metric as another candidate would.\n"
         "- Lead each bullet with the candidate's most distinctive specific achievement first, "
         "not a generic duty.\n"
         "- Avoid common resume patterns. No 'responsible for', 'tasked with', 'duties included'.\n"
         "- Inject specific project names, tools, methodologies, and contexts from the real data.\n"
-        "- The summary must feel like a real person wrote it — not a template.\n\n"
+        "- The summary must feel like a real person wrote it — not a template.\n"
+        "- If the candidate has numbers (%, $, time), ALWAYS include them. Never round to a generic number.\n"
+        "- Every sentence must contain at least one specific fact that could not apply to another candidate.\n\n"
         f"TARGET ROLE: {job_title} at {company}\n"
         f"JOB DESCRIPTION KEYWORDS: {', '.join(jd_keywords)}\n\n"
         "## FULL CANDIDATE CV ##\n"
@@ -438,16 +443,21 @@ def tailor_application(
         + '    }\n'
         + '  ],\n'
         + (
-            '  "cover_letter": "3-paragraph letter (200-300 words total). Each paragraph has exactly one job. '
-            'NO opening cliches. NO generic praise. '
-            'PARAGRAPH 1: Reference something specific about the company current work or product. Then name the role and state your specific value proposition. MAX 3 sentences. '
-            'PARAGRAPH 2: Exactly 2 achievements from the tailored CV with hard metrics. Use the real company names from the experience section above. Each achievement must show the real company name, the action taken, the resulting hard metric, and the method. Tie each to a JD requirement. Do NOT use placeholder text. '
-            'PARAGRAPH 3: 1-2 sentences stating what you bring that is unique. End with looking forward to discussing contribution to their specific company goals or projects. Do not use brackets or placeholders. '
+            '  "cover_letter": "Full-page letter (350-500 words, 4-5 paragraphs). '
+            'NO opening cliches. NO generic praise. This is a serious professional document — not a form letter. '
+            'PARAGRAPH 1: Reference something specific about the company current work, product, or recent achievement. Show you did your research. Then name the role and state a specific value proposition tied to company needs. MAX 4 sentences. '
+            'PARAGRAPH 2: Deep dive into your most relevant achievement. Include: company name, action taken, measurable outcome with hard numbers, method or tool used. Connect it directly to a JD requirement. 3-4 sentences. '
+            'PARAGRAPH 3: Second major achievement with a different angle (technical depth, leadership, problem-solving). Show breadth. Include company name, metric, method. 3-4 sentences. '
+            'PARAGRAPH 4: What you bring that is unique — specific technical stack, domain expertise, or approach that sets you apart from other applicants. Tie to the company specific goals. 2-3 sentences. '
+            'PARAGRAPH 5: Brief closing. State what you would like to discuss. Offer to provide additional information. Show enthusiasm through specificity, not adjectives. 1-2 sentences. '
             'UNIQUENESS: No two candidates should sound alike. Lead with the most distinctive real achievement. Vary sentence structures, openings, and metrics chosen from the candidate real data. Avoid any fill-in-the-blank phrasing.\n'
-            'NEVER start with: excited, writing, confident, impressed, valuable addition, honor. '
-            'NEVER use: leverage, synergy, proven track record, drive business growth, equipped me, I believe, I think. '
-            'ANTI-EXAMPLE (REJECTED): I am excited to apply for the data role at the company, where I can leverage my expertise. '
-            'GOOD EXAMPLE: BCG X deploys AI at scale for supply chain optimization -- similar to my work building ML pipelines that cut processing time by 60%. As a Forward Deployed AI Scientist, I bring 4 years of production ML.",\n'
+            'CRITICAL - NEVER use ANY of these banned phrases or words:\n'
+            '- Openers: I am excited, I am writing to apply, I am confident, I am impressed by, I would be a valuable addition, I believe I am the ideal candidate, It is with great enthusiasm\n'
+            '- Jargon: leverage, synergy, proven track record, drive business growth, equipped me with, I believe, I think, in today competitive landscape, think outside the box, best-in-class, world-class, end-to-end, deep dive (as noun), low-hanging fruit, move the needle, pain point, game-changer, circle back, holistic, robust, scalable (unless describing actual tech)\n'
+            '- Buzzwords: passionate, enthusiastic, team player, detail-oriented, results-driven, proactive, self-starter, go-getter, rockstar, ninja, guru, hardworking, dedicated, motivated\n'
+            '- Generic praise: industry-leading, cutting-edge, state-of-the-art, market-leading, dynamic\n'
+            'ANTI-EXAMPLE (REJECTED - full of AI slop): I am excited to apply for the data role at your company, where I can leverage my expertise in data analytics to drive business growth. As a passionate and results-driven professional with a proven track record, I believe I would be a valuable addition to your dynamic team.\n'
+            'GOOD EXAMPLE (ACCEPTED - specific, human, metrics-driven): BCG X deploys AI at scale for supply chain optimization -- the same challenge I tackled at Andela, where I built ML pipelines that cut logistics processing time by 60%. As a Forward Deployed AI Scientist with 4 years of production ML experience across three countries, I bring hands-on expertise deploying models that actually make decisions, not just predictions.",\n'
         )
         + '  "keywords_hit": ["kw1","kw2","kw3","kw4","kw5"],\n'
         + '  "match_score": 85\n'
@@ -465,21 +475,25 @@ def tailor_application(
          "(e.g. 'BSc in Computer Science, University of Lagos'). If you have no proper education data, "
          "output an empty array []. Never guess or fabricate education.\n"
          "- Summary must directly reference keywords from the JD. Must be 40+ words.\n"
-        "- Cover letter: EXACTLY 3 paragraphs. No more, no less. No title, no salutation. Just the letter body.\n"
-        "- Cover letter ABSOLUTELY BANNED: 'I am excited', 'I am writing to apply', 'I am confident', 'proven track record', "
-        "'I believe', 'I would be a valuable addition', 'I am impressed by', 'leverage my', 'drive business growth'. "
-        "These are cliches that instantly disqualify you.\n"
-        "- BANNED WORDS: 'passionate', 'enthusiastic', 'team player', 'detail-oriented', "
-        "'results-driven', 'proven track record', 'proactive', 'self-starter', 'go-getter', "
-        "'synergy', 'leverage' (unless a tool), "
-        "'rockstar', 'ninja', 'guru', 'hardworking', 'dedicated', 'motivated'.\n"
+         "- Cover letter: 4-5 paragraphs, 350-500 words. This is a full-page professional document, not a short blurb. No title, no salutation. Just the letter body.\n"
+         "- Cover letter BANNED FOREVER: 'I am excited', 'I am writing to apply', 'I am confident', 'proven track record', "
+         "'I believe', 'I would be a valuable addition', 'I am impressed by', 'leverage my', 'drive business growth', "
+         "'passionate', 'enthusiastic', 'team player', 'detail-oriented', "
+         "'results-driven', 'proactive', 'self-starter', 'go-getter', "
+         "'synergy', 'leverage' (unless a tool), "
+         "'rockstar', 'ninja', 'guru', 'hardworking', 'dedicated', 'motivated', "
+         "'cutting-edge', 'state-of-the-art', 'world-class', 'best-in-class', "
+         "'holistic', 'robust' (unless describing actual infrastructure), "
+         "'think outside the box', 'low-hanging fruit', 'move the needle', 'game-changer', "
+         "'in today competitive landscape', 'dynamic environment'.\n"
+         "These are AI slop cliches that instantly disqualify you. Every word must earn its place.\n"
         "- Match score: honest 0-100 based on keyword overlap between JD and tailored output.\n"
         "- Never fabricate phone numbers or email addresses.\n"
         "- No 'References available upon request'.\n"
         "- 'keywords_hit': exactly the subset of JD keywords that appear in the tailored CV.\n"
     )
 
-    raw = _call_any(prompt, api_keys, max_tokens=2000)
+    raw = _call_any(prompt, api_keys, max_tokens=3000)
     provider = "groq" if api_keys.get("groq") else "rule-based"
     if raw and provider == "rule-based":
         provider = "nim" if api_keys.get("nvidia") else "rule-based"

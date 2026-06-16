@@ -8,6 +8,8 @@ no two generated CVs look the same. Achieves this through:
   - Synonym substitution in bullet points
   - Random skill list permutation
   - Random project selection
+  - Optional section inclusion (volunteer, referees, languages)
+  - Variable bullet count per role
 """
 import random
 import re
@@ -27,7 +29,7 @@ _SYNONYM_MAP = {
 }
 
 
-def randomize_tailored_cv(tailored_cv: dict, job_title: str = "", seed: int = None) -> dict:
+def randomize_tailored_cv(tailored_cv: dict, job_title: str = "", seed: str = None) -> dict:
     if seed is not None:
         random.seed(seed)
     else:
@@ -46,11 +48,11 @@ def _randomize_experience(cv: dict) -> dict:
         achievements = exp.get("achievements", [])
         if not achievements:
             continue
-        n = min(random.randint(3, max(3, len(achievements))), len(achievements))
+        n = min(random.randint(3, max(4, len(achievements))), len(achievements))
         selected = random.sample(achievements, n)
         substituted = []
         for ach in selected:
-            if random.random() < 0.3:
+            if random.random() < 0.35:
                 ach = _substitute_synonyms(ach)
             substituted.append(ach)
         random.shuffle(substituted)
@@ -61,7 +63,15 @@ def _randomize_experience(cv: dict) -> dict:
 
 def _randomize_skills(cv: dict) -> dict:
     skills = cv.get("skills", [])
-    if len(skills) > 4:
+    if _is_grouped_skills(skills):
+        shuffled = list(skills)
+        random.shuffle(shuffled)
+        for g in shuffled:
+            items = g.get("items", [])
+            random.shuffle(items)
+            g["items"] = items
+        cv["skills"] = shuffled
+    elif len(skills) > 4:
         top_n = max(6, min(10, len(skills)))
         first = skills[:4]
         rest = skills[4:top_n]
@@ -69,6 +79,10 @@ def _randomize_skills(cv: dict) -> dict:
         skills = first + rest
     cv["skills"] = skills
     return cv
+
+
+def _is_grouped_skills(skills: list) -> bool:
+    return bool(skills) and isinstance(skills[0], dict) and "domain" in skills[0]
 
 
 def _randomize_projects(cv: dict) -> dict:
