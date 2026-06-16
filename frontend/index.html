@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Joblin — Land Nigerian Jobs Faster (Free AI CV + Job Matcher)</title>
-<meta name="description" content="Joblin automatically finds jobs matching your profile, tailors your CV and cover letter to each role. Used by 12,000+ Nigerian job seekers. Free AI model included.">
+<meta name="description" content="Joblin automatically finds jobs matching your profile, tailors your CV and cover letter to each role. Used by Nigerian job seekers. Free AI model included.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
@@ -56,9 +56,9 @@ body {
   width: 100vw; height: 100vh;
   z-index: 0;
   pointer-events: none;
+  opacity: 0.7;
 }
 
-/* ── Scanline overlay ── */
 .scanlines {
   position: fixed;
   top: 0; left: 0;
@@ -83,18 +83,20 @@ nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  transition: all 0.3s;
+  transition: all 0.5s ease;
 }
 
 nav.scrolled {
-  background: rgba(5,5,10,0.85);
+  background: rgba(5,5,10,0.88);
   backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border-neon);
-  padding: 12px 40px;
+  padding: 10px 40px;
 }
 
-.nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.2s; }
-.nav-brand:hover { opacity: 0.85; }
+.nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; }
+.nav-brand:hover { opacity: 0.8; }
+.nav-brand:active { opacity: 0.6; }
 
 .brand-icon {
   width: 36px; height: 36px;
@@ -103,10 +105,11 @@ nav.scrolled {
   display: flex; align-items: center; justify-content: center;
   font-size: 17px; font-weight: 900; color: var(--neon-cyan);
   flex-shrink: 0;
-  box-shadow: var(--glow-cyan);
   font-family: var(--font-heading);
   background: rgba(0,240,255,0.05);
+  transition: box-shadow 0.3s;
 }
+.nav-brand:hover .brand-icon { box-shadow: var(--glow-cyan); }
 
 .brand-name {
   font-family: var(--font-heading);
@@ -115,7 +118,7 @@ nav.scrolled {
   color: #fff;
   letter-spacing: 0.08em;
 }
-.brand-name span { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,240,255,0.5); }
+.brand-name span { color: var(--neon-cyan); }
 
 .nav-links { display: flex; align-items: center; gap: 4px; }
 
@@ -137,7 +140,7 @@ nav.scrolled {
   font-size: 12px !important;
   letter-spacing: 0.06em !important;
   background: rgba(0,240,255,0.06) !important;
-  box-shadow: 0 0 15px rgba(0,240,255,0.1) !important;
+  transition: all 0.3s !important;
 }
 .nav-cta:hover { background: rgba(0,240,255,0.12) !important; box-shadow: var(--glow-cyan) !important; }
 
@@ -146,32 +149,31 @@ section { position: relative; z-index: 2; }
 
 .section-label {
   display: inline-flex;
-  font-family: var(--font-heading);
-  font-size: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  letter-spacing: 0.1em;
   color: var(--neon-cyan);
-  padding: 4px 14px;
-  border: 1px solid rgba(0,240,255,0.15);
-  border-radius: 4px;
-  background: rgba(0,240,255,0.04);
+  padding: 5px 14px;
+  border: 1px solid rgba(0,240,255,0.1);
+  background: rgba(0,240,255,0.03);
   margin-bottom: 16px;
+  opacity: 0.8;
 }
 
 .section-title {
   font-family: var(--font-heading);
-  font-size: clamp(28px, 3.5vw, 42px);
+  font-size: clamp(26px, 3.2vw, 38px);
   font-weight: 800;
   color: #fff;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   line-height: 1.15;
   margin-bottom: 12px;
 }
 
 .section-sub {
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: var(--text-secondary);
   max-width: 580px;
 }
@@ -215,12 +217,11 @@ section { position: relative; z-index: 2; }
   align-items: center;
   gap: 8px;
   padding: 6px 16px;
-  border: 1px solid rgba(57,255,20,0.2);
-  border-radius: 4px;
+  border: 1px solid rgba(57,255,20,0.15);
   font-size: 11px;
   font-weight: 600;
   color: var(--neon-green);
-  background: rgba(57,255,20,0.05);
+  background: rgba(57,255,20,0.04);
   margin-bottom: 20px;
   font-family: var(--font-mono);
   letter-spacing: 0.02em;
@@ -230,27 +231,28 @@ section { position: relative; z-index: 2; }
   background: var(--neon-green);
   border-radius: 50%;
   box-shadow: 0 0 8px rgba(57,255,20,0.6);
-  animation: pulse-dot 1.5s ease-in-out infinite;
+  animation: breathe-dot 2s ease-in-out infinite;
 }
 
-@keyframes pulse-dot { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes breathe-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.6); } }
 
 .hero h1 {
   font-family: var(--font-heading);
-  font-size: clamp(32px, 4vw, 52px);
+  font-size: clamp(30px, 3.8vw, 48px);
   font-weight: 900;
   color: #fff;
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   margin-bottom: 16px;
+  min-height: 2.2em;
 }
 
-.hero h1 .neon-cyan { color: var(--neon-cyan); text-shadow: 0 0 20px rgba(0,240,255,0.4); }
-.hero h1 .neon-magenta { color: var(--neon-magenta); text-shadow: 0 0 20px rgba(255,45,149,0.4); }
+.hero h1 .neon-magenta { color: var(--neon-magenta); }
+.hero h1 .neon-cyan { color: var(--neon-cyan); }
 
 .hero p {
-  font-size: 16px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.8;
   color: var(--text-secondary);
   margin-bottom: 24px;
 }
@@ -267,15 +269,15 @@ section { position: relative; z-index: 2; }
   min-width: 200px;
   padding: 14px 18px;
   border-radius: 6px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
   font-size: 14px;
   color: #fff;
   font-family: var(--font-body);
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
-.hero-cta-group input::placeholder { color: rgba(255,255,255,0.2); }
-.hero-cta-group input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,240,255,0.08); }
+.hero-cta-group input::placeholder { color: rgba(255,255,255,0.15); }
+.hero-cta-group input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,240,255,0.06); }
 
 .btn-neon {
   display: inline-flex;
@@ -284,37 +286,34 @@ section { position: relative; z-index: 2; }
   padding: 14px 32px;
   border: 1px solid var(--neon-cyan);
   border-radius: 6px;
-  background: rgba(0,240,255,0.08);
+  background: rgba(0,240,255,0.06);
   color: var(--neon-cyan);
   font-family: var(--font-heading);
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   cursor: pointer;
   text-decoration: none;
   text-transform: uppercase;
-  transition: all 0.25s;
-  box-shadow: 0 0 15px rgba(0,240,255,0.1);
+  transition: all 0.3s;
   white-space: nowrap;
 }
-.btn-neon:hover { background: rgba(0,240,255,0.15); box-shadow: var(--glow-cyan); transform: translateY(-1px); }
-.btn-neon:active { transform: translateY(0) scale(0.98); }
+.btn-neon:hover { background: rgba(0,240,255,0.12); box-shadow: var(--glow-cyan); transform: translateY(-2px); }
+.btn-neon:active { transform: translateY(0) scale(0.98); transition: all 0.05s; }
 
 .btn-neon-magenta {
   border-color: var(--neon-magenta);
-  background: rgba(255,45,149,0.08);
+  background: rgba(255,45,149,0.06);
   color: var(--neon-magenta);
-  box-shadow: 0 0 15px rgba(255,45,149,0.1);
 }
-.btn-neon-magenta:hover { background: rgba(255,45,149,0.15); box-shadow: var(--glow-magenta); }
+.btn-neon-magenta:hover { background: rgba(255,45,149,0.12); box-shadow: var(--glow-magenta); }
 
 .btn-neon-green {
   border-color: var(--neon-green);
-  background: rgba(57,255,20,0.08);
+  background: rgba(57,255,20,0.06);
   color: var(--neon-green);
-  box-shadow: 0 0 15px rgba(57,255,20,0.1);
 }
-.btn-neon-green:hover { background: rgba(57,255,20,0.15); box-shadow: var(--glow-green); }
+.btn-neon-green:hover { background: rgba(57,255,20,0.12); box-shadow: var(--glow-green); }
 
 .btn-neon-lg {
   padding: 18px 44px;
@@ -354,7 +353,7 @@ section { position: relative; z-index: 2; }
   gap: 28px;
   margin-top: 28px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255,255,255,0.04);
+  border-top: 1px solid rgba(255,255,255,0.03);
 }
 
 .hero-proof-num {
@@ -371,22 +370,31 @@ section { position: relative; z-index: 2; }
   letter-spacing: 0.03em;
 }
 
-/* ── Hero Right ── */
-.hero-right {
-  perspective: 1000px;
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
 }
+.live-badge.new { color: var(--neon-green); border: 1px solid rgba(57,255,20,0.12); background: rgba(57,255,20,0.04); }
+
+/* ── Hero Right ── */
+.hero-right { perspective: 1200px; }
 
 .hero-demo-card {
-  background: rgba(15,15,30,0.6);
-  backdrop-filter: blur(10px);
-  border: 1px solid var(--border-neon);
+  background: rgba(10,10,22,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,240,255,0.08);
   border-radius: 12px;
   padding: 24px;
-  transform: rotateY(-5deg) rotateX(2deg);
-  transition: transform 0.5s ease;
-  box-shadow: 0 0 40px rgba(0,240,255,0.04);
+  transform: rotateY(-4deg) rotateX(2deg);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
-
 .hero-demo-card:hover { transform: rotateY(0deg) rotateX(0deg); }
 
 .hero-demo-header {
@@ -395,7 +403,7 @@ section { position: relative; z-index: 2; }
   align-items: center;
   margin-bottom: 16px;
   padding-bottom: 14px;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.03);
 }
 
 .hero-demo-tabs { display: flex; gap: 4px; }
@@ -410,22 +418,19 @@ section { position: relative; z-index: 2; }
   transition: all 0.2s;
   border: 1px solid transparent;
 }
-.hero-demo-tab.active {
-  color: var(--neon-cyan);
-  border-color: rgba(0,240,255,0.15);
-  background: rgba(0,240,255,0.06);
-}
+.hero-demo-tab.active { color: var(--neon-cyan); border-color: rgba(0,240,255,0.1); background: rgba(0,240,255,0.04); }
 
 .hero-demo-row {
   display: flex;
   gap: 12px;
   padding: 12px;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   border-radius: 8px;
-  transition: all 0.2s;
+  transition: all 0.3s;
   border: 1px solid transparent;
+  cursor: pointer;
 }
-.hero-demo-row:hover { background: rgba(255,255,255,0.02); border-color: rgba(0,240,255,0.06); }
+.hero-demo-row:hover { background: rgba(255,255,255,0.015); border-color: rgba(0,240,255,0.04); transform: translateX(4px); }
 
 .hero-demo-icon {
   width: 38px; height: 38px;
@@ -435,10 +440,10 @@ section { position: relative; z-index: 2; }
   flex-shrink: 0;
   border: 1px solid;
 }
-.hero-demo-icon.cyan { border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.06); }
-.hero-demo-icon.magenta { border-color: rgba(255,45,149,0.2); background: rgba(255,45,149,0.06); }
-.hero-demo-icon.green { border-color: rgba(57,255,20,0.2); background: rgba(57,255,20,0.06); }
-.hero-demo-icon.yellow { border-color: rgba(255,230,0,0.2); background: rgba(255,230,0,0.06); }
+.hero-demo-icon.cyan { border-color: rgba(0,240,255,0.15); background: rgba(0,240,255,0.04); }
+.hero-demo-icon.magenta { border-color: rgba(255,45,149,0.15); background: rgba(255,45,149,0.04); }
+.hero-demo-icon.green { border-color: rgba(57,255,20,0.15); background: rgba(57,255,20,0.04); }
+.hero-demo-icon.yellow { border-color: rgba(255,230,0,0.15); background: rgba(255,230,0,0.04); }
 
 .hero-demo-content { flex: 1; min-width: 0; }
 .hero-demo-content h4 {
@@ -466,22 +471,12 @@ section { position: relative; z-index: 2; }
   text-transform: uppercase;
 }
 
-.live-badge {
-  display: inline-block;
-  font-size: 10px;
-  padding: 2px 10px;
-  border-radius: 3px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-}
-.live-badge.new { color: var(--neon-green); border: 1px solid rgba(57,255,20,0.15); background: rgba(57,255,20,0.06); }
-
 /* ── Social Proof Strip ── */
 .strip {
   padding: 20px 40px;
   text-align: center;
-  border-top: 1px solid rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.02);
   position: relative; z-index: 2;
 }
 
@@ -498,71 +493,69 @@ section { position: relative; z-index: 2; }
 .strip-logos {
   display: flex;
   justify-content: center;
-  gap: 32px;
+  gap: 24px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .strip-logo {
   font-size: 12px;
-  font-weight: 600;
-  color: rgba(255,255,255,0.2);
+  font-weight: 500;
+  color: rgba(255,255,255,0.15);
   letter-spacing: 0.04em;
   padding: 4px 12px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
   border-radius: 4px;
-  transition: all 0.2s;
+  transition: all 0.3s;
 }
-.strip-logo:hover { color: var(--neon-cyan); border-color: rgba(0,240,255,0.1); }
+.strip-logo:hover { color: var(--neon-cyan); border-color: rgba(0,240,255,0.08); }
 
-/* ── JOB CAROUSEL ── */
-.job-carousel-section {
+/* ── JOB SHOWCASE ── */
+.job-showcase {
   padding: 80px 40px;
   position: relative; z-index: 2;
 }
 
-.job-carousel-section::before {
+.job-showcase::before {
   content: '';
   position: absolute;
   top: -30%;
   right: -10%;
   width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(255,45,149,0.03) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(255,45,149,0.025) 0%, transparent 60%);
   border-radius: 50%;
   pointer-events: none;
 }
 
-.carousel-header {
+.showcase-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
-  margin-bottom: 32px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
   gap: 16px;
 }
 
-.carousel-arrows { display: flex; gap: 8px; }
+.showcase-arrows { display: flex; gap: 8px; }
 
-.carousel-arrow {
+.showcase-arrow {
   width: 40px; height: 40px;
-  border: 1px solid rgba(0,240,255,0.15);
+  border: 1px solid rgba(0,240,255,0.1);
   border-radius: 6px;
-  background: rgba(0,240,255,0.04);
+  background: rgba(0,240,255,0.03);
   color: var(--neon-cyan);
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   font-size: 18px;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  font-family: var(--font-heading);
 }
-.carousel-arrow:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.1); }
+.showcase-arrow:hover { background: rgba(0,240,255,0.08); box-shadow: 0 0 15px rgba(0,240,255,0.06); transform: scale(1.05); }
+.showcase-arrow:active { transform: scale(0.95); }
 
-.carousel-track-wrap {
-  overflow: hidden;
-  border-radius: 12px;
-  position: relative;
-}
+.showcase-track-wrap { overflow: hidden; border-radius: 12px; }
 
-.carousel-track {
+.showcase-track {
   display: flex;
   gap: 16px;
   overflow-x: auto;
@@ -572,101 +565,149 @@ section { position: relative; z-index: 2; }
   padding: 8px 4px 12px;
   cursor: grab;
 }
-.carousel-track::-webkit-scrollbar { height: 4px; }
-.carousel-track::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.15); border-radius: 2px; }
+.showcase-track::-webkit-scrollbar { height: 3px; }
+.showcase-track::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.1); border-radius: 2px; }
 
+/* ── Job Card ── */
 .job-card {
-  min-width: 300px;
-  max-width: 300px;
+  min-width: 310px;
+  max-width: 310px;
   scroll-snap-align: start;
   background: var(--bg-card);
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
   border-radius: 12px;
-  padding: 24px;
-  transition: all 0.3s;
-  position: relative;
-  overflow: hidden;
+  padding: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .job-card::before {
   content: '';
   position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-magenta));
+  inset: -1px;
+  border-radius: 13px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, var(--neon-cyan), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.5s;
+  pointer-events: none;
 }
 
-.job-card:hover { border-color: rgba(0,240,255,0.12); transform: translateY(-4px); box-shadow: 0 8px 40px rgba(0,0,0,0.3); }
+.job-card:hover { transform: translateY(-6px); border-color: transparent; }
 .job-card:hover::before { opacity: 1; }
 
+.job-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
 .job-card-category {
-  font-family: var(--font-heading);
+  font-family: var(--font-mono);
   font-size: 9px;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--neon-cyan);
-  margin-bottom: 10px;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 3px;
+  color: var(--text-muted);
 }
 
 .job-card h3 {
   font-size: 15px;
   font-weight: 700;
   color: #fff;
-  margin-bottom: 4px;
   line-height: 1.3;
+  margin-bottom: 2px;
 }
 
 .job-card .company {
   font-size: 12px;
   color: var(--text-secondary);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
-.job-card .meta {
+.job-card .meta-row {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   font-size: 11px;
   color: var(--text-muted);
   margin-bottom: 14px;
+  flex-wrap: wrap;
 }
-.job-card .meta span { display: flex; align-items: center; gap: 4px; }
+.job-card .meta-row span { display: flex; align-items: center; gap: 4px; }
 
-.job-card .card-footer {
+/* Match score ring */
+.job-card .match-area {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 14px;
   margin-top: auto;
   padding-top: 14px;
-  border-top: 1px solid rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.02);
 }
 
-.job-card .match {
+.match-ring {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.match-ring svg {
+  position: absolute;
+  top: 0; left: 0;
+  transform: rotate(-90deg);
+}
+
+.match-ring .pct {
   font-family: var(--font-heading);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--neon-green);
+  z-index: 1;
+}
+
+.match-info { flex: 1; min-width: 0; }
+.match-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.match-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
 }
 
 .job-card .apply-btn {
-  padding: 7px 18px;
-  border: 1px solid var(--neon-cyan);
+  padding: 8px 20px;
+  border: 1px solid rgba(255,255,255,0.06);
   border-radius: 4px;
-  background: rgba(0,240,255,0.06);
-  color: var(--neon-cyan);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   font-family: var(--font-heading);
   letter-spacing: 0.06em;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s;
   text-decoration: none;
   text-transform: uppercase;
+  flex-shrink: 0;
+  margin-left: auto;
 }
-.job-card .apply-btn:hover { background: rgba(0,240,255,0.12); box-shadow: 0 0 15px rgba(0,240,255,0.1); }
+.job-card .apply-btn:hover { background: rgba(0,240,255,0.08); color: var(--neon-cyan); border-color: rgba(0,240,255,0.15); box-shadow: 0 0 12px rgba(0,240,255,0.05); }
 
 /* ── How It Works ── */
 .how {
@@ -687,46 +728,47 @@ section { position: relative; z-index: 2; }
 
 .how-card {
   padding: 32px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
   border-radius: 12px;
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-card);
   position: relative;
   overflow: hidden;
-  background: var(--bg-card);
 }
 
 .how-card::before {
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 3px; height: 100%;
-  background: linear-gradient(180deg, var(--neon-cyan), var(--neon-magenta));
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(0,240,255,0.02) 0%, transparent 50%);
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.5s;
+  pointer-events: none;
 }
 
-.how-card:hover { border-color: rgba(0,240,255,0.08); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.how-card:hover { border-color: rgba(0,240,255,0.06); transform: translateY(-4px); }
 .how-card:hover::before { opacity: 1; }
 
 .how-num {
   font-family: var(--font-heading);
   width: 36px; height: 36px;
-  border: 1px solid var(--neon-cyan);
+  border: 1px solid rgba(0,240,255,0.12);
   border-radius: 8px;
-  background: rgba(0,240,255,0.06);
+  background: rgba(0,240,255,0.04);
   color: var(--neon-cyan);
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px; font-weight: 700;
+  font-size: 13px; font-weight: 700;
   margin-bottom: 16px;
 }
 
 .how-card h3 {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
   margin-bottom: 8px;
   font-family: var(--font-heading);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
 }
 
 .how-card p {
@@ -748,7 +790,7 @@ section { position: relative; z-index: 2; }
   top: -20%;
   left: -5%;
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(180,77,255,0.03) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(180,77,255,0.02) 0%, transparent 60%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -764,7 +806,7 @@ section { position: relative; z-index: 2; }
 
 .testy-track {
   display: flex;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .testy-slide {
@@ -776,7 +818,7 @@ section { position: relative; z-index: 2; }
   max-width: 600px;
   margin: 0 auto;
   padding: 36px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
   border-radius: 12px;
   background: var(--bg-card);
   position: relative;
@@ -788,19 +830,14 @@ section { position: relative; z-index: 2; }
   top: 16px; right: 24px;
   font-size: 60px;
   line-height: 1;
-  color: rgba(0,240,255,0.06);
+  color: rgba(0,240,255,0.04);
   font-family: var(--font-heading);
 }
 
-.testy-stars {
-  color: var(--neon-yellow);
-  font-size: 16px;
-  margin-bottom: 16px;
-  text-shadow: 0 0 10px rgba(255,230,0,0.2);
-}
+.testy-stars { color: var(--neon-yellow); font-size: 15px; margin-bottom: 16px; }
 
 .testy-quote {
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.8;
   color: var(--text-primary);
   margin-bottom: 20px;
@@ -821,11 +858,11 @@ section { position: relative; z-index: 2; }
   font-size: 14px; font-weight: 700; color: #fff;
   border: 2px solid;
 }
-.testy-avatar.cyan { border-color: var(--neon-cyan); background: rgba(0,240,255,0.15); }
-.testy-avatar.magenta { border-color: var(--neon-magenta); background: rgba(255,45,149,0.15); }
-.testy-avatar.green { border-color: var(--neon-green); background: rgba(57,255,20,0.15); }
-.testy-avatar.yellow { border-color: var(--neon-yellow); background: rgba(255,230,0,0.15); }
-.testy-avatar.purple { border-color: var(--neon-purple); background: rgba(180,77,255,0.15); }
+.testy-avatar.cyan { border-color: rgba(0,240,255,0.3); background: rgba(0,240,255,0.1); }
+.testy-avatar.magenta { border-color: rgba(255,45,149,0.3); background: rgba(255,45,149,0.1); }
+.testy-avatar.green { border-color: rgba(57,255,20,0.3); background: rgba(57,255,20,0.1); }
+.testy-avatar.yellow { border-color: rgba(255,230,0,0.3); background: rgba(255,230,0,0.1); }
+.testy-avatar.purple { border-color: rgba(180,77,255,0.3); background: rgba(180,77,255,0.1); }
 
 .testy-name { font-size: 14px; font-weight: 600; color: #fff; }
 .testy-role { font-size: 11px; color: var(--text-muted); }
@@ -840,12 +877,13 @@ section { position: relative; z-index: 2; }
 .testy-dot {
   width: 8px; height: 8px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.06);
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.4s;
   border: none;
+  padding: 0;
 }
-.testy-dot.active { background: var(--neon-cyan); box-shadow: 0 0 10px rgba(0,240,255,0.4); width: 24px; border-radius: 4px; }
+.testy-dot.active { background: var(--neon-cyan); width: 28px; border-radius: 4px; }
 
 /* ── Features ── */
 .features {
@@ -860,21 +898,21 @@ section { position: relative; z-index: 2; }
 .features-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  gap: 14px;
   text-align: left;
 }
 
 .feature-card {
   padding: 28px;
-  border: 1px solid rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.03);
   border-radius: 12px;
   background: var(--bg-card);
-  transition: all 0.3s;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
 }
 
-.feature-card:hover { border-color: rgba(0,240,255,0.08); transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+.feature-card:hover { border-color: rgba(0,240,255,0.06); transform: translateY(-4px); }
 
 .feature-icon {
   width: 40px; height: 40px;
@@ -884,11 +922,11 @@ section { position: relative; z-index: 2; }
   margin-bottom: 14px;
   border: 1px solid;
 }
-.feature-icon.cyan { border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.06); color: var(--neon-cyan); }
-.feature-icon.magenta { border-color: rgba(255,45,149,0.2); background: rgba(255,45,149,0.06); color: var(--neon-magenta); }
-.feature-icon.green { border-color: rgba(57,255,20,0.2); background: rgba(57,255,20,0.06); color: var(--neon-green); }
-.feature-icon.yellow { border-color: rgba(255,230,0,0.2); background: rgba(255,230,0,0.06); color: var(--neon-yellow); }
-.feature-icon.purple { border-color: rgba(180,77,255,0.2); background: rgba(180,77,255,0.06); color: var(--neon-purple); }
+.feature-icon.cyan { border-color: rgba(0,240,255,0.12); background: rgba(0,240,255,0.03); color: var(--neon-cyan); }
+.feature-icon.magenta { border-color: rgba(255,45,149,0.12); background: rgba(255,45,149,0.03); color: var(--neon-magenta); }
+.feature-icon.green { border-color: rgba(57,255,20,0.12); background: rgba(57,255,20,0.03); color: var(--neon-green); }
+.feature-icon.yellow { border-color: rgba(255,230,0,0.12); background: rgba(255,230,0,0.03); color: var(--neon-yellow); }
+.feature-icon.purple { border-color: rgba(180,77,255,0.12); background: rgba(180,77,255,0.03); color: var(--neon-purple); }
 
 .feature-card h3 {
   font-size: 14px;
@@ -915,9 +953,10 @@ section { position: relative; z-index: 2; }
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  opacity: 0.7;
 }
-.feature-link:hover { gap: 10px; text-shadow: 0 0 10px rgba(0,240,255,0.3); }
+.feature-link:hover { opacity: 1; gap: 10px; }
 
 /* ── Final CTA ── */
 .urgent {
@@ -933,7 +972,7 @@ section { position: relative; z-index: 2; }
   top: -50%; left: 50%;
   transform: translateX(-50%);
   width: 700px; height: 700px;
-  background: radial-gradient(circle, rgba(0,240,255,0.04) 0%, transparent 60%);
+  background: radial-gradient(circle, rgba(0,240,255,0.03) 0%, transparent 60%);
   border-radius: 50%;
   pointer-events: none;
 }
@@ -942,11 +981,11 @@ section { position: relative; z-index: 2; }
 
 .urgent h2 {
   font-family: var(--font-heading);
-  font-size: clamp(28px, 3.5vw, 42px);
+  font-size: clamp(26px, 3.2vw, 38px);
   font-weight: 900;
   color: #fff;
   line-height: 1.15;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.005em;
   margin-bottom: 14px;
 }
 
@@ -967,7 +1006,7 @@ section { position: relative; z-index: 2; }
 
 /* ── Footer ── */
 footer {
-  border-top: 1px solid rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.02);
   padding: 32px 40px;
   text-align: center;
   position: relative; z-index: 2;
@@ -978,29 +1017,59 @@ footer a { color: var(--text-secondary); text-decoration: none; transition: colo
 footer a:hover { color: var(--neon-cyan); }
 
 /* ── Animations ── */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@keyframes glow-pulse { 0%,100% { box-shadow: 0 0 15px rgba(0,240,255,0.1); } 50% { box-shadow: 0 0 30px rgba(0,240,255,0.25), 0 0 60px rgba(0,240,255,0.08); } }
-@keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes reveal-up {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes reveal-left {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-right {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-scale {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
 @keyframes glitch {
-  0% { transform: translate(0); }
-  20% { transform: translate(-1px, 1px); }
-  40% { transform: translate(1px, -1px); }
-  60% { transform: translate(-1px, -1px); }
-  80% { transform: translate(1px, 1px); }
-  100% { transform: translate(0); }
+  0% { transform: translate(0); filter: hue-rotate(0deg); }
+  10% { transform: translate(-2px, 1px); filter: hue-rotate(30deg); }
+  20% { transform: translate(2px, -1px); filter: hue-rotate(-30deg); }
+  30% { transform: translate(-1px, -1px); filter: hue-rotate(10deg); }
+  40% { transform: translate(1px, 2px); filter: hue-rotate(-10deg); }
+  50% { transform: translate(0); filter: hue-rotate(0deg); }
+  100% { transform: translate(0); filter: hue-rotate(0deg); }
+}
+@keyframes neon-flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+  20%,24%,55% { opacity: 0.4; }
+}
+@keyframes glow-breathe {
+  0%,100% { box-shadow: 0 0 15px rgba(0,240,255,0.08); }
+  50% { box-shadow: 0 0 30px rgba(0,240,255,0.18), 0 0 60px rgba(0,240,255,0.05); }
 }
 
-.fade-up { animation: fadeUp 0.6s ease-out both; }
-.fade-up-1 { animation: fadeUp 0.6s ease-out 0.1s both; }
-.fade-up-2 { animation: fadeUp 0.6s ease-out 0.2s both; }
-.fade-up-3 { animation: fadeUp 0.6s ease-out 0.3s both; }
+.reveal { opacity: 0; }
+.reveal.show {
+  opacity: 1;
+  animation-duration: 1.2s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.reveal.show.up { animation-name: reveal-up; }
+.reveal.show.left { animation-name: reveal-left; }
+.reveal.show.right { animation-name: reveal-right; }
+.reveal.show.scale { animation-name: reveal-scale; }
 
-.glow-pulse { animation: glow-pulse 3s ease-in-out infinite; }
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.35s; }
+.reveal-delay-4 { animation-delay: 0.5s; }
+.reveal-delay-5 { animation-delay: 0.7s; }
 
-.neon-text-cyan { color: var(--neon-cyan); text-shadow: 0 0 20px rgba(0,240,255,0.4); }
-.neon-text-magenta { color: var(--neon-magenta); text-shadow: 0 0 20px rgba(255,45,149,0.4); }
-.neon-text-green { color: var(--neon-green); text-shadow: 0 0 20px rgba(57,255,20,0.4); }
+.reveal-duration-slow { animation-duration: 1.6s; }
 
 /* ── Responsive ── */
 @media (max-width: 860px) {
@@ -1010,20 +1079,22 @@ footer a:hover { color: var(--neon-cyan); }
   nav { padding: 12px 20px; }
   .nav-links a:not(.nav-cta) { display: none; }
   .hero { padding: 100px 20px 60px; }
-  .job-carousel-section, .how, .testy, .features, .urgent { padding: 60px 20px; }
+  .job-showcase, .how, .testy, .features, .urgent { padding: 60px 20px; }
   .strip { padding: 16px 20px; }
   .hero-cta-group { flex-direction: column; }
   .hero-cta-group input { min-width: 100%; }
   .hero-proof { gap: 16px; flex-wrap: wrap; }
-  .job-card { min-width: 260px; max-width: 260px; }
+  .job-card { min-width: 270px; max-width: 270px; }
   .testy-slide { padding: 0 16px; }
+  .showcase-header { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 480px) {
-  .hero h1 { font-size: 28px; }
+  .hero h1 { font-size: 24px; }
   .strip-logo { font-size: 10px; padding: 3px 8px; }
-  .carousel-header { flex-direction: column; align-items: flex-start; }
   .btn-neon-lg { padding: 14px 28px; font-size: 13px; }
+  .match-ring { width: 44px; height: 44px; }
+  .match-ring .pct { font-size: 12px; }
 }
 </style>
 </head>
@@ -1033,15 +1104,15 @@ footer a:hover { color: var(--neon-cyan); }
 <div class="scanlines"></div>
 
 <nav id="nav">
-  <a href="index.html" class="nav-brand">
+  <a href="index.html" class="nav-brand" id="logoLink">
     <div class="brand-icon">J</div>
     <span class="brand-name">Job<span>lin</span></span>
   </a>
   <div class="nav-links">
-    <a href="#how">[How It Works]</a>
-    <a href="#testy">[Results]</a>
-    <a href="about.html">[About]</a>
-    <a href="register.html" class="nav-cta">_create_account</a>
+    <a href="#how">How It Works</a>
+    <a href="#testy">Results</a>
+    <a href="about.html">About</a>
+    <a href="register.html" class="nav-cta">Register</a>
   </div>
 </nav>
 
@@ -1049,30 +1120,30 @@ footer a:hover { color: var(--neon-cyan); }
 <section class="hero">
   <div class="hero-inner">
     <div class="hero-left">
-      <div class="hero-badge fade-up">
+      <div class="hero-badge reveal show up" style="animation-delay:0.2s">
         <span class="dot"></span>
-        SYSTEM ONLINE &mdash; MATCHING 12,000+ CANDIDATES
+        AI SYSTEM &mdash; MATCHING CANDIDATES IN REAL TIME
       </div>
 
-      <h1 class="fade-up">
-        STOP APPLYING <span class="neon-magenta">BLIND</span>.<br>
-        LET AI TARGET <span class="neon-cyan">EVERY JOB</span>
+      <h1 id="heroHeading" class="reveal show up" style="animation-delay:0.4s">
+        <span class="neon-magenta">STOP</span> APPLYING BLIND.<br>
+        LET AI <span class="neon-cyan">TARGET</span> EVERY JOB
       </h1>
 
-      <p class="fade-up-1">
+      <p class="reveal show up" style="animation-delay:0.7s">
         Joblin automatically matches you to jobs from 33+ boards, rewrites your CV and
-        cover letter for each role, and helps Nigerian professionals at every level —
-        from NYSC corps members to senior executives — land interviews 3x faster.
+        cover letter for each role, and helps Nigerian professionals at every level land
+        interviews faster — from NYSC corps members to senior executives.
       </p>
 
-      <form class="hero-cta-group fade-up-2" action="register.html" method="GET">
+      <form class="hero-cta-group reveal show up" style="animation-delay:1s" action="register.html" method="GET">
         <input type="email" name="email" placeholder="Enter your email to begin" required>
-        <button type="submit" class="btn-neon glow-pulse">
+        <button type="submit" class="btn-neon">
           GET HIRED NOW &rarr;
         </button>
       </form>
 
-      <div class="hero-trust fade-up-3">
+      <div class="hero-trust reveal show up" style="animation-delay:1.3s">
         <div class="hero-avatars">
           <span>C</span>
           <span>T</span>
@@ -1080,11 +1151,11 @@ footer a:hover { color: var(--neon-cyan); }
           <span>K</span>
         </div>
         <div class="hero-trust-text">
-          <strong>12,000+</strong> Nigerian job seekers already locked in
+          <strong id="visitorCount">87</strong> Nigerian job seekers using Joblin
         </div>
       </div>
 
-      <div class="hero-proof fade-up-3">
+      <div class="hero-proof reveal show up" style="animation-delay:1.5s">
         <div>
           <div class="hero-proof-num">33+</div>
           <div class="hero-proof-label">Job Boards</div>
@@ -1098,16 +1169,15 @@ footer a:hover { color: var(--neon-cyan); }
           <div class="hero-proof-label">AI Model Included</div>
         </div>
       </div>
-      <div class="hero-trust fade-up-3" id="liveStatsBar" style="display:none;margin-top:-14px">
+      <div class="hero-trust reveal show up" style="animation-delay:1.3s" id="liveStatsBar" style="display:none;margin-top:-14px">
         <div class="hero-trust-text">
           <span class="live-badge new">LIVE</span>
-          <strong id="newJobCount" style="color:var(--neon-cyan)">0</strong> new jobs added <span id="lastScrapedRel">today</span>
+          <strong id="newJobCount" style="color:var(--neon-cyan)">0</strong> new today &middot; Last scraped: <span id="lastScrapedRel">...</span>
         </div>
       </div>
     </div>
 
-    <!-- 3D Demo Panel -->
-    <div class="hero-right fade-up-1">
+    <div class="hero-right reveal show right" style="animation-delay:1s">
       <div class="hero-demo-card">
         <div class="hero-demo-header">
           <div class="hero-demo-tabs">
@@ -1115,48 +1185,48 @@ footer a:hover { color: var(--neon-cyan); }
             <span class="hero-demo-tab">New</span>
             <span class="hero-demo-tab">Remote</span>
           </div>
-          <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:0.04em">[ MATCH v2.4 ]</span>
+          <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">MATCH v2.4</span>
         </div>
 
         <div class="hero-demo-body">
-          <div class="hero-demo-row" style="cursor:pointer" onclick="location.href='register.html'">
+          <div class="hero-demo-row" onclick="location.href='register.html'">
             <div class="hero-demo-icon green">&#127891;</div>
             <div class="hero-demo-content">
-              <h4>Graduate Intern &mdash; Entry Level</h4>
-              <p>Lagos &bull; 3h ago &bull; No experience required</p>
+              <h4>Graduate Intern</h4>
+              <p>Flutterwave &bull; Lagos &bull; 3h ago</p>
             </div>
             <div class="hero-demo-score">
               <div class="hero-demo-score-val" style="color:var(--neon-green)">96%</div>
               <div class="hero-demo-score-label">Match</div>
             </div>
           </div>
-          <div class="hero-demo-row" style="cursor:pointer" onclick="location.href='register.html'">
+          <div class="hero-demo-row" onclick="location.href='register.html'">
             <div class="hero-demo-icon cyan">&#128188;</div>
             <div class="hero-demo-content">
-              <h4>Junior Data Analyst &mdash; Mid Level</h4>
-              <p>Remote &bull; 4h ago &bull; 1-2 yrs experience</p>
+              <h4>Junior Data Analyst</h4>
+              <p>Paystack &bull; Remote &bull; 4h ago</p>
             </div>
             <div class="hero-demo-score">
               <div class="hero-demo-score-val" style="color:var(--neon-cyan)">91%</div>
               <div class="hero-demo-score-label">Match</div>
             </div>
           </div>
-          <div class="hero-demo-row" style="cursor:pointer" onclick="location.href='register.html'">
+          <div class="hero-demo-row" onclick="location.href='register.html'">
             <div class="hero-demo-icon yellow">&#127758;</div>
             <div class="hero-demo-content">
               <h4>NYSC Programme Associate</h4>
-              <p>Abuja &bull; Posted yesterday &bull; NYSC specific</p>
+              <p>BudgIT &bull; Abuja &bull; 1d ago</p>
             </div>
             <div class="hero-demo-score">
               <div class="hero-demo-score-val" style="color:var(--neon-yellow)">88%</div>
               <div class="hero-demo-score-label">Match</div>
             </div>
           </div>
-          <div class="hero-demo-row" style="cursor:pointer" onclick="location.href='register.html'">
+          <div class="hero-demo-row" onclick="location.href='register.html'">
             <div class="hero-demo-icon magenta">&#128202;</div>
             <div class="hero-demo-content">
               <h4>Senior Project Officer</h4>
-              <p>Lagos &bull; 2d ago &bull; 5+ yrs experience</p>
+              <p>UNICEF &bull; Abuja &bull; 2d ago</p>
             </div>
             <div class="hero-demo-score">
               <div class="hero-demo-score-val" style="color:var(--neon-magenta)">79%</div>
@@ -1170,7 +1240,7 @@ footer a:hover { color: var(--neon-cyan); }
 </section>
 
 <!-- ═══ SOCIAL PROOF STRIP ═══ -->
-<div class="strip">
+<div class="strip reveal">
   <p>Trusted by job seekers at every career stage</p>
   <div class="strip-logos">
     <span class="strip-logo">&#127891; NYSC Corps Members</span>
@@ -1183,25 +1253,23 @@ footer a:hover { color: var(--neon-cyan); }
   </div>
 </div>
 
-<!-- ═══ JOB SHOWCASE CAROUSEL ═══ -->
-<section class="job-carousel-section" id="jobs">
+<!-- ═══ JOB SHOWCASE ═══ -->
+<section class="job-showcase" id="jobs">
   <div style="max-width:1100px;margin:0 auto">
-    <div class="carousel-header">
+    <div class="showcase-header">
       <div>
         <div class="section-label">// live_feed</div>
         <h2 class="section-title" style="margin-bottom:4px">MATCHED FOR <span class="neon-text-magenta">YOU</span></h2>
-        <p class="section-sub">Real-time job matches scraped from 33+ Nigerian job boards. <span id="carouselJobCount" style="color:var(--neon-cyan)"></span></p>
+        <p class="section-sub">Our AI scans 33+ boards and scores every job against your profile. Each match percentage shows how well your CV fits the role.</p>
       </div>
-      <div class="carousel-arrows">
-        <button class="carousel-arrow" id="carouselLeft">&#8592;</button>
-        <button class="carousel-arrow" id="carouselRight">&#8594;</button>
+      <div class="showcase-arrows">
+        <button class="showcase-arrow" id="carouselLeft">&#8592;</button>
+        <button class="showcase-arrow" id="carouselRight">&#8594;</button>
       </div>
     </div>
 
-    <div class="carousel-track-wrap">
-      <div class="carousel-track" id="jobTrack">
-        <!-- Cards injected by JS -->
-      </div>
+    <div class="showcase-track-wrap">
+      <div class="showcase-track" id="jobTrack"></div>
     </div>
     <div style="text-align:center;margin-top:24px">
       <a href="register.html" class="btn-neon">View All Matches &rarr;</a>
@@ -1212,27 +1280,27 @@ footer a:hover { color: var(--neon-cyan); }
 <!-- ═══ HOW IT WORKS ═══ -->
 <section class="how" id="how">
   <div class="how-inner">
-    <div class="section-label">// setup_protocol</div>
-    <h2 class="section-title">DEPLOY IN <span class="neon-text-cyan">3 MINUTES</span></h2>
+    <div class="section-label reveal">// setup_protocol</div>
+    <h2 class="section-title reveal">DEPLOY IN <span class="neon-text-cyan">3 MINUTES</span></h2>
     <div class="how-grid">
-      <div class="how-card">
+      <div class="how-card reveal" style="animation-delay:0.1s">
         <div class="how-num">01</div>
         <h3>UPLOAD YOUR CV</h3>
         <p>Paste your raw text or upload your existing CV. Joblin reads your experience, skills, education, and certifications — and builds a clean, ATS-optimised profile in seconds. No formatting headaches.</p>
       </div>
-      <div class="how-card">
+      <div class="how-card reveal" style="animation-delay:0.25s">
         <div class="how-num">02</div>
         <h3>AI MATCHES YOU</h3>
         <p>Our engine scans 33+ boards daily and shows only roles that fit your profile with a match score — from entry level to senior positions. Every job is ranked by compatibility.</p>
       </div>
-      <div class="how-card">
+      <div class="how-card reveal" style="animation-delay:0.4s">
         <div class="how-num">03</div>
         <h3>ONE-CLICK TAILOR</h3>
         <p>Click any job and Joblin rewrites your CV and cover letter to match that specific role — keywords, skills, achievements. ATS-optimised. Ready to download and apply.</p>
       </div>
     </div>
     <div style="margin-top:36px">
-      <a href="register.html" class="btn-neon btn-neon-magenta btn-neon-lg">Initialize Your Profile &rarr;</a>
+      <a href="register.html" class="btn-neon btn-neon-magenta btn-neon-lg reveal" style="animation-delay:0.5s">Initialize Your Profile &rarr;</a>
     </div>
   </div>
 </section>
@@ -1240,8 +1308,8 @@ footer a:hover { color: var(--neon-cyan); }
 <!-- ═══ TESTIMONIALS ═══ -->
 <section class="testy" id="testy">
   <div class="testy-inner">
-    <div class="section-label">// success_logs</div>
-    <h2 class="section-title">HIRED BY THE <span class="neon-text-green">SYSTEM</span></h2>
+    <div class="section-label reveal">// success_logs</div>
+    <h2 class="section-title reveal">HIRED BY THE <span class="neon-text-green">SYSTEM</span></h2>
     <div class="testy-carousel">
       <div class="testy-track" id="testyTrack">
         <div class="testy-slide">
@@ -1338,7 +1406,7 @@ footer a:hover { color: var(--neon-cyan); }
       <div class="testy-dots" id="testyDots"></div>
     </div>
     <div style="margin-top:32px">
-      <a href="register.html" class="btn-neon btn-neon-green">Join 12,000+ Success Stories &rarr;</a>
+      <a href="register.html" class="btn-neon btn-neon-green reveal" style="animation-delay:0.3s">Join Our Success Stories &rarr;</a>
     </div>
   </div>
 </section>
@@ -1346,40 +1414,40 @@ footer a:hover { color: var(--neon-cyan); }
 <!-- ═══ FEATURES ═══ -->
 <section class="features">
   <div class="features-inner">
-    <div class="section-label">// specs</div>
-    <h2 class="section-title">PLATFORM <span class="neon-text-magenta">CAPABILITIES</span></h2>
+    <div class="section-label reveal">// specs</div>
+    <h2 class="section-title reveal">PLATFORM <span class="neon-text-magenta">CAPABILITIES</span></h2>
     <div class="features-grid">
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.1s">
         <div class="feature-icon cyan">&#9889;</div>
         <h3>ATS-Optimized CVs</h3>
         <p>Every CV is rewritten with job-specific keywords so your application passes automated screening systems every time.</p>
         <a href="register.html" class="feature-link">Activate &rarr;</a>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.2s">
         <div class="feature-icon magenta">&#128270;</div>
         <h3>Smart Keyword Matching</h3>
         <p>Our AI analyzes each job description and injects the exact keywords, skills, and phrases recruiters are looking for.</p>
         <a href="register.html" class="feature-link" style="color:var(--neon-magenta)">Activate &rarr;</a>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.3s">
         <div class="feature-icon green">&#128200;</div>
         <h3>Match Score Rankings</h3>
         <p>See exactly how well your profile matches each job with a percentage score. Only apply to roles where you have an edge.</p>
         <a href="register.html" class="feature-link" style="color:var(--neon-green)">Activate &rarr;</a>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.4s">
         <div class="feature-icon yellow">&#128279;</div>
         <h3>33+ Board Aggregation</h3>
         <p>We scrape LinkedIn, Jobberman, MyJobMag, Hot Nigerian Jobs, and 29+ other boards daily so you never miss an opportunity.</p>
         <a href="register.html" class="feature-link" style="color:var(--neon-yellow)">Activate &rarr;</a>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.5s">
         <div class="feature-icon purple">&#128221;</div>
         <h3>One-Click Cover Letters</h3>
         <p>Generate tailored cover letters for every application with a single click. Each one is unique, role-specific, and ready to send.</p>
         <a href="register.html" class="feature-link" style="color:var(--neon-purple)">Activate &rarr;</a>
       </div>
-      <div class="feature-card">
+      <div class="feature-card reveal" style="animation-delay:0.6s">
         <div class="feature-icon cyan">&#127760;</div>
         <h3>NYSC &amp; Career Changer Mode</h3>
         <p>Special handling for NYSC experience, career transitions, and entry-level candidates. Our AI optimizes for your specific stage.</p>
@@ -1392,17 +1460,16 @@ footer a:hover { color: var(--neon-cyan); }
 <!-- ═══ FINAL CTA ═══ -->
 <section class="urgent">
   <div class="urgent-inner">
-    <h2>YOUR DREAM JOB IS <span class="neon-text-cyan">WAITING</span>.<br>
+    <h2 class="reveal">YOUR DREAM JOB IS <span class="neon-text-cyan">WAITING</span>.<br>
     <span class="neon-text-magenta">DEPLOY YOUR APPLICATION</span>.</h2>
-    <p>
+    <p class="reveal" style="animation-delay:0.2s">
       Every day you wait, another candidate is tailoring their CV with Joblin
-      and landing the interview you deserve. The job market doesn't pause — and
-      neither should your career. Start for free in under 3 minutes.
+      and landing the interview you deserve. Start for free in under 3 minutes.
     </p>
-    <a href="register.html" class="btn-neon btn-neon-lg glow-pulse">
+    <a href="register.html" class="btn-neon btn-neon-lg reveal" style="animation-delay:0.4s">
       GET HIRED NOW &rarr;
     </a>
-    <div class="urgent-note">
+    <div class="urgent-note reveal" style="animation-delay:0.5s">
       Free AI model included &bull; No credit card &bull; <a href="login.html">Sign in if you already have an account</a>
     </div>
   </div>
@@ -1417,6 +1484,14 @@ footer a:hover { color: var(--neon-cyan); }
 </footer>
 
 <script>
+// ── Visitor Counter ──
+(function() {
+  let count = parseInt(localStorage.getItem('jl_visitors') || '87', 10);
+  count = Math.max(87, count + 1);
+  localStorage.setItem('jl_visitors', count.toString());
+  document.getElementById('visitorCount').textContent = count;
+})();
+
 // ── 3D Grid Canvas ──
 const canvas = document.getElementById('gridCanvas');
 const ctx = canvas.getContext('2d');
@@ -1434,42 +1509,42 @@ const dots = [];
 for (let x = 0; x < W; x += gridSize) {
   for (let y = 0; y < H; y += gridSize) {
     dots.push({
-      x: x + Math.random() * 10,
-      y: y + Math.random() * 10,
-      baseX: x,
-      baseY: y,
+      x, y,
+      baseX: x, baseY: y,
       phase: Math.random() * Math.PI * 2,
-      speed: 0.2 + Math.random() * 0.3,
-      amp: 2 + Math.random() * 6,
+      speed: 0.08 + Math.random() * 0.12,
+      amp: 3 + Math.random() * 5,
     });
   }
 }
 
-let mouseX = 0, mouseY = 0;
+let mouseX = W / 2, mouseY = H / 2;
 let mouseInfluence = 0;
 window.addEventListener('mousemove', e => {
   mouseX = e.clientX;
   mouseY = e.clientY;
-  mouseInfluence = 1;
+  mouseInfluence = Math.min(1, mouseInfluence + 0.03);
 });
-window.addEventListener('mouseleave', () => { mouseInfluence = 0; });
+window.addEventListener('mouseleave', () => {
+  mouseInfluence = Math.max(0, mouseInfluence - 0.01);
+});
 
 function drawGrid(t) {
   ctx.clearRect(0, 0, W, H);
 
-  const offsetX = Math.sin(t * 0.1) * 5;
-  const offsetY = Math.cos(t * 0.08) * 5;
+  const offsetX = Math.sin(t * 0.04) * 4;
+  const offsetY = Math.cos(t * 0.03) * 4;
 
-  // Draw connecting lines
-  ctx.strokeStyle = 'rgba(0, 240, 255, 0.025)';
-  ctx.lineWidth = 1;
-  for (let i = 0; i < dots.length; i++) {
-    for (let j = i + 1; j < dots.length; j++) {
+  // Lines — slower, fewer connections
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.02)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < dots.length; i += 2) {
+    for (let j = i + 2; j < dots.length; j += 2) {
       const dx = dots[i].x - dots[j].x;
       const dy = dots[i].y - dots[j].y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 100) {
-        ctx.globalAlpha = (1 - dist / 100) * 0.3;
+      if (dist < 80) {
+        ctx.globalAlpha = (1 - dist / 80) * 0.2;
         ctx.beginPath();
         ctx.moveTo(dots[i].x, dots[i].y);
         ctx.lineTo(dots[j].x, dots[j].y);
@@ -1479,28 +1554,28 @@ function drawGrid(t) {
   }
   ctx.globalAlpha = 1;
 
-  // Draw dots
   for (const d of dots) {
     const wave = Math.sin(t * d.speed + d.phase) * d.amp;
+    const waveY = Math.cos(t * d.speed * 0.6 + d.phase * 1.3) * d.amp * 0.4;
     d.x = d.baseX + offsetX + wave;
-    d.y = d.baseY + offsetY + Math.cos(t * d.speed * 0.7 + d.phase) * d.amp * 0.5;
+    d.y = d.baseY + offsetY + waveY;
 
-    // Mouse interaction
-    if (mouseInfluence > 0.05) {
+    if (mouseInfluence > 0.02) {
       const dx = mouseX - d.x;
       const dy = mouseY - d.y;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 120) {
-        const push = (1 - dist / 120) * 15 * mouseInfluence;
+      if (dist < 140) {
+        const push = (1 - dist / 140) * 18 * mouseInfluence;
         d.x -= dx / dist * push;
         d.y -= dy / dist * push;
       }
     }
 
-    const brightness = 0.2 + Math.sin(t * d.speed + d.phase) * 0.15;
+    const brightness = 0.15 + Math.sin(t * d.speed + d.phase) * 0.1;
+    const size = 1 + Math.sin(t * d.speed + d.phase) * 0.6;
     ctx.fillStyle = `rgba(0, 240, 255, ${brightness})`;
     ctx.beginPath();
-    ctx.arc(d.x, d.y, 1.5, 0, Math.PI * 2);
+    ctx.arc(d.x, d.y, size, 0, Math.PI * 2);
     ctx.fill();
   }
 
@@ -1522,73 +1597,107 @@ document.querySelectorAll('a[href^="#"]').forEach(a => {
   });
 });
 
-// ── Job Carousel ──
+// Logo click — scroll to top if on homepage
+document.getElementById('logoLink').addEventListener('click', function(e) {
+  if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname === '') {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+// ── IntersectionObserver: scroll-triggered reveals ──
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('show');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal:not(.show)').forEach(el => revealObserver.observe(el));
+
+// ── Job Cards ──
 const DEMO_JOBS = [
-  { title: 'Graduate Intern', company: 'Flutterwave', location: 'Lagos', type: 'On-site', match: 96, cat: 'Entry Level', icon: '🎓', ago: '2h ago' },
-  { title: 'Junior Data Analyst', company: 'Paystack', location: 'Remote', type: 'Remote', match: 91, cat: 'Data & Analytics', icon: '📊', ago: '4h ago' },
-  { title: 'NYSC Programme Associate', company: 'BudgIT', location: 'Abuja', type: 'Hybrid', match: 88, cat: 'NGO/Dev', icon: '🌍', ago: '1d ago' },
-  { title: 'Software Developer Intern', company: 'Andela', location: 'Lagos', type: 'On-site', match: 85, cat: 'Software & IT', icon: '💻', ago: '6h ago' },
-  { title: 'Project Management Officer', company: 'UNICEF Nigeria', location: 'Abuja', type: 'On-site', match: 82, cat: 'Project Mgmt', icon: '📋', ago: '3d ago' },
-  { title: 'Customer Success Associate', company: 'Kuda Bank', location: 'Lagos', type: 'Remote', match: 79, cat: 'Customer Svc', icon: '🎧', ago: '12h ago' },
-  { title: 'Data Entry & Admin Officer', company: 'Paga', location: 'Lagos', type: 'On-site', match: 76, cat: 'Admin & Ops', icon: '📁', ago: '2d ago' },
-  { title: 'Marketing Intern', company: 'Chipper Cash', location: 'Remote', type: 'Remote', match: 73, cat: 'Sales/Marketing', icon: '📈', ago: '1d ago' },
-  { title: 'Senior Product Manager', company: 'Interswitch', location: 'Lagos', type: 'Hybrid', match: 70, cat: 'Product', icon: '🚀', ago: '5d ago' },
+  { title: 'Graduate Intern', company: 'Flutterwave', location: 'Lagos', type: 'On-site', match: 96, cat: 'Entry Level', ago: '2h ago' },
+  { title: 'Junior Data Analyst', company: 'Paystack', location: 'Remote', type: 'Remote', match: 91, cat: 'Data & Analytics', ago: '4h ago' },
+  { title: 'NYSC Programme Associate', company: 'BudgIT', location: 'Abuja', type: 'Hybrid', match: 88, cat: 'NGO/Dev', ago: '1d ago' },
+  { title: 'Software Developer Intern', company: 'Andela', location: 'Lagos', type: 'On-site', match: 85, cat: 'Software & IT', ago: '6h ago' },
+  { title: 'Project Management Officer', company: 'UNICEF Nigeria', location: 'Abuja', type: 'On-site', match: 82, cat: 'Project Mgmt', ago: '3d ago' },
+  { title: 'Customer Success Associate', company: 'Kuda Bank', location: 'Lagos', type: 'Remote', match: 79, cat: 'Customer Svc', ago: '12h ago' },
+  { title: 'Data Entry & Admin Officer', company: 'Paga', location: 'Lagos', type: 'On-site', match: 76, cat: 'Admin & Ops', ago: '2d ago' },
+  { title: 'Marketing Intern', company: 'Chipper Cash', location: 'Remote', type: 'Remote', match: 73, cat: 'Sales/Marketing', ago: '1d ago' },
+  { title: 'Senior Product Manager', company: 'Interswitch', location: 'Lagos', type: 'Hybrid', match: 70, cat: 'Product', ago: '5d ago' },
 ];
 
-const track = document.getElementById('jobTrack');
-const leftBtn = document.getElementById('carouselLeft');
-const rightBtn = document.getElementById('carouselRight');
+function getMatchColor(pct) {
+  if (pct >= 85) return { base: '#39ff14', label: 'Excellent', desc: 'Strong profile fit for this role' };
+  if (pct >= 70) return { base: '#00f0ff', label: 'Strong', desc: 'Good alignment with requirements' };
+  if (pct >= 55) return { base: '#ffe600', label: 'Good', desc: 'Partial match, some gaps' };
+  return { base: '#ff2d95', label: 'Fair', desc: 'Some skills align, review details' };
+}
 
 function renderJobCards() {
-  track.innerHTML = DEMO_JOBS.map(j => `
-    <div class="job-card">
-      <div class="job-card-category">${j.cat}</div>
+  track.innerHTML = DEMO_JOBS.map(j => {
+    const mc = getMatchColor(j.match);
+    const circumference = 2 * Math.PI * 22;
+    const offset = circumference - (j.match / 100) * circumference;
+    const borderBg = mc.base + '15';
+
+    return `
+    <div class="job-card" style="border-color:${borderBg}">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:${mc.base}15;color:${mc.base}">${j.cat}</span>
+      </div>
       <h3>${j.title}</h3>
       <div class="company">${j.company}</div>
-      <div class="meta">
-        <span>📍 ${j.location}</span>
-        <span>🕐 ${j.ago}</span>
-        <span>🔗 ${j.type}</span>
+      <div class="meta-row">
+        <span>&#128205; ${j.location}</span>
+        <span>&#128338; ${j.ago}</span>
+        <span>&#128279; ${j.type}</span>
       </div>
-      <div class="card-footer">
-        <div class="match">${j.match}%</div>
-        <a href="register.html" class="apply-btn">Apply Now</a>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px ${mc.base}08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"/>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="${mc.base}" stroke-width="3"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+              stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"/>
+          </svg>
+          <span class="pct" style="color:${mc.base}">${j.match}%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:${mc.base}">${mc.label} Match</div>
+          <div class="match-desc">${mc.desc}</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
       </div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
+
+const track = document.getElementById('jobTrack');
 renderJobCards();
 
-leftBtn.addEventListener('click', () => {
-  track.scrollBy({ left: -320, behavior: 'smooth' });
+document.getElementById('carouselLeft').addEventListener('click', () => {
+  track.scrollBy({ left: -326, behavior: 'smooth' });
 });
-rightBtn.addEventListener('click', () => {
-  track.scrollBy({ left: 320, behavior: 'smooth' });
+document.getElementById('carouselRight').addEventListener('click', () => {
+  track.scrollBy({ left: 326, behavior: 'smooth' });
 });
 
 // Drag to scroll
-let isDown = false;
-let startX, scrollLeft;
+let isDown = false, startX, scrollLeft;
 track.addEventListener('mousedown', e => {
-  isDown = true;
-  track.style.cursor = 'grabbing';
-  startX = e.pageX - track.offsetLeft;
-  scrollLeft = track.scrollLeft;
+  isDown = true; track.style.cursor = 'grabbing';
+  startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
 });
-track.addEventListener('mouseleave', () => {
-  isDown = false;
-  track.style.cursor = 'grab';
-});
-track.addEventListener('mouseup', () => {
-  isDown = false;
-  track.style.cursor = 'grab';
-});
+track.addEventListener('mouseleave', () => { isDown = false; track.style.cursor = 'grab'; });
+track.addEventListener('mouseup', () => { isDown = false; track.style.cursor = 'grab'; });
 track.addEventListener('mousemove', e => {
   if (!isDown) return;
   e.preventDefault();
-  const x = e.pageX - track.offsetLeft;
-  const walk = (x - startX) * 2;
-  track.scrollLeft = scrollLeft - walk;
+  track.scrollLeft = scrollLeft - (e.pageX - track.offsetLeft - startX) * 2;
 });
 
 // ── Testimonial Carousel ──
@@ -1606,22 +1715,19 @@ function goToSlide(idx) {
   });
 }
 
-// Create dots
 slides.forEach((_, i) => {
   const dot = document.createElement('button');
   dot.className = 'testy-dot' + (i === 0 ? ' active' : '');
   dot.addEventListener('click', () => {
     clearInterval(autoSlide);
     goToSlide(i);
-    autoSlide = setInterval(nextSlide, 5000);
+    autoSlide = setInterval(nextSlide, 6000);
   });
   testyDots.appendChild(dot);
 });
 
-function nextSlide() {
-  goToSlide((currentSlide + 1) % slides.length);
-}
-autoSlide = setInterval(nextSlide, 5000);
+function nextSlide() { goToSlide((currentSlide + 1) % slides.length); }
+autoSlide = setInterval(nextSlide, 6000);
 
 // ── Live Stats ──
 (async function loadLiveStats() {
@@ -1640,22 +1746,26 @@ autoSlide = setInterval(nextSlide, 5000);
       if (newCount > 0) {
         document.getElementById('newJobCount').textContent = newCount;
         document.getElementById('liveStatsBar').style.display = 'flex';
-        if (data.last_scraped) {
-          const ts = new Date(data.last_scraped.replace(' ', 'T') + 'Z');
-          const now = new Date();
-          const diffH = (now - ts) / 3600000;
-          let rel = 'today';
-          if (diffH < 1) rel = 'just now';
-          else if (diffH < 4) rel = Math.round(diffH) + 'h ago';
-          else if (diffH < 24) rel = 'today';
-          else rel = Math.round(diffH / 24) + 'd ago';
-          document.getElementById('lastScrapedRel').textContent = rel;
-        }
       }
-      document.getElementById('carouselJobCount').textContent =
-        `[ ${data.total > 999 ? Math.round(data.total / 100) / 10 + 'K' : data.total} LIVE ]`;
+      const scrapedEl = document.getElementById('lastScrapedRel');
+      if (scrapedEl && data.last_scraped && data.last_scraped !== 'NA') {
+        const ts = new Date(data.last_scraped.replace(' ', 'T') + 'Z');
+        const now = new Date();
+        const diffH = (now - ts) / 3600000;
+        let rel = 'today';
+        if (diffH < 1) rel = 'just now';
+        else if (diffH < 4) rel = Math.round(diffH) + 'h ago';
+        else if (diffH < 48) rel = Math.round(diffH) + 'h ago';
+        else rel = Math.round(diffH / 24) + 'd ago';
+        scrapedEl.textContent = rel;
+      } else if (scrapedEl) {
+        scrapedEl.textContent = 'API pending setup';
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    const scrapedEl = document.getElementById('lastScrapedRel');
+    if (scrapedEl) scrapedEl.textContent = 'scraper starting up';
+  }
 })();
 </script>
 
