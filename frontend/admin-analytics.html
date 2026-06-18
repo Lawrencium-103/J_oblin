@@ -132,14 +132,6 @@ Usage Heatmap
 <div id="heatmapContainer"><p style="color:#94a3b8;font-size:13px">Loading...</p></div>
 </div>
 
-<div class="card" style="margin-top:16px">
-<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg></span>Recent Activity</div>
-<div style="max-height:300px;overflow-y:auto">
-<table class="activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
-<tbody id="activityBody"></tbody></table>
-</div>
-</div>
-
 </div>
 </div>
 </div>
@@ -168,10 +160,6 @@ async function loadAnalytics() {
   } catch (err) {
     showToast(err.message, "error");
   }
-  try {
-    const logData = await apiFetch("GET", "/api/admin/analytics/log?limit=50");
-    renderActivityLog(logData.entries || []);
-  } catch (err) {}
 }
 
 function renderActionChart(distribution) {
@@ -269,16 +257,6 @@ function switchPeriod(period, btn) {
   if (period === "daily") renderHeatmap(analyticsData.daily || [], "daily");
   else if (period === "monthly") renderHeatmap(analyticsData.monthly || [], "monthly");
   else if (period === "yearly") renderHeatmap(analyticsData.yearly || [], "yearly");
-}
-
-function renderActivityLog(entries) {
-  const tbody = document.getElementById("activityBody");
-  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">No activity logged yet.</td></tr>'; return; }
-  tbody.innerHTML = entries.map(e => {
-    const ts = e.created_at ? new Date(e.created_at + "Z").toLocaleString() : "";
-    const actionClass = (e.action || "").replace(/\s+/g,"_").toLowerCase();
-    return `<tr><td style="white-space:nowrap;color:#94a3b8;font-size:10px">${escHtml(ts)}</td><td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${escHtml(e.name||e.email||"User #"+e.user_id)}</td><td><span class="action-badge ${actionClass}">${escHtml(e.action||"")}</span></td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;color:#94a3b8;font-size:10px">${escHtml((e.details||"").slice(0,60))}</td></tr>`;
-  }).join("");
 }
 
 if (!getToken()) { window.location.href = "login.html"; }

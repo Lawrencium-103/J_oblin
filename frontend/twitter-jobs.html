@@ -93,6 +93,14 @@ function truncate(text, len) {
   return text.slice(0, len).replace(/\s+\S*$/, '') + '...';
 }
 
+function isJunkJob(job) {
+  const junkTitles = /view profile|my saved|account.*privacy|update.*profile|sign in|log in|create.*account|page not found|error|loading/i;
+  if (!job.title || junkTitles.test(job.title)) return true;
+  if (job.company === 'Unknown' || job.company === 'unknown' || !job.company) return true;
+  if (job.job_category === 'other' && (!job.description || job.description.length < 20)) return true;
+  return false;
+}
+
 async function loadJobs() {
   const box = document.getElementById('tweetBox');
   box.value = 'Loading jobs...';
@@ -105,6 +113,7 @@ async function loadJobs() {
     const count = parseInt(document.getElementById('jobCount').value);
     let filtered = currentJobs;
     if (catFilter) filtered = filtered.filter(j => j.job_category === catFilter);
+    filtered = filtered.filter(j => !isJunkJob(j));
     const selected = filtered.slice(0, count);
     generateTweet(selected);
     populateCategories(currentJobs);
@@ -137,6 +146,7 @@ function generateTweet(jobs) {
     const location = j.location ? ' ' + j.location : '';
     const category = j.job_category || '';
     const desc = truncate(j.description || '', 120);
+    const jobUrl = j.url || (siteUrl + '/job-detail.html?id=' + j.id);
     lines.push(n + '. ' + title + ' - ' + company);
     if (location || category) {
       const tags = [];
@@ -145,7 +155,7 @@ function generateTweet(jobs) {
       lines.push('   ' + tags.join(' | '));
     }
     if (desc) lines.push('   ' + desc);
-    lines.push('   ' + siteUrl + '/job-detail.html?id=' + j.id);
+    lines.push('   ' + jobUrl);
     lines.push('');
   });
   lines.push('Apply via Joblin - AI-powered CV tailoring for Nigerian job seekers');

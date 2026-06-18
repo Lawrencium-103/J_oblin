@@ -923,7 +923,7 @@ def get_recent_jobs_public(limit: int = 15):
     with get_db() as conn:
         rows = _exec(
             conn,
-            "SELECT id, title, company, location, source, job_category, date_found FROM global_jobs WHERE is_active = 1 ORDER BY date_found DESC LIMIT ?",
+            "SELECT id, title, company, location, source, job_category, url, description, date_found FROM global_jobs WHERE is_active = 1 ORDER BY date_found DESC LIMIT ?",
             (limit,),
         ).fetchall()
         return [dict(r) for r in rows]
@@ -1057,7 +1057,7 @@ def get_activity_stats():
 
         top_users = _exec(
             conn,
-            f"SELECT a.user_id, u.name, u.email, COUNT(*) as cnt "
+            f"SELECT a.user_id, MAX(u.name) as name, MAX(u.email) as email, COUNT(*) as cnt "
             f"FROM user_activity_log a LEFT JOIN users u ON u.id = a.user_id "
             f"GROUP BY a.user_id ORDER BY cnt DESC LIMIT 10",
         ).fetchall()

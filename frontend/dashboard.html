@@ -64,17 +64,19 @@ body { background: #ffffff; }
   position: relative;
   overflow: hidden;
   margin-bottom: 18px;
-  padding: 20px 22px;
+  padding: 24px 28px;
   border: 1px solid #dbe7e4;
   background: linear-gradient(135deg, #ffffff 0%, #eef8f5 100%);
+  border-radius: 12px;
 }
 
 .motivation-card::before {
   content: "";
   position: absolute;
   inset: 0 auto 0 0;
-  width: 4px;
+  width: 5px;
   background: linear-gradient(180deg, #0d9488, #059669);
+  border-radius: 0 3px 3px 0;
 }
 
 .motivation-kicker {
@@ -83,21 +85,39 @@ body { background: #ffffff; }
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #0f766e;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.motivation-kicker::before {
+  content: "◆";
+  font-size: 8px;
+  color: #0d9488;
 }
 
 .motivation-message {
   max-width: 900px;
-  font-size: 15px;
-  line-height: 1.75;
-  color: #334155;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.6;
+  color: #1e293b;
 }
 
 .motivation-action {
-  margin-top: 12px;
-  font-size: 12px;
+  margin-top: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: #0d9488;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.motivation-action::before {
+  content: "→";
+  font-size: 16px;
 }
 
 @media (max-width: 600px) {
@@ -242,7 +262,7 @@ body { background: #ffffff; }
       </div>
 
       <div class="card motivation-card animate-in" id="dailyMotivation">
-        <div class="motivation-kicker" id="motivationKicker">Today's reminder</div>
+        <div class="motivation-kicker" id="motivationKicker">◆ Today's reminder</div>
         <div class="motivation-message" id="motivationMessage">Loading your morning note...</div>
         <div class="motivation-action" id="motivationAction"></div>
       </div>
@@ -343,76 +363,20 @@ body { background: #ffffff; }
 <script src="app.js"></script>
 <script>
 const DAILY_MOTIVATIONS = [
-  {
-    kicker: "You are not invisible",
-    message: "There is a hiring manager somewhere right now who does not know your name yet, but they will feel something shift when they read your application — a quiet certainty that they found the right person. You are not invisible. You are simply not in front of them yet. That is exactly what we are here to change, one carefully placed word at a time.",
-    action: "Polish your CV today as if that manager is reading it tonight."
-  },
-  {
-    kicker: "Rejection is not the final word",
-    message: "Every 'no' you have received was written by someone who had incomplete information — they did not know your full story, your resilience, the things you taught yourself at midnight because no course existed for it yet. The right employer is not looking for perfection. They are looking for the real version of capable. That is you, exactly as you are today.",
-    action: "Apply to one role today that feels just slightly out of reach."
-  },
-  {
-    kicker: "The middle is the hardest part",
-    message: "You are not behind. You are in the heavy middle — the part no one talks about because there are no celebrations yet, just you showing up again and again in silence. That kind of discipline is rare. Most people quit here. You are still here. That already separates you from the majority before a single employer reads your name.",
-    action: "Do one small thing today. One job saved, one sentence improved."
-  },
-  {
-    kicker: "Your story has weight",
-    message: "The path you took to get here — the detours, the pivots, the skills you stitched together from different lives — that is not a liability. That is texture. Employers who are building real things are not looking for a straight line. They want someone who has been tested and knows what they are made of. Write your story like you mean it.",
-    action: "Rewrite your professional summary today. Make it sound like you."
-  },
-  {
-    kicker: "This morning still belongs to you",
-    message: "Before the noise starts, before the day pulls you away — this moment belongs to you. The search can feel like a second job that pays nothing and asks everything. Joblin is here so you are not doing it alone, so the work is lighter, the matches are smarter, and the time you spend on each application actually counts.",
-    action: "Open one job listing before the day takes the morning from you."
-  },
-  {
-    kicker: "Someone needs exactly what you have",
-    message: "There is a team somewhere that is struggling because they do not have you. A project stalling. A gap that keeps costing them. They have posted the role and are hoping someone with your precise combination of skills and experience will appear. You are that person. The only thing standing between you and them is one more well-aimed application.",
-    action: "Identify your strongest role match today and send a real, tailored application."
-  },
-  {
-    kicker: "Discipline over mood",
-    message: "You will not always feel motivated. Some mornings the job board feels like a wall and every listing looks like a door built for someone else. That feeling is not the truth — it is just fatigue wearing the mask of reality. On those mornings, discipline is the answer. Show up anyway. Joblin carries the search so your energy goes to the applications that actually matter.",
-    action: "Filter by your strongest category and apply to one role before noon."
-  },
-  {
-    kicker: "You have earned your expertise",
-    message: "Every skill on your CV cost you something — time, tuition, sacrifice, late nights, or the quiet years when you were building without an audience. Do not apologise for what you have learned. Do not shrink your experience to fit a polite box. Walk into every application with the knowledge that you paid the real price for what you know.",
-    action: "Add one achievement today that you have been underselling on your CV."
-  },
-  {
-    kicker: "Momentum starts small",
-    message: "You do not need to find your dream job today. You need to take one real step that makes tomorrow's step easier. Save a role. Improve one bullet point. Send one email. Each small action builds a current beneath you that you cannot always feel — until one day the call comes, and you realise the momentum was working the entire time.",
-    action: "Take one concrete step before you check your phone."
-  },
-  {
-    kicker: "The market is slow, not closed",
-    message: "A slow market feels personal. It is not. Thousands of people are hired every single day, even in difficult economies — because companies still have problems that need solving, customers that need serving, and roles that need filling. The question is not whether the market is open. It is whether your application is sharp enough to reach the people making decisions today.",
-    action: "Use Joblin to tailor your CV to a specific role. Generic applications cost you."
-  },
-  {
-    kicker: "Rest is part of the process",
-    message: "Searching from a depleted place produces depleted applications. If yesterday was hard, that is not weakness — that is information. Today, do less than you think you should, but make what you do count. One thoughtful, rested application will always outperform ten exhausted ones. You are not a machine. You are the asset.",
-    action: "Do one quality thing today and let that be enough."
-  },
-  {
-    kicker: "You are closer than you feel",
-    message: "The gap between where you are and where you are going is almost never as wide as anxiety makes it seem. Often it is one conversation, one referral, one morning where you apply to something you almost skipped. Keep that possibility alive. It costs nothing to submit one more application — and it might be the one that changes everything.",
-    action: "Apply to one job today that you almost did not."
-  },
-  {
-    kicker: "Your name deserves to be in the room",
-    message: "Someone else is going to get the job you were afraid to apply for. Not because they were more qualified — but because they sent the application and you did not. Your name deserves to be in those conversations. Joblin exists so that the hard part — the matching, the tailoring, the CV — is already handled. The only thing left is your decision to show up.",
-    action: "Apply to the role you have been avoiding. Do it before you talk yourself out of it."
-  },
-  {
-    kicker: "Progress does not always look like progress",
-    message: "Some weeks you will apply to ten jobs and hear nothing. That is not failure — it is volume and learning. You are finding out what your CV communicates, which companies are a fit, and which roles to pursue differently. Every non-response is data. Keep refining. The feedback is hidden in the silence, and Joblin is here to help you decode it.",
-    action: "Look at the last five roles you applied for. Is your CV as tailored as it could be?"
-  }
+  { kicker: "Your next win is closer than you think", message: "Every tailored CV you send raises your odds. One more application today could be the one.", action: "Open one high-match role and apply now." },
+  { kicker: "Effort compounds", message: "The work you put in today makes tomorrow easier. Keep building momentum — your consistency is your superpower.", action: "Save or apply to one role before you stop for the day." },
+  { kicker: "Rejection is redirection", message: "Every 'no' clears the path for the right 'yes'. Keep going — your role is out there.", action: "Apply to a role you normally would not consider. It might surprise you." },
+  { kicker: "You have what it takes", message: "Your skills got you this far. Trust them. The right employer is looking for exactly what you bring.", action: "Tailor your CV to one job today. Let the match do the talking." },
+  { kicker: "Small steps, big results", message: "You do not need to land a job today. Just take one step that moves the needle.", action: "Pick one saved role and tailor your CV to it right now." },
+  { kicker: "Someone is waiting for you", message: "A hiring manager is hoping the right candidate applies today. Make sure that candidate is you.", action: "Scan the latest jobs and apply to your strongest match." },
+  { kicker: "Discipline beats motivation", message: "Motivation fades. Discipline stays. Show up even when you do not feel like it — that is how offers happen.", action: "Do one quality application before the day pulls you elsewhere." },
+  { kicker: "Your CV is your voice", message: "Make every bullet count. The right detail can open a door that a generic CV never could.", action: "Review your CV and add one achievement-driven bullet point." },
+  { kicker: "Next level starts now", message: "The role you want requires the version of you who is ready for it. Become that version today.", action: "Identify a skill gap and find a job that challenges you to grow." },
+  { kicker: "You are not behind", message: "There is no timeline. Your path is yours. Keep moving at your pace and trust the process.", action: "Filter jobs by your strongest category and apply to one." },
+  { kicker: "Every application teaches you", message: "Each submission sharpens your CV and your confidence. You are not just applying — you are levelling up.", action: "Apply to one role. Even if it is not perfect. The practice matters." },
+  { kicker: "Your effort deserves results", message: "You have put in the work. Now let your application show it. Precision beats volume every time.", action: "Use Joblin to tailor your CV to a specific role right now." },
+  { kicker: "Show up for yourself", message: "The person you are trying to become is counting on you to act today. Do not let them down.", action: "Open the jobs page and find one role that excites you." },
+  { kicker: "Consistency is the shortcut", message: "There is no secret. The people who get hired are the ones who keep showing up. Keep going.", action: "Do one thing for your job search before you check social media." }
 ];
 
 function renderDailyMotivation() {
@@ -421,9 +385,11 @@ function renderDailyMotivation() {
   let hash = 0;
   for (let i = 0; i < morningKey.length; i++) hash += morningKey.charCodeAt(i) * (i + 1);
   const note = DAILY_MOTIVATIONS[hash % DAILY_MOTIVATIONS.length];
+  const user = getCurrentUser();
+  const name = (user && user.name) ? user.name.split(' ')[0] : 'there';
   if (document.getElementById("motivationKicker")) document.getElementById("motivationKicker").textContent = note.kicker || "Today's reminder";
   document.getElementById("motivationMessage").textContent = note.message;
-  document.getElementById("motivationAction").textContent = "→ " + note.action;
+  document.getElementById("motivationAction").innerHTML = '<span style="opacity:0.6">' + name + '</span>, ' + note.action;
 }
 
 async function loadStats() {

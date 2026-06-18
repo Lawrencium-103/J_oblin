@@ -450,8 +450,13 @@ def list_global_jobs(
             log_activity(user_id, "search", details)
         except Exception:
             pass
-    jobs, total = get_global_jobs(category, source, search, is_graduate, location, user_id, applied, limit, offset, sort)
-    return {"jobs": jobs, "total": total, "count": len(jobs)}
+    try:
+        jobs, total = get_global_jobs(category, source, search, is_graduate, location, user_id, applied, limit, offset, sort)
+        return {"jobs": jobs, "total": total, "count": len(jobs)}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Database error: {type(e).__name__}: {e}")
 
 
 @app.get("/api/jobs/{job_id}")
