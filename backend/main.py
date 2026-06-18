@@ -455,8 +455,9 @@ def list_global_jobs(
         return {"jobs": jobs, "total": total, "count": len(jobs)}
     except Exception as e:
         import traceback
-        traceback.print_exc()
-        raise HTTPException(500, f"Database error: {type(e).__name__}: {e}")
+        tb = traceback.format_exc()
+        print(tb)
+        raise HTTPException(500, f"Database error: {type(e).__name__}: {e}\n\n{tb[:1000]}")
 
 
 @app.get("/api/jobs/{job_id}")

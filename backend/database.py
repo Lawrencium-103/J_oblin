@@ -611,12 +611,12 @@ def _compute_match_score(job: dict, category: str) -> float:
     return round(min(score, 100.0), 1)
 
 
-_NG_CITIES = {"lagos","abuja","ibadan","port harcourt","kano","enugu","owerri","aba","jos",
-               "ilorin","kaduna","warri","benin city","maiduguri","zaria","akure","aba",
+_NG_CITIES = ("lagos","abuja","ibadan","port harcourt","kano","enugu","owerri","aba","jos",
+               "ilorin","kaduna","warri","benin city","maiduguri","zaria","akure",
                "abeokuta","ondo","osogbo","ife","bauchi","calabar","uyo","asaba",
-               "awka","nnewi","onitsha","yola","gombe","katsina","sokoto","kaduna"}
-_REMOTE_KW = {"remote","work from home","telecommute","home based","home-based",
-              "fully remote","remote-first","virtual","anywhere"}
+               "awka","nnewi","onitsha","yola","gombe","katsina","sokoto")
+_REMOTE_KW = ("remote","work from home","telecommute","home based","home-based",
+              "fully remote","remote-first","virtual","anywhere")
 
 def classify_location(location: str) -> str:
     if not location:
