@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Analytics</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+.analytics-grid { display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px }
+@media (max-width:768px){.analytics-grid{grid-template-columns:1fr}}
+.chart-card canvas { max-height: 260px }
+.stat-grid-5 { display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-bottom:20px }
+.heatmap-grid { display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-top:8px }
+.heatmap-cell { aspect-ratio:1;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:7px;color:#94a3b8;min-height:18px }
+.heatmap-label { font-size:9px;color:#94a3b8;margin-bottom:4px }
+.user-table { width:100%;border-collapse:collapse;font-size:12px }
+.user-table th { text-align:left;padding:6px 8px;font-weight:600;color:#94a3b8;text-transform:uppercase;font-size:10px;border-bottom:1px solid var(--border-muted) }
+.user-table td { padding:6px 8px;color:var(--text-muted);border-bottom:1px solid var(--border-muted) }
+.user-table tr:hover td { background:var(--bg-surface-hover) }
+.user-badge { display:inline-block;padding:1px 6px;border-radius:4px;font-size:9px;font-weight:600 }
+.user-badge.admin { background:rgba(13,148,136,0.1);color:#0d9488 }
+.user-badge.user { background:rgba(100,116,139,0.1);color:#64748b }
+.period-tabs { display:flex;gap:4px;margin-bottom:10px }
+.period-tab { padding:4px 14px;border-radius:6px;font-size:12px;font-weight:600;border:1px solid var(--border-muted);background:transparent;color:var(--text-muted);cursor:pointer }
+.period-tab.active { background:#0d9488;color:#fff;border-color:#0d9488 }
+.action-badge { display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.04em }
+.action-badge.login { background:rgba(13,148,136,0.1);color:#0d9488 }
+.action-badge.search { background:rgba(5,150,105,0.1);color:#059669 }
+.action-badge.tailor { background:rgba(139,92,246,0.1);color:#7c3aed }
+.action-badge.cv_generated { background:rgba(217,70,239,0.1);color:#d946ef }
+.action-badge.page_view { background:rgba(245,158,11,0.1);color:#d97706 }
+.action-badge.export { background:rgba(239,68,68,0.1);color:#dc2626 }
+</style>
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar">
+<a href="index.html" class="sidebar-brand">
+<div class="brand-icon">
+<svg class="brand-logo-svg" width="30" height="30" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="2" y="2" width="32" height="32" rx="8" fill="url(#brandGrad)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
+<path d="M14 11H22V15H18V21C18 22.6569 16.6569 24 15 24C13.3431 24 12 22.6569 12 21H15C15 21.5523 15.4477 22 16 22C16.5523 22 17 21.5523 17 21V15H14V11Z" fill="#FFFFFF"/>
+<defs><linearGradient id="brandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#0d9488"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs>
+</svg>
+</div>
+<h1>Job<span>lin</span></h1>
+</a>
+<nav class="sidebar-nav">
+<div class="sidebar-section-title">Main</div>
+<a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+<a href="jobs.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span class="nav-label">All Jobs</span></a>
+<a href="manual-job.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg></span><span class="nav-label">Manual Entry</span></a>
+<div class="sidebar-section-title">My Profile</div>
+<a href="make-cv.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="nav-label">Make My CV</span></a>
+<a href="cv-editor.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13.5V20a2 2 0 0 0 2 2h8.5"/><path d="M20 12.5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/><path d="m14 2-2 2h6"/><path d="M18.42 15.61a2.1 2.1 0 1 1 2.97 2.97L11 22 8 22l0-3L18.42 15.61Z"/></svg></span><span class="nav-label">Edit CV</span></a>
+<a href="settings.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">Settings</span></a>
+<a href="about.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><span class="nav-label">About</span></a>
+<div class="admin-only" style="display:none">
+<div class="sidebar-section-title">Admin</div>
+<a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">Admin Panel</span></a>
+<a href="admin-analytics.html" class="nav-item active"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span><span class="nav-label">Analytics</span></a>
+<a href="twitter-jobs.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></span><span class="nav-label">Twitter Posts</span></a>
+</div>
+</nav>
+<div class="sidebar-footer">
+<div class="sidebar-user">
+<div class="user-avatar" id="avatarInitial">U</div>
+<div class="user-details"><span class="user-name" id="user-name"></span><span class="user-email" id="user-email"></span></div>
+</div>
+<button class="logout-btn" id="adminToggle" onclick="toggleAdminMode()" style="display:none"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span id="adminToggleLabel">Admin View</span></button>
+<button class="logout-btn" onclick="logout()"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span><span>Sign Out</span></button>
+</div>
+</aside>
+
+<div class="main-content">
+<div class="top-bar">
+<button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+<div class="top-bar-search"><span class="search-icon"><svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg></span><input type="text" id="globalSearch" placeholder="Search jobs..." onkeydown="if(event.key==='Enter')location.href='jobs.html?search='+encodeURIComponent(this.value)"></div>
+<div class="top-bar-actions"><button class="btn btn-primary btn-sm" onclick="location.href='jobs.html'">Browse Jobs</button><button class="btn btn-primary btn-sm" onclick="location.href='make-cv.html'">Make My CV</button></div>
+</div>
+
+<div class="page-content">
+<div class="page-header">
+<div><h2>Analytics</h2><p class="subtitle">User activity, generation stats, and usage heatmap</p></div>
+<button class="btn btn-ghost btn-sm" onclick="loadAnalytics()">Refresh</button>
+</div>
+
+<div class="stat-grid-5" id="statCards">
+<div class="stat-card"><div class="stat-value" id="statUsers">---</div><div class="stat-label">Total Users</div></div>
+<div class="stat-card"><div class="stat-value" id="statActive">---</div><div class="stat-label">Active Today</div></div>
+<div class="stat-card"><div class="stat-value" id="statGenerations">---</div><div class="stat-label">CVs Generated</div></div>
+<div class="stat-card"><div class="stat-value" id="statActions">---</div><div class="stat-label">Total Actions</div></div>
+<div class="stat-card"><div class="stat-value" id="statJobs">---</div><div class="stat-label">Total Jobs</div></div>
+</div>
+
+<div class="analytics-grid">
+<div class="card chart-card">
+<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg></span>Action Distribution</div>
+<canvas id="actionChart"></canvas>
+</div>
+<div class="card chart-card">
+<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span>Activity Trend (30 Days)</div>
+<canvas id="trendChart"></canvas>
+</div>
+</div>
+
+<div class="analytics-grid" style="grid-template-columns:1fr 1.5fr">
+<div class="card">
+<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Top Users</div>
+<div id="topUsers" class="top-users-list"><p style="color:#94a3b8;font-size:13px">Loading...</p></div>
+</div>
+<div class="card">
+<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></span>Users</div>
+<div style="max-height:260px;overflow-y:auto">
+<table class="user-table"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th></tr></thead>
+<tbody id="usersBody"></tbody></table>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-title">
+<span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span>
+Usage Heatmap
+</div>
+<div class="period-tabs">
+<button class="period-tab active" data-period="daily" onclick="switchPeriod('daily',this)">Daily (60d)</button>
+<button class="period-tab" data-period="monthly" onclick="switchPeriod('monthly',this)">Monthly (12m)</button>
+<button class="period-tab" data-period="yearly" onclick="switchPeriod('yearly',this)">Yearly</button>
+</div>
+<div id="heatmapContainer"><p style="color:#94a3b8;font-size:13px">Loading...</p></div>
+</div>
+
+<div class="card" style="margin-top:16px">
+<div class="card-title"><span class="card-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg></span>Recent Activity</div>
+<div style="max-height:300px;overflow-y:auto">
+<table class="activity-table"><thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+<tbody id="activityBody"></tbody></table>
+</div>
+</div>
+
+</div>
+</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let actionChartInstance = null;
+let trendChartInstance = null;
+let analyticsData = null;
+
+async function loadAnalytics() {
+  try {
+    const data = await apiFetch("GET", "/api/admin/analytics/overview");
+    analyticsData = data;
+    document.getElementById("statUsers").textContent = data.total_users || 0;
+    document.getElementById("statActive").textContent = data.active_today || 0;
+    document.getElementById("statGenerations").textContent = data.total_cv_generations || 0;
+    document.getElementById("statActions").textContent = data.total_actions || 0;
+    const stats = await apiFetch("GET", "/api/stats");
+    document.getElementById("statJobs").textContent = stats.total || 0;
+    renderActionChart(data.action_distribution || {});
+    renderTrendChart(data.timeline || []);
+    renderTopUsers(data.top_users || []);
+    renderUsers(data.users_list || []);
+    renderHeatmap(data.daily || []);
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+  try {
+    const logData = await apiFetch("GET", "/api/admin/analytics/log?limit=50");
+    renderActivityLog(logData.entries || []);
+  } catch (err) {}
+}
+
+function renderActionChart(distribution) {
+  const colors = { login:"#0d9488", search:"#059669", tailor:"#7c3aed", cv_generated:"#d946ef", page_view:"#d97706", export:"#dc2626" };
+  if (actionChartInstance) actionChartInstance.destroy();
+  const ctx = document.getElementById("actionChart").getContext("2d");
+  actionChartInstance = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(distribution).map(l => l.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())),
+      datasets: [{ data: Object.values(distribution), backgroundColor: Object.keys(distribution).map(l=>colors[l]||"#94a3b8"), borderColor:"var(--bg-surface)", borderWidth:2 }],
+    },
+    options: { responsive:true, maintainAspectRatio:true, plugins:{ legend:{ position:"bottom", labels:{ color:"var(--text-muted)", font:{size:10}, padding:8, usePointStyle:true, pointStyle:"circle" } } } },
+  });
+}
+
+function renderTrendChart(timeline) {
+  if (trendChartInstance) trendChartInstance.destroy();
+  const ctx = document.getElementById("trendChart").getContext("2d");
+  trendChartInstance = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: timeline.map(t=>t.date?t.date.slice(5):""),
+      datasets: [{ label:"Actions", data:timeline.map(t=>t.count), borderColor:"#0d9488", backgroundColor:"#0d94881a", fill:true, tension:0.3, pointRadius:3, pointBackgroundColor:"#0d9488", borderWidth:2 }],
+    },
+    options: { responsive:true, maintainAspectRatio:true, plugins:{legend:{display:false}}, scales:{ x:{ticks:{color:"var(--text-subtle)",font:{size:9},maxTicksLimit:15},grid:{color:"var(--border-muted)"}}, y:{beginAtZero:true,ticks:{color:"var(--text-subtle)",font:{size:9}},grid:{color:"var(--border-muted)"}} } },
+  });
+}
+
+function renderTopUsers(users) {
+  const container = document.getElementById("topUsers");
+  if (!users.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px">No activity yet.</p>'; return; }
+  const medals = ["&#129351;","&#129352;","&#129353;"];
+  container.innerHTML = users.map((u,i) =>
+    `<div class="top-user-row"><span class="tu-rank">${medals[i]||(i+1)}</span><span class="tu-name">${escHtml(u.name||u.email||"Unknown")}</span><span class="tu-count">${u.count}</span></div>`
+  ).join("");
+}
+
+function renderUsers(users) {
+  const tbody = document.getElementById("usersBody");
+  if (!users.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#94a3b8">No users.</td></tr>'; return; }
+  tbody.innerHTML = users.map(u => {
+    const joined = u.joined ? new Date(u.joined + (u.joined.includes("T")?"":"Z")).toLocaleDateString() : "";
+    return `<tr><td>${escHtml(u.name||"")}</td><td style="font-size:11px">${escHtml(u.email)}</td><td><span class="user-badge ${u.is_admin?'admin':'user'}">${u.is_admin?"Admin":"User"}</span></td><td style="font-size:10px;color:#94a3b8">${joined}</td></tr>`;
+  }).join("");
+}
+
+function renderHeatmap(data, period) {
+  const container = document.getElementById("heatmapContainer");
+  if (!data || !data.length) { container.innerHTML = '<p style="color:#94a3b8;font-size:13px">No data yet.</p>'; return; }
+  const vals = data.map(d => d.count);
+  const max = Math.max(...vals, 1);
+  if (period === "yearly") {
+    container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">' +
+      data.map(d => {
+        const pct = d.count / max;
+        const bg = d.count ? `rgba(13,148,136,${0.1 + pct * 0.7})` : "var(--border-muted)";
+        return `<div style="background:${bg};border-radius:6px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:${d.count?'#1a1a2e':'#94a3b8'}">${d.count}</div><div style="font-size:11px;color:#94a3b8">${d.year||""}</div></div>`;
+      }).join("") + '</div>';
+    return;
+  }
+  if (period === "monthly") {
+    container.innerHTML = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px">' +
+      data.map(d => {
+        const pct = d.count / max;
+        const bg = d.count ? `rgba(13,148,136,${0.1 + pct * 0.7})` : "var(--border-muted)";
+        return `<div style="background:${bg};border-radius:6px;padding:10px;text-align:center"><div style="font-size:18px;font-weight:800;color:${d.count?'#1a1a2e':'#94a3b8'}">${d.count}</div><div style="font-size:11px;color:#94a3b8">${d.month||""}</div></div>`;
+      }).join("") + '</div>';
+    return;
+  }
+  const dayLabels = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  let html = '<div class="heatmap-label">Actions per day (darker = more)</div><div class="heatmap-grid">';
+  dayLabels.forEach(d => { html += `<div style="font-size:8px;color:#94a3b8;text-align:center;padding:2px 0">${d[0]}</div>`; });
+  const startDate = new Date();
+  startDate.setDate(startDate.getDate() - 60);
+  const dayMap = {};
+  data.forEach(d => { dayMap[d.day] = d.count; });
+  for (let i = 0; i < 60; i++) {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    const key = d.toISOString().slice(0,10);
+    const cnt = dayMap[key] || 0;
+    const pct = cnt / max;
+    const bg = cnt ? `rgba(13,148,136,${0.08 + pct * 0.7})` : "var(--border-muted)";
+    html += `<div class="heatmap-cell" style="background:${bg}" title="${key}: ${cnt} actions">${cnt||""}</div>`;
+  }
+  html += '</div>';
+  container.innerHTML = html;
+}
+
+function switchPeriod(period, btn) {
+  document.querySelectorAll(".period-tab").forEach(t => t.classList.remove("active"));
+  btn.classList.add("active");
+  if (!analyticsData) return;
+  if (period === "daily") renderHeatmap(analyticsData.daily || [], "daily");
+  else if (period === "monthly") renderHeatmap(analyticsData.monthly || [], "monthly");
+  else if (period === "yearly") renderHeatmap(analyticsData.yearly || [], "yearly");
+}
+
+function renderActivityLog(entries) {
+  const tbody = document.getElementById("activityBody");
+  if (!entries.length) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#94a3b8;padding:20px">No activity logged yet.</td></tr>'; return; }
+  tbody.innerHTML = entries.map(e => {
+    const ts = e.created_at ? new Date(e.created_at + "Z").toLocaleString() : "";
+    const actionClass = (e.action || "").replace(/\s+/g,"_").toLowerCase();
+    return `<tr><td style="white-space:nowrap;color:#94a3b8;font-size:10px">${escHtml(ts)}</td><td style="max-width:100px;overflow:hidden;text-overflow:ellipsis">${escHtml(e.name||e.email||"User #"+e.user_id)}</td><td><span class="action-badge ${actionClass}">${escHtml(e.action||"")}</span></td><td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;color:#94a3b8;font-size:10px">${escHtml((e.details||"").slice(0,60))}</td></tr>`;
+  }).join("");
+}
+
+if (!getToken()) { window.location.href = "login.html"; }
+updateHeader();
+loadAnalytics();
+</script>
+</body>
+</html>

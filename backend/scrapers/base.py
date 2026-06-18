@@ -39,7 +39,12 @@ _BACKOFF_SECONDS = 300 # 5 minutes backoff
 
 # Simple robots.txt allowlist cache: domain -> set of disallowed path prefixes
 _ROBOTS_DISALLOWED: dict[str, list[str]] = {}
-_ROBOTS_CHECKED: set[str] = set()
+_ROBOTS_CHECKED: dict[str, float] = {}  # domain -> timestamp; refetch after 24h
+_ROBOTS_TTL = 86400  # 24 hours
+
+# HTTP response cache per URL (in-memory, TTL per domain)
+_HTTP_CACHE: dict[str, tuple[float, str]] = {}  # url -> (expires_at, text)
+_HTTP_CACHE_TTL = 300  # 5 minutes default
 
 # Freshness window — 72 hours gives better coverage without letting stale jobs in
 _FRESHNESS_HOURS = 72
@@ -109,12 +114,15 @@ def _url_fingerprint(url: str) -> str:
 class BaseScraper:
     def __init__(self):
         self.session = requests.Session()
-        self._ua_idx = 0
-        self._set_ua(0)
+        self._ua_idx = random.randint(0, len(_UA_POOL) - 1)
+        self._set_ua(self._ua_idx)
 
     # ── Headers ────────────────────────────────────────────────────────────
 
-    def _set_ua(self, idx: int = 0):
+    def _set_ua(self, idx: int | None = None):
+        if idx is None:
+            self._ua_idx = (self._ua_idx + 1) % len(_UA_POOL)
+            idx = self._ua_idx
         ua = _UA_POOL[idx % len(_UA_POOL)]
         self.session.headers.update({
             "User-Agent": ua,
@@ -159,8 +167,9 @@ class BaseScraper:
         """Check URL against cached robots.txt disallow rules. True = allowed."""
         domain = urlparse(url).netloc
         path   = urlparse(url).path
-        if domain not in _ROBOTS_CHECKED:
-            _ROBOTS_CHECKED.add(domain)
+        now = time.time()
+        if domain not in _ROBOTS_CHECKED or now - _ROBOTS_CHECKED.get(domain, 0) > _ROBOTS_TTL:
+            _ROBOTS_CHECKED[domain] = now
             try:
                 robots_url = f"https://{domain}/robots.txt"
                 resp = requests.get(robots_url,
@@ -207,10 +216,17 @@ class BaseScraper:
     # ── HTTP helpers ───────────────────────────────────────────────────────
 
     def fetch(self, url: str, timeout: int = 25, _attempt: int = 0) -> str | None:
+        if _attempt == 0:
+            self._set_ua()
         if self._is_domain_backed_off(url):
             return None
         if not self._respect_robots(url):
             return None
+        cached = _HTTP_CACHE.get(url)
+        if cached:
+            expires, text = cached
+            if time.time() < expires:
+                return text
         self._polite_wait(url)
         try:
             resp = self.session.get(url, timeout=timeout, allow_redirects=True)
@@ -219,10 +235,11 @@ class BaseScraper:
                 wait = (2 ** _attempt) * random.uniform(3, 7)
                 print(f"[scraper] {resp.status_code} on {url[:60]} — waiting {wait:.1f}s, rotating UA")
                 time.sleep(wait)
-                self._set_ua(_attempt + 1)
+                self._set_ua()
                 return self.fetch(url, timeout, _attempt + 1)
             if resp.status_code == 200:
                 self._record_domain_success(url)
+                _HTTP_CACHE[url] = (time.time() + _HTTP_CACHE_TTL, resp.text)
                 return resp.text
             print(f"[scraper] HTTP {resp.status_code} for {url[:60]}")
             self._record_domain_failure(url)
@@ -241,8 +258,17 @@ class BaseScraper:
         return BeautifulSoup(html, "html.parser") if html else None
 
     def fetch_json(self, url: str, timeout: int = 20, extra_headers: dict = None) -> dict | list | None:
+        self._set_ua()
         if self._is_domain_backed_off(url):
             return None
+        cached = _HTTP_CACHE.get(url)
+        if cached:
+            expires, text = cached
+            if time.time() < expires:
+                try:
+                    return json.loads(text)
+                except Exception:
+                    pass
         self._polite_wait(url)
         try:
             headers = {**self.session.headers, "Accept": "application/json"}
@@ -251,6 +277,7 @@ class BaseScraper:
             resp = self.session.get(url, timeout=timeout, headers=headers, allow_redirects=True)
             resp.raise_for_status()
             self._record_domain_success(url)
+            _HTTP_CACHE[url] = (time.time() + _HTTP_CACHE_TTL, resp.text)
             return resp.json()
         except Exception as e:
             print(f"[scraper] JSON error: {url[:60]} — {e}")
@@ -259,15 +286,20 @@ class BaseScraper:
 
     def post_json(self, url: str, body: dict, headers: dict = None, timeout: int = 20) -> dict | list | None:
         """POST JSON — used for Algolia and similar APIs."""
+        self._set_ua()
+        if self._is_domain_backed_off(url):
+            return None
         try:
-            h = {"Content-Type": "application/json", "Accept": "application/json"}
+            h = {**self.session.headers, "Content-Type": "application/json", "Accept": "application/json"}
             if headers:
                 h.update(headers)
-            resp = requests.post(url, json=body, headers=h, timeout=timeout)
+            resp = self.session.post(url, json=body, headers=h, timeout=timeout)
             resp.raise_for_status()
+            self._record_domain_success(url)
             return resp.json()
         except Exception as e:
             print(f"[scraper] POST JSON error: {url[:60]} — {e}")
+            self._record_domain_failure(url)
             return None
 
     def fetch_rss(self, url: str) -> list[dict]:

@@ -9,7 +9,7 @@
 <body>
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
-    <a href="dashboard.html" class="sidebar-brand">
+    <a href="index.html" class="sidebar-brand">
       <div class="brand-icon">J</div>
       <h1>Job<span>lin</span></h1>
     </a>
@@ -53,6 +53,12 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           </span>
           <span class="nav-label">Admin Panel</span>
+        </a>
+        <a href="admin-analytics.html" class="nav-item">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          </span>
+          <span class="nav-label">Analytics</span>
         </a>
       </div>
     </nav>
@@ -98,17 +104,28 @@
       </div>
 
       <div class="filters-bar">
-        <select id="categoryFilter"><option value="">All Categories</option></select>
-        <select id="sourceFilter"><option value="">All Sources</option></select>
-        <select id="graduateFilter">
+        <label class="filter-group">Category<select id="categoryFilter"><option value="">All Categories</option></select></label>
+        <label class="filter-group">Source<select id="sourceFilter"><option value="">All Sources</option></select></label>
+        <label class="filter-group">Level<select id="graduateFilter">
           <option value="">All Levels</option>
           <option value="true">Graduate / Entry</option>
           <option value="false">Experienced</option>
-        </select>
-        <select id="sortOrder">
+        </select></label>
+        <label class="filter-group">Status<select id="appliedFilter">
+          <option value="">All Status</option>
+          <option value="true">Applied</option>
+          <option value="false">Not Applied</option>
+        </select></label>
+        <label class="filter-group">Location<select id="locationFilter">
+          <option value="">All Locations</option>
+          <option value="nigeria">Nigeria</option>
+          <option value="remote">Remote</option>
+          <option value="international">International</option>
+        </select></label>
+        <label class="filter-group">Sort<select id="sortOrder">
           <option value="date">Newest First</option>
           <option value="relevance">Most Relevant</option>
-        </select>
+        </select></label>
         <button class="btn btn-primary btn-sm" onclick="loadJobs()">Filter</button>
       </div>
 
@@ -139,11 +156,78 @@ async function loadConfig() {
   } catch (err) {}
 }
 
-function getParams() {
+function filterStorageKey() {
+  const user = getCurrentUser() || {};
+  return `joblin_job_filters_${user.id || user.email || "anon"}`;
+}
+
+function getFilterValues() {
+  return {
+    search: document.getElementById("searchInput").value || "",
+    category: document.getElementById("categoryFilter").value || "",
+    source: document.getElementById("sourceFilter").value || "",
+    graduate: document.getElementById("graduateFilter").value || "",
+    applied: document.getElementById("appliedFilter").value || "",
+    location: document.getElementById("locationFilter").value || "",
+    sort: document.getElementById("sortOrder").value || "date",
+  };
+}
+
+function applyFilterValues(values) {
+  if (!values) return;
+  if (values.search !== undefined) document.getElementById("searchInput").value = values.search || "";
+  if (values.category !== undefined) document.getElementById("categoryFilter").value = values.category || "";
+  if (values.source !== undefined) document.getElementById("sourceFilter").value = values.source || "";
+  if (values.graduate !== undefined) document.getElementById("graduateFilter").value = values.graduate || "";
+  if (values.applied !== undefined) document.getElementById("appliedFilter").value = values.applied || "";
+  if (values.location !== undefined) document.getElementById("locationFilter").value = values.location || "";
+  if (values.sort !== undefined) document.getElementById("sortOrder").value = values.sort || "date";
+}
+
+function loadSavedFilters() {
+  try {
+    const raw = localStorage.getItem(filterStorageKey());
+    if (raw) applyFilterValues(JSON.parse(raw));
+  } catch (e) {}
+}
+
+function saveFilters() {
+  try {
+    localStorage.setItem(filterStorageKey(), JSON.stringify(getFilterValues()));
+  } catch (e) {}
+}
+
+function applyInitialFilters() {
+  loadSavedFilters();
   const params = new URLSearchParams(window.location.search);
-  if (params.get("search")) document.getElementById("searchInput").value = params.get("search");
-  if (params.get("category")) document.getElementById("categoryFilter").value = params.get("category");
+  const urlValues = {};
+  ["search", "category", "source", "graduate", "applied", "location", "sort"].forEach(key => {
+    if (params.has(key)) urlValues[key] = params.get(key) || "";
+  });
+  applyFilterValues(urlValues);
   return params;
+}
+
+function syncUrlParams() {
+  const params = new URLSearchParams();
+  const search = document.getElementById("searchInput").value;
+  const category = document.getElementById("categoryFilter").value;
+  const source = document.getElementById("sourceFilter").value;
+  const graduate = document.getElementById("graduateFilter").value;
+  const applied = document.getElementById("appliedFilter").value;
+  const location = document.getElementById("locationFilter").value;
+  const sort = document.getElementById("sortOrder").value;
+  if (search) params.set("search", search);
+  if (category) params.set("category", category);
+  if (source) params.set("source", source);
+  if (graduate) params.set("graduate", graduate);
+  if (applied) params.set("applied", applied);
+  if (location) params.set("location", location);
+  if (sort && sort !== "date") params.set("sort", sort);
+  const qs = params.toString();
+  const url = qs ? `?${qs}` : window.location.pathname;
+  window.history.replaceState(null, "", url);
+  saveFilters();
 }
 
 async function loadJobs(page = 0) {
@@ -152,8 +236,12 @@ async function loadJobs(page = 0) {
   const category = document.getElementById("categoryFilter").value;
   const source = document.getElementById("sourceFilter").value;
   const graduate = document.getElementById("graduateFilter").value || null;
+  const applied = document.getElementById("appliedFilter").value || null;
+  const location = document.getElementById("locationFilter").value || null;
   const sort = document.getElementById("sortOrder").value;
   const offset = page * PAGE_SIZE;
+
+  syncUrlParams();
 
   document.getElementById("jobList").innerHTML = '<div class="empty-state"><div class="spinner spinner-lg"></div><p style="margin-top:12px">Loading jobs...</p></div>';
 
@@ -163,6 +251,8 @@ async function loadJobs(page = 0) {
     if (category) url += `&category=${encodeURIComponent(category)}`;
     if (source) url += `&source=${encodeURIComponent(source)}`;
     if (graduate) url += `&is_graduate=${graduate}`;
+    if (applied) url += `&applied=${applied}`;
+    if (location) url += `&location=${location}`;
 
     const data = await apiFetch("GET", url);
     const jobs = data.jobs || [];
@@ -216,11 +306,15 @@ async function exportExcel() {
   btn.disabled = false; btn.innerHTML = "Export Excel";
 }
 
-if (!getToken()) window.location.href = "login.html";
-updateHeader();
-loadConfig();
-getParams();
-loadJobs();
+async function initJobsPage() {
+  if (!getToken()) window.location.href = "login.html";
+  updateHeader();
+  await loadConfig();
+  applyInitialFilters();
+  loadJobs();
+}
+
+initJobsPage();
 </script>
 </body>
 </html>

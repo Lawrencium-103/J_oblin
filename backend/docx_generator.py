@@ -83,19 +83,20 @@ def _safe(text: str) -> str:
 
 SECTIONS_ORDER = ["summary", "skills", "experience", "education", "certifications", "projects", "languages"]
 
+FIXED_TOP = ["summary", "skills", "experience"]
+
 
 def _shuffled_sections(seed_str: str = "") -> list:
-    """Return sections in a seeded random order for visual diversity."""
-    order = list(SECTIONS_ORDER)
+    """Return sections with summary, skills, experience fixed at top; rest shuffled."""
+    rest = [s for s in SECTIONS_ORDER if s not in FIXED_TOP]
     if not seed_str:
-        return order
+        return FIXED_TOP + rest
     import hashlib
     rnd = int(hashlib.md5(seed_str.encode()).hexdigest(), 16)
-    # Use Fisher-Yates with deterministic randomness
-    for i in range(len(order) - 1, 0, -1):
+    for i in range(len(rest) - 1, 0, -1):
         rnd, ri = divmod(rnd, i + 1)
-        order[i], order[ri] = order[ri], order[i]
-    return order
+        rest[i], rest[ri] = rest[ri], rest[i]
+    return FIXED_TOP + rest
 
 
 def _dedup_company(title: str, company: str) -> str:

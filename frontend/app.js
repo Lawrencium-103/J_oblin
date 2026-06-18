@@ -34,6 +34,8 @@ function getCurrentUser() { const u = localStorage.getItem("joblin_user"); retur
 function setCurrentUser(user) { localStorage.setItem("joblin_user", JSON.stringify(user)); }
 function updateHeader() {
   const user = getCurrentUser();
+  const pageName = window.location.pathname.split("/").pop() || "dashboard.html";
+  apiFetch("POST", "/api/track", { action: "page_view", details: pageName }).catch(() => {});
   const nameEl = document.getElementById("user-name");
   const emailEl = document.getElementById("user-email");
   const avatarEl = document.getElementById("avatarInitial");
@@ -127,7 +129,7 @@ const CATEGORY_COLORS = {
   "human-resources": "#db2777", "sales-marketing": "#ea580c",
   "customer-service": "#f59e0b", "engineering": "#b45309",
   "procurement-supply": "#0891b2", "legal-compliance": "#475569",
-  "remote": "#0891b2", "other": "#94a3b8",
+  "remote": "#0891b2", "web3-blockchain": "#8b5cf6", "other": "#94a3b8",
 };
 const CATEGORY_NAMES = {
   "data-analytics": "Data & Analytics", "monitoring-evaluation": "M&E",
@@ -138,7 +140,7 @@ const CATEGORY_NAMES = {
   "human-resources": "HR", "sales-marketing": "Sales/Marketing",
   "customer-service": "Customer Svc", "engineering": "Engineering",
   "procurement-supply": "Procurement", "legal-compliance": "Legal",
-  "remote": "Remote", "other": "Other",
+  "remote": "Remote", "web3-blockchain": "Web3/Blockchain", "other": "Other",
 };
 
 function renderCategoryBadge(cat) {
@@ -163,10 +165,11 @@ function renderJobItem(job, isNew = false) {
       badge = '<span class="new-badge">New</span>';
     }
   }
+  const appliedBadge = job.is_applied ? '<span class="applied-badge" style="margin-left:6px">&#10003; Applied</span>' : "";
   return `
-    <div class="job-item ${newClass} ${ageClass}" data-id="${job.id}" onclick="location.href='job-detail.html?id=${job.id}'" style="cursor:pointer">
+    <div class="job-item ${newClass} ${ageClass}${job.is_applied ? ' job-applied' : ''}" data-id="${job.id}" onclick="location.href='job-detail.html?id=${job.id}'" style="cursor:pointer">
       <div class="job-info">
-        <div class="job-title">${escHtml(job.title)} ${badge}</div>
+        <div class="job-title">${escHtml(job.title)} ${badge} ${appliedBadge}</div>
         <div class="job-company">${escHtml(job.company || "Unknown")} \u00b7 ${escHtml(job.source || "")} ${renderCategoryBadge(job.job_category)}</div>
       </div>
       <div class="job-actions">

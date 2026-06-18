@@ -5,19 +5,120 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Joblin - Dashboard</title>
 <link rel="stylesheet" href="styles.css">
+<style>
+body { background: #ffffff; }
+.app-layout { background: #ffffff; }
+.main-content { background: #f8fafc; }
+.stat-card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
+.card { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
+
+.dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dash-header .last-updated {
+  font-size: 12px;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dash-header .live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #059669;
+  box-shadow: 0 0 6px #059669;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+.search-dash {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-dash input,
+.search-dash select {
+  min-width: 140px;
+}
+
+.motivation-card {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+  padding: 20px 22px;
+  border: 1px solid #dbe7e4;
+  background: linear-gradient(135deg, #ffffff 0%, #eef8f5 100%);
+}
+
+.motivation-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, #0d9488, #059669);
+}
+
+.motivation-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0f766e;
+  margin-bottom: 8px;
+}
+
+.motivation-message {
+  max-width: 900px;
+  font-size: 15px;
+  line-height: 1.75;
+  color: #334155;
+}
+
+.motivation-action {
+  margin-top: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0d9488;
+}
+
+@media (max-width: 600px) {
+  .search-dash { flex-direction: column; }
+  .search-dash input,
+  .search-dash select { width: 100%; min-width: 0; }
+}
+</style>
 </head>
 <body>
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
-    <a href="dashboard.html" class="sidebar-brand">
+    <a href="index.html" class="sidebar-brand">
       <div class="brand-icon">
         <svg class="brand-logo-svg" width="30" height="30" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
           <rect x="2" y="2" width="32" height="32" rx="8" fill="url(#brandGrad)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/>
           <path d="M14 11H22V15H18V21C18 22.6569 16.6569 24 15 24C13.3431 24 12 22.6569 12 21H15C15 21.5523 15.4477 22 16 22C16.5523 22 17 21.5523 17 21V15H14V11Z" fill="#FFFFFF"/>
           <defs>
             <linearGradient id="brandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
-              <stop stop-color="#06b6d4"/>
-              <stop offset="1" stop-color="#0891b2"/>
+              <stop stop-color="#0d9488"/>
+              <stop offset="1" stop-color="#0f766e"/>
             </linearGradient>
           </defs>
         </svg>
@@ -28,38 +129,38 @@
       <div class="sidebar-section-title">Main</div>
       <a href="dashboard.html" class="nav-item active">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         </span>
         <span class="nav-label">Dashboard</span>
       </a>
       <a href="jobs.html" class="nav-item">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
         </span>
         <span class="nav-label">All Jobs</span>
       </a>
       <a href="manual-job.html" class="nav-item">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg>
         </span>
         <span class="nav-label">Manual Entry</span>
       </a>
       <div class="sidebar-section-title">My Profile</div>
       <a href="make-cv.html" class="nav-item">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
         </span>
         <span class="nav-label">Make My CV</span>
       </a>
       <a href="cv-editor.html" class="nav-item">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V20a2 2 0 0 0 2 2h8.5"/><path d="M20 12.5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/><path d="m14 2-2 2h6"/><path d="M18.42 15.61a2.1 2.1 0 1 1 2.97 2.97L11 22 8 22l0-3L18.42 15.61Z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 13.5V20a2 2 0 0 0 2 2h8.5"/><path d="M20 12.5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/><path d="m14 2-2 2h6"/><path d="M18.42 15.61a2.1 2.1 0 1 1 2.97 2.97L11 22 8 22l0-3L18.42 15.61Z"/></svg>
         </span>
         <span class="nav-label">Edit CV</span>
       </a>
       <a href="settings.html" class="nav-item">
         <span class="nav-icon">
-          <svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </span>
         <span class="nav-label">Settings</span>
       </a>
@@ -76,6 +177,12 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
           </span>
           <span class="nav-label">Admin Panel</span>
+        </a>
+        <a href="admin-analytics.html" class="nav-item">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          </span>
+          <span class="nav-label">Analytics</span>
         </a>
       </div>
     </nav>
@@ -95,7 +202,7 @@
       </button>
       <button class="logout-btn" onclick="logout()">
         <span>
-          <svg class="nav-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
         </span>
         <span>Sign Out</span>
       </button>
@@ -109,7 +216,7 @@
       </button>
       <div class="top-bar-search">
         <span class="search-icon">
-          <svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
         </span>
         <input type="text" id="globalSearch" placeholder="Search jobs..." onkeydown="if(event.key==='Enter')location.href='jobs.html?search='+encodeURIComponent(this.value)">
       </div>
@@ -120,117 +227,222 @@
     </div>
 
     <div class="page-content">
-      <div class="page-header">
+      <div class="page-header dash-header">
         <div>
           <h2>Dashboard</h2>
-          <p class="subtitle">Overview of your job search</p>
+          <p class="subtitle">Overview of your job search activity</p>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <div class="last-updated">
+            <span class="live-dot"></span>
+            <span>Updated <span id="lastScrapedTime">—</span></span>
+          </div>
+          <button class="btn btn-primary btn-sm admin-only" id="scrapeBtn" onclick="triggerScrape()" style="display:none">Scrape Fresh Jobs</button>
         </div>
       </div>
 
+      <div class="card motivation-card animate-in" id="dailyMotivation">
+        <div class="motivation-kicker" id="motivationKicker">Today's reminder</div>
+        <div class="motivation-message" id="motivationMessage">Loading your morning note...</div>
+        <div class="motivation-action" id="motivationAction"></div>
+      </div>
+
       <div class="stats-grid" id="statsGrid">
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.15)">
+        <div class="stat-card animate-in">
+          <div class="stat-icon" style="background:#e8f5f4;color:#0d9488">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
           </div>
           <div class="stat-value" id="statTotal">—</div>
           <div class="stat-label">Total Jobs</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(16,185,129,0.1);color:#10b981;border:1px solid rgba(16,185,129,0.15)">
+        <div class="stat-card animate-in" style="animation-delay:0.05s">
+          <div class="stat-icon" style="background:#e8f5f4;color:#0d9488">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </div>
           <div class="stat-value" id="statRecent">—</div>
-          <div class="stat-label">Last 24h</div>
+          <div class="stat-label">New (24h)</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(245,158,11,0.1);color:#f59e0b;border:1px solid rgba(245,158,11,0.15)">
+        <div class="stat-card animate-in" style="animation-delay:0.1s">
+          <div class="stat-icon" style="background:#e8f5f4;color:#0d9488">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div class="stat-value" id="statSources">—</div>
+          <div class="stat-label">Job Sources</div>
+        </div>
+        <div class="stat-card animate-in" style="animation-delay:0.15s">
+          <div class="stat-icon" style="background:#e8f5f4;color:#0d9488">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
           </div>
           <div class="stat-value" id="statCategories">—</div>
           <div class="stat-label">Categories</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6;border:1px solid rgba(139,92,246,0.15)">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <div class="stat-card animate-in" style="animation-delay:0.2s">
+          <div class="stat-icon" style="background:#fef3c7;color:#d97706">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="12" y2="16"/><line x1="12" x2="12.01" y1="8" y2="8"/></svg>
           </div>
-          <div class="stat-value" id="statSources">—</div>
-          <div class="stat-label">Sources</div>
+          <div class="stat-value" id="statApplied">—</div>
+          <div class="stat-label">Applied</div>
         </div>
-        <div class="stat-card" id="lastScrapedCard" style="display:none">
-          <div class="stat-icon" style="background:rgba(6,182,212,0.1);color:#06b6d4;border:1px solid rgba(6,182,212,0.15)">
+        <div class="stat-card animate-in" style="animation-delay:0.25s">
+          <div class="stat-icon" style="background:#e8f5e9;color:#059669">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
           </div>
           <div class="stat-value stat-value-sm" id="statLastScraped">—</div>
-          <div class="stat-label" id="statLastScrapedLabel">Last updated</div>
+          <div class="stat-label">Last Scrape</div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-title">
-          <div class="card-icon" style="background:rgba(6,182,212,0.08);color:#06b6d4">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+      <div class="dashboard-grid">
+        <div class="card animate-in" style="animation-delay:0.3s">
+          <div class="card-title">
+            <span class="card-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" x2="18" y1="20" y2="10"/><line x1="12" x2="12" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="14"/></svg>
+            </span>
+            Category Breakdown
           </div>
-          Category Breakdown
+          <div id="categoryBreakdown"><p style="color:#94a3b8;font-size:13px">Loading...</p></div>
         </div>
-        <div id="categoryBreakdown"><p style="color:#94a3b8;font-size:13px">Loading...</p></div>
+
+        <div class="card animate-in" style="animation-delay:0.35s">
+          <div class="card-title">
+            <span class="card-icon">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </span>
+            Location Breakdown
+          </div>
+          <div id="locationBreakdown"><p style="color:var(--text-subtle);font-size:13px">Loading...</p></div>
+        </div>
       </div>
 
-      <div class="card">
+      <div class="card animate-in" style="animation-delay:0.4s">
         <div class="card-title">
-          <div class="card-icon" style="background:rgba(16,185,129,0.08);color:#10b981">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
-          </div>
+          <span class="card-icon">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg>
+          </span>
           Quick Search
         </div>
-        <div class="search-section">
-          <input type="text" id="quickSearch" placeholder="Search jobs..." onkeydown="if(event.key==='Enter')location.href='jobs.html?search='+encodeURIComponent(this.value)">
-          <select id="quickCategory" onchange="if(this.value)location.href='jobs.html?category='+this.value">
+        <div class="search-dash">
+          <input type="text" id="quickSearch" placeholder="Job title, company, keywords..." style="flex:1;min-width:160px">
+          <select id="quickCategory" style="min-width:140px">
             <option value="">All Categories</option>
           </select>
-          <button class="btn btn-primary" onclick="location.href='jobs.html?search='+encodeURIComponent(document.getElementById('quickSearch').value)">Search</button>
+          <select id="quickLocation" style="min-width:120px">
+            <option value="">All Locations</option>
+            <option value="nigeria">Nigeria</option>
+            <option value="remote">Remote</option>
+            <option value="international">International</option>
+          </select>
+          <button class="btn btn-primary btn-sm" onclick="location.href='jobs.html?search='+encodeURIComponent(document.getElementById('quickSearch').value)+'&category='+document.getElementById('quickCategory').value+'&location='+document.getElementById('quickLocation').value">Search</button>
         </div>
       </div>
+
     </div>
   </div>
 </div>
 
 <script src="app.js"></script>
 <script>
+const DAILY_MOTIVATIONS = [
+  {
+    kicker: "You are not invisible",
+    message: "There is a hiring manager somewhere right now who does not know your name yet, but they will feel something shift when they read your application — a quiet certainty that they found the right person. You are not invisible. You are simply not in front of them yet. That is exactly what we are here to change, one carefully placed word at a time.",
+    action: "Polish your CV today as if that manager is reading it tonight."
+  },
+  {
+    kicker: "Rejection is not the final word",
+    message: "Every 'no' you have received was written by someone who had incomplete information — they did not know your full story, your resilience, the things you taught yourself at midnight because no course existed for it yet. The right employer is not looking for perfection. They are looking for the real version of capable. That is you, exactly as you are today.",
+    action: "Apply to one role today that feels just slightly out of reach."
+  },
+  {
+    kicker: "The middle is the hardest part",
+    message: "You are not behind. You are in the heavy middle — the part no one talks about because there are no celebrations yet, just you showing up again and again in silence. That kind of discipline is rare. Most people quit here. You are still here. That already separates you from the majority before a single employer reads your name.",
+    action: "Do one small thing today. One job saved, one sentence improved."
+  },
+  {
+    kicker: "Your story has weight",
+    message: "The path you took to get here — the detours, the pivots, the skills you stitched together from different lives — that is not a liability. That is texture. Employers who are building real things are not looking for a straight line. They want someone who has been tested and knows what they are made of. Write your story like you mean it.",
+    action: "Rewrite your professional summary today. Make it sound like you."
+  },
+  {
+    kicker: "This morning still belongs to you",
+    message: "Before the noise starts, before the day pulls you away — this moment belongs to you. The search can feel like a second job that pays nothing and asks everything. Joblin is here so you are not doing it alone, so the work is lighter, the matches are smarter, and the time you spend on each application actually counts.",
+    action: "Open one job listing before the day takes the morning from you."
+  },
+  {
+    kicker: "Someone needs exactly what you have",
+    message: "There is a team somewhere that is struggling because they do not have you. A project stalling. A gap that keeps costing them. They have posted the role and are hoping someone with your precise combination of skills and experience will appear. You are that person. The only thing standing between you and them is one more well-aimed application.",
+    action: "Identify your strongest role match today and send a real, tailored application."
+  },
+  {
+    kicker: "Discipline over mood",
+    message: "You will not always feel motivated. Some mornings the job board feels like a wall and every listing looks like a door built for someone else. That feeling is not the truth — it is just fatigue wearing the mask of reality. On those mornings, discipline is the answer. Show up anyway. Joblin carries the search so your energy goes to the applications that actually matter.",
+    action: "Filter by your strongest category and apply to one role before noon."
+  },
+  {
+    kicker: "You have earned your expertise",
+    message: "Every skill on your CV cost you something — time, tuition, sacrifice, late nights, or the quiet years when you were building without an audience. Do not apologise for what you have learned. Do not shrink your experience to fit a polite box. Walk into every application with the knowledge that you paid the real price for what you know.",
+    action: "Add one achievement today that you have been underselling on your CV."
+  },
+  {
+    kicker: "Momentum starts small",
+    message: "You do not need to find your dream job today. You need to take one real step that makes tomorrow's step easier. Save a role. Improve one bullet point. Send one email. Each small action builds a current beneath you that you cannot always feel — until one day the call comes, and you realise the momentum was working the entire time.",
+    action: "Take one concrete step before you check your phone."
+  },
+  {
+    kicker: "The market is slow, not closed",
+    message: "A slow market feels personal. It is not. Thousands of people are hired every single day, even in difficult economies — because companies still have problems that need solving, customers that need serving, and roles that need filling. The question is not whether the market is open. It is whether your application is sharp enough to reach the people making decisions today.",
+    action: "Use Joblin to tailor your CV to a specific role. Generic applications cost you."
+  },
+  {
+    kicker: "Rest is part of the process",
+    message: "Searching from a depleted place produces depleted applications. If yesterday was hard, that is not weakness — that is information. Today, do less than you think you should, but make what you do count. One thoughtful, rested application will always outperform ten exhausted ones. You are not a machine. You are the asset.",
+    action: "Do one quality thing today and let that be enough."
+  },
+  {
+    kicker: "You are closer than you feel",
+    message: "The gap between where you are and where you are going is almost never as wide as anxiety makes it seem. Often it is one conversation, one referral, one morning where you apply to something you almost skipped. Keep that possibility alive. It costs nothing to submit one more application — and it might be the one that changes everything.",
+    action: "Apply to one job today that you almost did not."
+  },
+  {
+    kicker: "Your name deserves to be in the room",
+    message: "Someone else is going to get the job you were afraid to apply for. Not because they were more qualified — but because they sent the application and you did not. Your name deserves to be in those conversations. Joblin exists so that the hard part — the matching, the tailoring, the CV — is already handled. The only thing left is your decision to show up.",
+    action: "Apply to the role you have been avoiding. Do it before you talk yourself out of it."
+  },
+  {
+    kicker: "Progress does not always look like progress",
+    message: "Some weeks you will apply to ten jobs and hear nothing. That is not failure — it is volume and learning. You are finding out what your CV communicates, which companies are a fit, and which roles to pursue differently. Every non-response is data. Keep refining. The feedback is hidden in the silence, and Joblin is here to help you decode it.",
+    action: "Look at the last five roles you applied for. Is your CV as tailored as it could be?"
+  }
+];
+
+function renderDailyMotivation() {
+  const now = new Date();
+  const morningKey = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toDateString();
+  let hash = 0;
+  for (let i = 0; i < morningKey.length; i++) hash += morningKey.charCodeAt(i) * (i + 1);
+  const note = DAILY_MOTIVATIONS[hash % DAILY_MOTIVATIONS.length];
+  if (document.getElementById("motivationKicker")) document.getElementById("motivationKicker").textContent = note.kicker || "Today's reminder";
+  document.getElementById("motivationMessage").textContent = note.message;
+  document.getElementById("motivationAction").textContent = "→ " + note.action;
+}
+
 async function loadStats() {
   try {
-    const data = await apiFetch("GET", "/api/stats");
-    const totalEl = document.getElementById("statTotal");
-    const recentEl = document.getElementById("statRecent");
-    const catCountEl = document.getElementById("statCategories");
-    const srcCountEl = document.getElementById("statSources");
-    animateNumber(totalEl, data.total || 0);
-    animateNumber(recentEl, data.recent_24h || 0);
-    catCountEl.textContent = Object.keys(data.by_category || {}).length;
-    srcCountEl.textContent = Object.keys(data.by_source || {}).length;
-
-    const catContainer = document.getElementById("categoryBreakdown");
-    if (data.by_category && Object.keys(data.by_category).length) {
-      const entries = Object.entries(data.by_category).sort((a,b) => b[1]-a[1]);
-      const maxCount = entries[0][1];
-      catContainer.innerHTML = '<div class="category-breakdown">' +
-        entries.map(([cat, cnt]) => {
-          const color = CATEGORY_COLORS[cat] || "#94a3b8";
-          const name = CATEGORY_NAMES[cat] || cat;
-          const pct = maxCount > 0 ? (cnt / maxCount * 100) : 0;
-          return `<div class="category-chip" style="border:1px solid ${color}20">
-            <div class="chip-bar" style="background:${color};width:${pct}%"></div>
-            <span class="chip-count" style="color:${color}">${cnt}</span>
-            <span class="chip-label">${escHtml(name)}</span>
-          </div>`;
-        }).join("") + '</div>';
-    } else {
-      catContainer.innerHTML = '<p style="color:#94a3b8;font-size:13px">No jobs available yet. Check back after the next update.</p>';
-    }
-
-    const lastCard = document.getElementById("lastScrapedCard");
+    // /api/stats is public — use plain fetch so 401 redirect doesn't fire
+    const r = await fetch(window.location.origin + "/api/stats", {
+      headers: { "Authorization": "Bearer " + (getToken() || "") }
+    });
+    if (!r.ok) throw new Error("Stats fetch failed: " + r.status);
+    const data = await r.json();
+    const total = data.total || 0;
+    animateNumber(document.getElementById("statTotal"), total);
+    animateNumber(document.getElementById("statRecent"), data.recent_24h || 0);
+    document.getElementById("statCategories").textContent = Object.keys(data.by_category || {}).length || 0;
+    document.getElementById("statSources").textContent = Object.keys(data.by_source || {}).length || 0;
+    const loc = data.by_location || {};
     if (data.last_scraped) {
-      lastCard.style.display = "flex";
-      const ts = new Date(data.last_scraped.replace(" ", "T") + "Z");
+      const tsStr = String(data.last_scraped);
+      const ts = new Date(tsStr.includes("T") ? tsStr : tsStr.replace(" ", "T"));
       const now = new Date();
       const diffMs = now - ts;
       const diffMins = Math.floor(diffMs / 60000);
@@ -240,13 +452,102 @@ async function loadStats() {
       else if (diffMins < 1440) rel = Math.floor(diffMins / 60) + "h ago";
       else rel = Math.floor(diffMins / 1440) + "d ago";
       document.getElementById("statLastScraped").textContent = rel;
-      const newCount = data.new_24h || 0;
-      document.getElementById("statLastScrapedLabel").textContent =
-        newCount ? newCount + " new jobs" : "Last updated";
+      document.getElementById("lastScrapedTime").textContent = rel;
+    } else {
+      document.getElementById("statLastScraped").textContent = "Never scraped";
+      document.getElementById("lastScrapedTime").textContent = "never";
+    }
+    renderCategoryBreakdown(data.by_category || {});
+    renderLocationBreakdown(loc);
+    if (total === 0) {
+      showToast("No jobs in database yet — click \"Scrape Fresh Jobs\" to populate.", "error");
     }
   } catch (err) {
-    showToast(err.message, "error");
+    console.error("Stats error:", err);
+    ["statTotal", "statRecent", "statCategories", "statSources"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = "0";
+    });
+    const lastEl = document.getElementById("statLastScraped");
+    if (lastEl) lastEl.textContent = "—";
+    const timeEl = document.getElementById("lastScrapedTime");
+    if (timeEl) timeEl.textContent = "unavailable";
+    showToast("Could not load stats: " + err.message, "error");
   }
+}
+
+async function triggerScrape() {
+  const btn = document.getElementById("scrapeBtn");
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = "Scraping...";
+  try {
+    const data = await apiFetch("POST", "/api/scrape/cron", {});
+    showToast("Scraping started in background — refresh in 60 seconds.");
+  } catch (err) {
+    showToast("Scrape error: " + err.message, "error");
+  } finally {
+    setTimeout(() => {
+      if (btn) { btn.disabled = false; btn.textContent = "Scrape Fresh Jobs"; }
+      loadStats();
+    }, 5000);
+  }
+}
+
+async function loadAppliedCount() {
+  try {
+    const data = await apiFetch("GET", "/api/jobs?applied=true&limit=1&offset=0");
+    document.getElementById("statApplied").textContent = data.total || 0;
+  } catch (e) {
+    document.getElementById("statApplied").textContent = "0";
+  }
+}
+
+function renderCategoryBreakdown(byCategory) {
+  const container = document.getElementById("categoryBreakdown");
+  const entries = Object.entries(byCategory).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    container.innerHTML = '<p style="color:#94a3b8;font-size:13px">No jobs yet.</p>';
+    return;
+  }
+  const maxCount = entries[0][1];
+  container.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
+    entries.slice(0, 15).map(([cat, cnt]) => {
+      const color = CATEGORY_COLORS[cat] || "#94a3b8";
+      const name = CATEGORY_NAMES[cat] || cat;
+      const pct = maxCount > 0 ? (cnt / maxCount * 100) : 0;
+      return `<div style="display:flex;align-items:center;gap:var(--space-2);padding:4px 0">
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted);min-width:80px">${escHtml(name)}</span>
+        <div style="flex:1;height:6px;background:var(--border-muted);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.8s ease"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:var(--text-default);min-width:28px;text-align:right">${cnt}</span>
+      </div>`;
+    }).join("") + '</div>';
+}
+
+function renderLocationBreakdown(byLocation) {
+  const container = document.getElementById("locationBreakdown");
+  const labels = { nigeria: "Nigeria", remote: "Remote", international: "International", unspecified: "Unspecified" };
+  const colors = { nigeria: "#0d9488", remote: "#0891b2", international: "#6366f1", unspecified: "#94a3b8" };
+  const entries = Object.entries(byLocation).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) {
+    container.innerHTML = '<p style="color:#94a3b8;font-size:13px">No location data yet.</p>';
+    return;
+  }
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  container.innerHTML = '<div style="display:flex;flex-direction:column;gap:6px">' +
+    entries.map(([key, cnt]) => {
+      const pct = (cnt / total * 100).toFixed(0);
+      const color = colors[key] || "#94a3b8";
+      return `<div style="display:flex;align-items:center;gap:var(--space-2);padding:4px 0">
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted);min-width:80px">${labels[key] || key}</span>
+        <div style="flex:1;height:6px;background:var(--border-muted);border-radius:3px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;transition:width 0.8s ease"></div>
+        </div>
+        <span style="font-size:12px;font-weight:700;color:${color};min-width:32px;text-align:right">${pct}%</span>
+      </div>`;
+    }).join("") + '</div>';
 }
 
 function animateNumber(el, target) {
@@ -276,12 +577,13 @@ async function loadCategories() {
   } catch (err) {}
 }
 
-
-
 if (!getToken()) window.location.href = "login.html";
 updateHeader();
-loadStats();
+renderDailyMotivation();
 loadCategories();
+loadStats();
+loadAppliedCount();
+setInterval(() => { loadStats(); loadAppliedCount(); }, 30000);
 </script>
 </body>
 </html>

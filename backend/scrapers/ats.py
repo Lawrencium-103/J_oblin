@@ -39,7 +39,7 @@ class ATSJobScraper(BaseScraper):
         q_words = set(query.lower().split()) if query else set()
         all_jobs = []
         for company in ASHBY_COMPANIES:
-            data = self.fetch_json(f"https://api.ashbyhq.com/posting-api/job-board/{company}")
+            data = self.fetch_json(f"https://api.ashbyhq.com/posting-api/job-board/{company}", timeout=10)
             if not isinstance(data, dict) or not data.get("jobs"):
                 continue
             for item in data["jobs"]:
@@ -47,29 +47,29 @@ class ATSJobScraper(BaseScraper):
                     title = item.get("title", "")
                     if not title:
                         continue
-                    if q_words and not self._matches_query(title, item.get("descriptionHtml", ""), q_words):
+                    desc = _strip_html(item.get("descriptionHtml", ""))
+                    if q_words and not self._matches_query(title, desc, q_words):
                         continue
                     posted = (item.get("publishedAt", "") or "")[:10]
                     all_jobs.append(self._make_job(
                         title,
                         item.get("department", "") or company.title(),
                         item.get("location", "Remote"),
-                        _strip_html(item.get("descriptionHtml", "")),
+                        desc,
                         f"https://jobs.ashbyhq.com/{company}/{item.get('id', '')}",
                         "ashby", CAT, posted,
                     ))
                 except Exception:
                     continue
-        print(f"[ashby] {len(all_jobs)} jobs matching '{query}'")
         return self.filter_fresh(all_jobs[:50])
 
     # ── Greenhouse Public API ──────────────────────────────────────────────
     def scrape_greenhouse(self, query: str) -> list[dict]:
         q_words = set(query.lower().split()) if query else set()
         all_jobs = []
-        for company in GREENHOUSE_COMPANIES:
+        for company in GREENHOUSE_COMPANIES[:10]:
             data = self.fetch_json(
-                f"https://boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true"
+                f"https://boards-api.greenhouse.io/v1/boards/{company}/jobs?content=true", timeout=10
             )
             if not isinstance(data, dict) or not data.get("jobs"):
                 continue
@@ -95,7 +95,6 @@ class ATSJobScraper(BaseScraper):
                     ))
                 except Exception:
                     continue
-        print(f"[greenhouse] {len(all_jobs)} jobs matching '{query}'")
         return self.filter_fresh(all_jobs[:50])
 
     # ── Query matching helper ─────────────────────────────────────────────

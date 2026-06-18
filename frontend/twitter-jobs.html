@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin - Twitter Posts</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.tw-container { max-width:700px;margin:0 auto }
+.tw-header { margin-bottom:16px }
+.tw-tweet-box { width:100%;min-height:400px;font-size:13px;line-height:1.7;padding:16px;border:1px solid var(--border-muted);border-radius:10px;background:var(--bg-surface);color:var(--text-default);font-family:'SF Mono','Consolas',monospace;resize:vertical;white-space:pre-wrap }
+.tw-controls { display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap }
+.tw-controls select,.tw-controls input { padding:6px 10px;border:1px solid var(--border-muted);border-radius:6px;font-size:12px;background:var(--bg-surface);color:var(--text-default) }
+.tw-controls button { padding:8px 16px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s }
+.tw-copy-btn { background:#0d9488;color:#fff;border:none }
+.tw-copy-btn:hover { background:#0f766e }
+.tw-copy-btn.copied { background:#059669 }
+.tw-refresh-btn { background:transparent;border:1px solid var(--border-muted);color:var(--text-muted) }
+.tw-refresh-btn:hover { border-color:#0d9488;color:#0d9488 }
+.tw-preview-count { font-size:12px;color:#94a3b8;margin-top:8px }
+.tw-site-badge { display:inline-block;background:#0d9488;color:#fff;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;margin-bottom:4px }
+</style>
+</head>
+<body>
+<div class="app-layout">
+<aside class="sidebar" id="sidebar">
+<a href="index.html" class="sidebar-brand">
+<div class="brand-icon"><svg class="brand-logo-svg" width="30" height="30" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="32" height="32" rx="8" fill="url(#brandGrad)" stroke="rgba(255,255,255,0.15)" stroke-width="1.5"/><path d="M14 11H22V15H18V21C18 22.6569 16.6569 24 15 24C13.3431 24 12 22.6569 12 21H15C15 21.5523 15.4477 22 16 22C16.5523 22 17 21.5523 17 21V15H14V11Z" fill="#FFFFFF"/><defs><linearGradient id="brandGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse"><stop stop-color="#0d9488"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs></svg></div>
+<h1>Job<span>lin</span></h1></a>
+<nav class="sidebar-nav">
+<div class="sidebar-section-title">Main</div>
+<a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg></span><span class="nav-label">Dashboard</span></a>
+<a href="jobs.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></span><span class="nav-label">All Jobs</span></a>
+<a href="manual-job.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="16"/><line x1="8" x2="16" y1="12" y2="12"/></svg></span><span class="nav-label">Manual Entry</span></a>
+<div class="sidebar-section-title">My Profile</div>
+<a href="make-cv.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg></span><span class="nav-label">Make My CV</span></a>
+<a href="cv-editor.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 13.5V20a2 2 0 0 0 2 2h8.5"/><path d="M20 12.5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v6"/><path d="m14 2-2 2h6"/><path d="M18.42 15.61a2.1 2.1 0 1 1 2.97 2.97L11 22 8 22l0-3L18.42 15.61Z"/></svg></span><span class="nav-label">Edit CV</span></a>
+<a href="settings.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">Settings</span></a>
+<a href="about.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span><span class="nav-label">About</span></a>
+<div class="admin-only" style="display:none">
+<div class="sidebar-section-title">Admin</div>
+<a href="dashboard.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">Admin Panel</span></a>
+<a href="admin-analytics.html" class="nav-item"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg></span><span class="nav-label">Analytics</span></a>
+<a href="twitter-jobs.html" class="nav-item active"><span class="nav-icon"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z"/></svg></span><span class="nav-label">Twitter Posts</span></a>
+</div>
+</nav>
+<div class="sidebar-footer">
+<div class="sidebar-user"><div class="user-avatar" id="avatarInitial">U</div><div class="user-details"><span class="user-name" id="user-name"></span><span class="user-email" id="user-email"></span></div></div>
+<button class="logout-btn" onclick="logout()"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span><span>Sign Out</span></button>
+</div>
+</aside>
+
+<div class="main-content">
+<div class="top-bar">
+<button class="mobile-nav-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button>
+<div class="top-bar-search"><span class="search-icon"><svg class="search-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/></svg></span><input type="text" id="globalSearch" placeholder="Search jobs..." onkeydown="if(event.key==='Enter')location.href='jobs.html?search='+encodeURIComponent(this.value)"></div>
+<div class="top-bar-actions"><button class="btn btn-primary btn-sm" onclick="location.href='jobs.html'">Browse Jobs</button><button class="btn btn-primary btn-sm" onclick="location.href='make-cv.html'">Make My CV</button></div>
+</div>
+
+<div class="page-content tw-container">
+<div class="page-header tw-header">
+<div>
+<h2>Twitter Posts</h2>
+<p class="subtitle">Copy-paste ready job listings for Twitter. Mix of Nigerian and international roles.</p>
+</div>
+</div>
+
+<div class="tw-controls">
+<select id="jobCount"><option value="10">10 jobs</option><option value="15" selected>15 jobs</option><option value="20">20 jobs</option></select>
+<select id="categoryFilter"><option value="">All categories</option></select>
+<button class="tw-refresh-btn" onclick="loadJobs()">Refresh Jobs</button>
+<button class="tw-copy-btn" id="copyBtn" onclick="copyTweet()">Copy to Clipboard</button>
+</div>
+
+<textarea class="tw-tweet-box" id="tweetBox" readonly placeholder="Loading jobs..."></textarea>
+<div class="tw-preview-count" id="charCount">0 characters</div>
+</div>
+</div>
+</div>
+
+<script src="app.js"></script>
+<script>
+let currentJobs = [];
+
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+function truncate(text, len) {
+  if (!text || text.length <= len) return text || '';
+  return text.slice(0, len).replace(/\s+\S*$/, '') + '...';
+}
+
+async function loadJobs() {
+  const box = document.getElementById('tweetBox');
+  box.value = 'Loading jobs...';
+  try {
+    const r = await fetch('/api/recent-jobs');
+    if (!r.ok) { box.value = 'Failed to load jobs.'; return; }
+    const data = await r.json();
+    currentJobs = data.jobs || [];
+    const catFilter = document.getElementById('categoryFilter').value;
+    const count = parseInt(document.getElementById('jobCount').value);
+    let filtered = currentJobs;
+    if (catFilter) filtered = filtered.filter(j => j.job_category === catFilter);
+    const selected = filtered.slice(0, count);
+    generateTweet(selected);
+    populateCategories(currentJobs);
+  } catch (e) {
+    box.value = 'Error loading jobs: ' + e.message;
+  }
+}
+
+function populateCategories(jobs) {
+  const sel = document.getElementById('categoryFilter');
+  const current = sel.value;
+  const cats = [...new Set(jobs.map(j => j.job_category).filter(Boolean))];
+  sel.innerHTML = '<option value="">All categories</option>' + cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
+  sel.value = current;
+}
+
+function generateTweet(jobs) {
+  const box = document.getElementById('tweetBox');
+  if (!jobs.length) { box.value = 'No jobs found for the selected category.'; return; }
+  const siteUrl = window.location.origin;
+  let lines = [];
+  lines.push('NEW JOBS IN NIGERIA AND INTERNATIONAL');
+  lines.push('Apply via Joblin - AI-powered CV tailoring for Nigerian job seekers');
+  lines.push(siteUrl);
+  lines.push('');
+  jobs.forEach((j, i) => {
+    const n = i + 1;
+    const title = j.title || 'Untitled';
+    const company = j.company || 'Unknown';
+    const location = j.location ? ' ' + j.location : '';
+    const category = j.job_category || '';
+    const desc = truncate(j.description || '', 120);
+    lines.push(n + '. ' + title + ' - ' + company);
+    if (location || category) {
+      const tags = [];
+      if (location) tags.push(location);
+      if (category) tags.push(category);
+      lines.push('   ' + tags.join(' | '));
+    }
+    if (desc) lines.push('   ' + desc);
+    lines.push('   ' + siteUrl + '/job-detail.html?id=' + j.id);
+    lines.push('');
+  });
+  lines.push('Apply via Joblin - AI-powered CV tailoring for Nigerian job seekers');
+  lines.push(siteUrl);
+  box.value = lines.join('\n');
+  document.getElementById('charCount').textContent = box.value.length + ' characters' + (box.value.length > 280 ? ' (thread: ' + Math.ceil(box.value.length / 280) + ' tweets)' : ' (1 tweet)');
+}
+
+async function copyTweet() {
+  const box = document.getElementById('tweetBox');
+  const btn = document.getElementById('copyBtn');
+  try {
+    await navigator.clipboard.writeText(box.value);
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
+  } catch (e) {
+    box.select();
+    document.execCommand('copy');
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy to Clipboard'; btn.classList.remove('copied'); }, 2000);
+  }
+}
+
+document.getElementById('jobCount').addEventListener('change', () => {
+  const catFilter = document.getElementById('categoryFilter').value;
+  const count = parseInt(document.getElementById('jobCount').value);
+  let filtered = currentJobs;
+  if (catFilter) filtered = filtered.filter(j => j.job_category === catFilter);
+  generateTweet(filtered.slice(0, count));
+});
+document.getElementById('categoryFilter').addEventListener('change', () => {
+  const catFilter = document.getElementById('categoryFilter').value;
+  const count = parseInt(document.getElementById('jobCount').value);
+  let filtered = currentJobs;
+  if (catFilter) filtered = filtered.filter(j => j.job_category === catFilter);
+  generateTweet(filtered.slice(0, count));
+});
+
+if (!getToken()) { window.location.href = 'login.html'; }
+updateHeader();
+loadJobs();
+</script>
+</body>
+</html>

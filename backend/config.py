@@ -569,6 +569,17 @@ JOB_CATEGORIES = {
                       "remote-first","remote first","work anywhere"],
         "color": "#0891b2",
     },
+    "web3-blockchain": {
+        "name": "Web3 & Blockchain", "icon": "link",
+        "keywords": ["web3","blockchain","solidity","smart contract","ethereum",
+                      "bitcoin","crypto","defi","nft","solana",
+                      "web 3","blockchain developer","crypto analyst",
+                      "tokenomics","dapp","decentralized","web3 developer",
+                      "blockchain engineer","crypto currency","metaverse",
+                      "chainlink","web3.js","ethers.js","hardhat","foundry",
+                      "rust blockchain","solana developer","crypto trader"],
+        "color": "#8b5cf6",
+    },
     "design-creative": {
         "name": "Design & Creative", "icon": "pen-tool",
         "keywords": ["graphic designer","graphic design","ui designer","ux designer",

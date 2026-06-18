@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: joblin
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: oregon
+    branch: main
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: DATA_DIR
+        value: /data
+      - key: JOBLIN_JWT_SECRET
+        generateValue: true
+      - key: JOBLIN_CRON_TOKEN
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: joblin-db
+          property: connectionString
+    disk:
+      name: joblin-data
+      mountPath: /data
+      sizeGB: 1
+    healthCheckPath: /api/health
+
+databases:
+  - name: joblin-db
+    databaseName: joblin
+    plan: starter
+    region: oregon

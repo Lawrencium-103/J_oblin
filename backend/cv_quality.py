@@ -16,7 +16,7 @@ CLICHES = [
 
 THRESHOLDS = {
     "achievement_density": 0.60,
-    "bullets_per_role": 3,
+    "bullets_per_role": 2,
     "min_skills": 5,
     "summary_min_words": 30,
     "education_required": False,
@@ -105,8 +105,8 @@ def _check_cover_letter(cover_letter: str) -> dict:
             "reason": f"Cliche phrases found: {', '.join(cliches_found[:3])}"
         }
     words = len(cover_letter.split())
-    if words < 50:
-        return {"pass": False, "score": words, "reason": f"Only {words} words (need 50+)"}
+    if words < 200:
+        return {"pass": False, "score": words, "reason": f"Only {words} words (need 200+)"}
     return {"pass": True, "score": words, "reason": f"{words} words, no cliches"}
 
 

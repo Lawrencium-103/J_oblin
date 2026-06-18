@@ -422,6 +422,13 @@ def tailor_application(
         + transferable_boost
         + bridging_suggestions
         + feedback_section
+        + "\n\n## DATA INTEGRITY — ABSOLUTELY CRITICAL ##\n"
+        + "- NEVER change or fabricate dates. Use exact dates from source data. Empty string if missing.\n"
+        + "- NEVER fabricate achievements, numbers, metrics, outcomes, project names, tools, or methodologies.\n"
+        + "- You may rephrase/polish existing achievements for JD relevance, but every factual claim must trace to source data.\n"
+        + "- If source data has 0 achievements for a role → output []. Do not generate fake ones.\n"
+        + "- If source data has 2 achievements → output those 2 (rewritten). Do not add a 3rd.\n"
+        + "- This candidate's integrity depends on you. Fabrications get them rejected or fired.\n"
         + "\n\n## OUTPUT INSTRUCTIONS ##\n"
         "Return ONLY valid JSON. No markdown. No code fences. No explanation. "
         "Every section must be rewritten for the TARGET ROLE. Do NOT pass through original content unchanged.\n"
@@ -438,45 +445,81 @@ def tailor_application(
         + '    {\n'
         + '      "title": "(original title — do not change)",\n'
         + '      "company": "(original company — do not change)",\n'
+        + '      "start_date": "(original start date — do not change, empty string if missing)",\n'
+        + '      "end_date": "(original end date — do not change, empty string if missing)",\n'
+        + '      "current": false,\n'
         + '      "description": "(1-line rewritten to highlight JD-relevant impact, or empty string)",\n'
-        + '      "achievements": ["(5-7 bullets, each with specific numbers: %, $, time, volume. Must use action verbs and metrics.)"]\n'
+        + '      "achievements": ["(only real achievements from source data, rewritten for relevance)"]\n'
         + '    }\n'
         + '  ],\n'
         + (
-            '  "cover_letter": "Full-page letter (350-500 words, 4-5 paragraphs). '
-            'NO opening cliches. NO generic praise. This is a serious professional document — not a form letter. '
-            'PARAGRAPH 1: Reference something specific about the company current work, product, or recent achievement. Show you did your research. Then name the role and state a specific value proposition tied to company needs. MAX 4 sentences. '
-            'PARAGRAPH 2: Deep dive into your most relevant achievement. Include: company name, action taken, measurable outcome with hard numbers, method or tool used. Connect it directly to a JD requirement. 3-4 sentences. '
-            'PARAGRAPH 3: Second major achievement with a different angle (technical depth, leadership, problem-solving). Show breadth. Include company name, metric, method. 3-4 sentences. '
-            'PARAGRAPH 4: What you bring that is unique — specific technical stack, domain expertise, or approach that sets you apart from other applicants. Tie to the company specific goals. 2-3 sentences. '
-            'PARAGRAPH 5: Brief closing. State what you would like to discuss. Offer to provide additional information. Show enthusiasm through specificity, not adjectives. 1-2 sentences. '
-            'UNIQUENESS: No two candidates should sound alike. Lead with the most distinctive real achievement. Vary sentence structures, openings, and metrics chosen from the candidate real data. Avoid any fill-in-the-blank phrasing.\n'
-            'CRITICAL - NEVER use ANY of these banned phrases or words:\n'
-            '- Openers: I am excited, I am writing to apply, I am confident, I am impressed by, I would be a valuable addition, I believe I am the ideal candidate, It is with great enthusiasm\n'
-            '- Jargon: leverage, synergy, proven track record, drive business growth, equipped me with, I believe, I think, in today competitive landscape, think outside the box, best-in-class, world-class, end-to-end, deep dive (as noun), low-hanging fruit, move the needle, pain point, game-changer, circle back, holistic, robust, scalable (unless describing actual tech)\n'
-            '- Buzzwords: passionate, enthusiastic, team player, detail-oriented, results-driven, proactive, self-starter, go-getter, rockstar, ninja, guru, hardworking, dedicated, motivated\n'
-            '- Generic praise: industry-leading, cutting-edge, state-of-the-art, market-leading, dynamic\n'
-            'ANTI-EXAMPLE (REJECTED - full of AI slop): I am excited to apply for the data role at your company, where I can leverage my expertise in data analytics to drive business growth. As a passionate and results-driven professional with a proven track record, I believe I would be a valuable addition to your dynamic team.\n'
-            'GOOD EXAMPLE (ACCEPTED - specific, human, metrics-driven): BCG X deploys AI at scale for supply chain optimization -- the same challenge I tackled at Andela, where I built ML pipelines that cut logistics processing time by 60%. As a Forward Deployed AI Scientist with 4 years of production ML experience across three countries, I bring hands-on expertise deploying models that actually make decisions, not just predictions.",\n'
+            '  "cover_letter": "450-600 word cover letter. '
+            'See dedicated COVER LETTER section below for structure and rules."'
         )
         + '  "keywords_hit": ["kw1","kw2","kw3","kw4","kw5"],\n'
         + '  "match_score": 85\n'
         + '}\n\n'
+        + "## COVER LETTER — NARRATIVE FLOW (MANDATORY) ##\n"
+        + "450-600 WORDS. 4-5 PARAGRAPHS. THIS IS A FULL-PAGE PROFESSIONAL DOCUMENT. "
+        + "Under 400 words will be rejected.\n\n"
+        + "The cover letter must read as ONE coherent argument — not five separate paragraphs. "
+        + "Each paragraph must end with a sentence that naturally leads into the next. "
+        + "The reader should feel a logical thread from opening to close.\n\n"
+        + "### Narrative Arc ###\n"
+        + "Paragraph 1 — Hook & Context (3-4 sentences):\n"
+        + "  Sentence 1: Open with something specific about the company — their product, a recent milestone, a problem "
+        + "they're solving, or their mission. NOT a greeting. NOT who you are. Something that proves you read beyond the JD.\n"
+        + "  Sentence 2-3: Connect that company context to your own experience. 'This matters to me because at X I saw Y...'\n"
+        + "  Sentence 4: State the role and your value proposition in one line. This sentence should end with a natural "
+        + "bridge to your strongest achievement (e.g. '...experience I would bring directly to this role').\n\n"
+        + "Paragraph 2 — Deep Evidence (4-5 sentences):\n"
+        + "  Open with your single most relevant achievement. Company name + what you did + tool/method + "
+        + "measurable outcome. Connect it to a specific JD requirement.\n"
+        + "  Middle sentences: Add context — scope, scale, complexity. Numbers everywhere.\n"
+        + "  Last sentence: Transition to breadth. 'Beyond this, I also bring...' or 'This is complemented by my experience in...'\n\n"
+        + "Paragraph 3 — Breadth & Range (3-4 sentences):\n"
+        + "  A second achievement from a different angle (technical depth vs. leadership vs. problem-solving). "
+        + "It does NOT need to be a different company — it needs a different skill set or context.\n"
+        + "  Include: what you did, the outcome, and why it matters for THIS role.\n"
+        + "  Last sentence: Pivot to what makes you unique. 'What sets me apart is...' or 'Beyond these results, I also bring...'\n\n"
+        + "Paragraph 4 — What Makes You Different (2-3 sentences):\n"
+        + "  Name the specific combination of skills, domain expertise, or perspective that no other candidate has. "
+        + "Tie it directly to a company need from the JD. Show why your particular mix fits their particular context.\n"
+        + "  Last sentence: Lead into close. 'I would welcome the chance to discuss...'\n\n"
+        + "Paragraph 5 — Close (1-2 sentences):\n"
+        + "  Name something specific you'd discuss — reference the company's project, challenge, or goal from P1. "
+        + "This closes the loop. Make it clear you're ready to talk specifics, not just available for an interview.\n"
+        + "  Sign: 'Best regards,' or 'Sincerely,' on its own line, then candidate name on next line.\n\n"
+        + "### Anti-Slop Rules ###\n"
+        + "BANNED: 'I am excited', 'I am writing to apply', 'I am confident', 'I am impressed by', "
+        + "'I would be a valuable addition', 'I believe I am the ideal candidate', 'It is with great enthusiasm', "
+        + "'leverage', 'synergy', 'proven track record', 'drive business growth', 'equipped me with', "
+        + "'passionate', 'enthusiastic', 'team player', 'detail-oriented', 'results-driven', 'proactive', "
+        + "'self-starter', 'go-getter', 'rockstar', 'ninja', 'guru', 'hardworking', 'dedicated', 'motivated', "
+        + "'cutting-edge', 'state-of-the-art', 'world-class', 'best-in-class', 'think outside the box', "
+        + "'low-hanging fruit', 'move the needle', 'game-changer', 'in today competitive landscape', 'dynamic environment'.\n"
+        + "If any banned phrase appears, the letter is rejected.\n\n"
         "## CRITICAL RULES ##\n"
         "- 'tailored_skills' MUST be an ARRAY OF OBJECTS with 'domain', 'items', 'description'. "
-        "Each domain groups 3-6 related skills. Each domain has a 1-2 sentence description showing context + metrics. "
-        "Aim for 3-5 domain groups covering ALL candidate skills relevant to the job.\n"
-        "- 'tailored_experience': same title/company as original. Rewrite ALL achievements to be JD-relevant with metrics. "
-         "CRITICAL: EVERY role MUST have 4-7 achievement bullets. If a role has fewer than 4 in the source data, "
-         "reconstruct achievements from the raw CV text or job description context. "
-         "EVERY bullet must have at least one number (%, $, time saved, volume). Zero-bullet roles will be rejected.\n"
+         "Each domain groups 3-6 related skills. Each domain has a 1-2 sentence description showing context + metrics. "
+         "Aim for 3-5 domain groups covering ALL candidate skills relevant to the job. "
+         "CRITICAL: Reference the candidate's REAL PROJECTS from the Projects section in the descriptions. "
+         "E.g. if the candidate built a Power BI retail analysis dashboard, mention it as evidence of BI skill. "
+         "Do not just list tools — show what was built with them.\n"
+         "- 'tailored_experience': same title/company/dates as original. NEVER change dates. "
+           "Rewrite achievements to be JD-relevant, but use ONLY real facts from source data. "
+           "CRITICAL: EVERY bullet must demonstrate relevance to the target job description. If the original work "
+           "was in a different domain, reframe it to highlight transferable skills. Show how past work prepared "
+           "the candidate for THIS specific role. "
+           "Output as many achievements as exist in source data — do NOT fabricate new ones. "
+           "Zero-bullet roles: output empty achievements array []. "
+           "EVERY bullet must have at least one number (%, $, time saved, volume) if the source data includes one.\n"
          "- EDUCATION RULE: Never put a professional summary, career objective, or personal statement in the "
          "education field. Education entries MUST be degree + institution pairs only "
          "(e.g. 'BSc in Computer Science, University of Lagos'). If you have no proper education data, "
          "output an empty array []. Never guess or fabricate education.\n"
-         "- Summary must directly reference keywords from the JD. Must be 40+ words.\n"
-         "- Cover letter: 4-5 paragraphs, 350-500 words. This is a full-page professional document, not a short blurb. No title, no salutation. Just the letter body.\n"
-         "- Cover letter BANNED FOREVER: 'I am excited', 'I am writing to apply', 'I am confident', 'proven track record', "
+          "- Summary must directly reference keywords from the JD. Must be 40+ words.\n"
+          "- Cover letter BANNED FOREVER: 'I am excited', 'I am writing to apply', 'I am confident', 'proven track record', "
          "'I believe', 'I would be a valuable addition', 'I am impressed by', 'leverage my', 'drive business growth', "
          "'passionate', 'enthusiastic', 'team player', 'detail-oriented', "
          "'results-driven', 'proactive', 'self-starter', 'go-getter', "
@@ -490,10 +533,10 @@ def tailor_application(
         "- Match score: honest 0-100 based on keyword overlap between JD and tailored output.\n"
         "- Never fabricate phone numbers or email addresses.\n"
         "- No 'References available upon request'.\n"
-        "- 'keywords_hit': exactly the subset of JD keywords that appear in the tailored CV.\n"
+         "- 'keywords_hit': exactly the subset of JD keywords that appear in the tailored CV.\n"
     )
 
-    raw = _call_any(prompt, api_keys, max_tokens=3000)
+    raw = _call_any(prompt, api_keys, max_tokens=4000)
     provider = "groq" if api_keys.get("groq") else "rule-based"
     if raw and provider == "rule-based":
         provider = "nim" if api_keys.get("nvidia") else "rule-based"
@@ -578,6 +621,35 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
                 "Developed automated reporting systems serving 50+ stakeholders across departments.",
             ][rng() % 3],
         })
+
+    # Attach relevant projects to skill group descriptions
+    projects = user_cv.get("projects", [])
+    if projects and grouped:
+        project_text = ""
+        for p in projects[:4]:
+            pname = p.get("name", "")
+            pdesc = p.get("description", "")[:200]
+            ptechs = ", ".join(p.get("technologies", []))
+            if pname:
+                project_text += f" Project: {pname} — {pdesc}"
+                if ptechs:
+                    project_text += f" [{ptechs}]"
+        for g in grouped:
+            # Check if any project technologies or description match this group's taxonomy
+            gname = g.get("domain", "")
+            ginfo = SKILL_TAXONOMY.get(gname, {})
+            gkws = ginfo.get("keywords", [])
+            relevant_project = ""
+            for p in projects[:6]:
+                pname = p.get("name", "")
+                pdesc = (p.get("description", "") or "").lower()
+                ptechs = [t.lower() for t in p.get("technologies", [])]
+                if any(kw in pdesc or any(kw in pt for pt in ptechs) for kw in gkws):
+                    pshort = p.get("description", "")[:120]
+                    relevant_project = f" Relevant project: {pname} — {pshort}"
+                    break
+            if relevant_project:
+                g["description"] = g.get("description", "") + relevant_project
 
     exp_raw = user_cv.get("experience", [])
     exp_out = []
@@ -671,33 +743,39 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
             if cut > 80:
                 ba_mid = ba_mid[:cut] + "..."
         summary_templates = [
-            f"{job_title} with proven experience applying {top3} to deliver measurable outcomes. "
-            f"Notable achievement: {ba_mid}. "
-            f"Combines technical proficiency in {top2} with a structured, methodical approach "
-            f"to problem-solving, data quality, and stakeholder communication. "
-            f"Consistently produces analysis that drives decisions and improves operational efficiency.",
+            f"{job_title} who {ba_mid}. "
+            f"That work draws on {top3} expertise and a consistent track record of delivering analysis "
+            f"that stakeholders actually use — not just reports that sit on shelves. "
+            f"Every project starts with the same discipline: understand the question, validate the data, "
+            f"then build the right methodology to answer it.",
 
-            f"Results-focused {job_title} with hands-on experience across {top3}. "
-            f"Known for {ba_mid}. "
-            f"Brings expertise in {top2} to every project, along with a commitment to data accuracy, "
-            f"clear reporting, and actionable insights that teams trust and use.",
+            f"For the {job_title} role being hired for, the relevant experience includes {ba_mid}. "
+            f"This sits on top of {rng() % 4 + 3} years working across {top3}, building dashboards, "
+            f"cleaning messy datasets, and designing reports that decision-makers trust enough to act on. "
+            f"The thread through every project is the same: data only matters when it changes what people decide.",
 
-            f"{job_title} experienced in applying {top3} to solve complex problems and deliver impact. "
-            f"Track record includes {ba_mid}. "
-            f"Skilled in {top2} with a focused approach to turning raw data into decisions "
-            f"that improve outcomes for organisations and the people they serve.",
+            f"At the core of this candidacy: {ba_mid}. "
+            f"That ability to move from raw data to decision-ready analysis is backed by "
+            f"hands-on proficiency in {top3}. "
+            f"Every deliverable — whether a one-time deep-dive or a recurring dashboard — is built "
+            f"to answer a real question, not just to fill a template.",
         ]
     else:
         summary_templates = [
-            f"{job_title} with applied experience in {top3}. Combines technical proficiency in {top2} "
-            f"with a structured approach to problem-solving, data quality, and stakeholder communication. "
-            f"Committed to delivering accurate, actionable analysis that supports better decisions.",
-            f"Results-oriented {job_title} with hands-on experience across {top3}. "
-            f"Brings expertise in {top2} along with a disciplined approach to data accuracy "
-            f"and reporting. Known for producing analysis that stakeholders trust and act on.",
-            f"{job_title} experienced in applying {top3} to solve real-world problems. "
-            f"Skilled in {top2} and committed to data-driven decision-making. "
-            f"Focuses on delivering clear, accurate insights that improve outcomes.",
+            f"{job_title} with working experience across {top3}. "
+            f"Every project follows the same approach: understand the decision that needs to be made, "
+            f"work backward to the data required, and present findings in a way that is immediately actionable. "
+            f"No reports that sit unread — every output is designed to inform, persuade, or enable action.",
+
+            f"The work speaks to {top3} capability — but what sets this candidacy apart is a consistent "
+            f"focus on outcomes over outputs. Whether building dashboards, cleaning datasets, or "
+            f"designing recurring reports, the goal is always the same: deliver insights that actually get used. "
+            f"That means knowing the data, knowing the audience, and presenting findings with clarity.",
+
+            f"Hands-on experience with {top3}, applied to real problems with measurable results. "
+            f"Data is only valuable when it changes how people decide — and every analysis, dashboard, "
+            f"or report produced has been built with that principle in mind. "
+            f"Clear, accurate, and built for action.",
         ]
     summary = summary_templates[rng() % len(summary_templates)]
 
@@ -716,76 +794,66 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
         ach1 = candidate_achievements[0]
         ach1_fmt = _fmt_ach(ach1["achievement"])
         co1 = ach1["company"]
-        mid_section = ""
+        ach2_fmt = ""
+        co2 = ""
         if len(candidate_achievements) > 1:
             ach2 = candidate_achievements[1]
             ach2_fmt = _fmt_ach(ach2["achievement"])
             co2 = ach2["company"]
-            mid_opts = [
-                f" At {co2}, I {ach2_fmt}. This dual experience across different contexts taught me "
-                f"how to adapt my approach without compromising on depth or accuracy. ",
-                f" My earlier work at {co2} reinforced this approach: {ach2_fmt}. "
-                f"Each role taught me that data only creates value when it changes how people decide. ",
-                f" Earlier, at {co2}, I {ach2_fmt}. "
-                f"That experience taught me to work across teams and adapt quickly to new data environments. ",
-            ]
-            mid_section = mid_opts[rng() % len(mid_opts)]
         cover_templates = [
-            f"Your search for a {job_title} who combines technical precision with measurable impact "
-            f"directly reflects the work I have been doing. At {co1}, I {ach1_fmt}. "
-            f"This is not a one-off \u2014 every analysis I deliver follows the same standard: "
-            f"clean data, rigorous methods, and findings that stakeholders actually use to make decisions. "
-            f"My proficiency in {top3} means I can contribute from day one, whether the team needs "
-            f"ad-hoc insights or a structured reporting framework.{mid_section}"
-            f"I would welcome the chance to discuss how my background in data analysis and reporting "
-            f"can support your team\u2019s objectives and help drive the outcomes that matter to your organization.",
+            f"Your team is looking for a {job_title} who can deliver analysis that actually drives decisions — not just populate dashboards. That is exactly the work I have been doing.\n\n"
+            f"At {co1}, I led the effort to {ach1_fmt}. This was not a routine reporting task — it required understanding what the data actually meant for the business, cleaning and validating it, then presenting it in a way that prompted action. Every project I have taken on follows this pattern: start with the decision that needs to be made, work backward to the data needed, and build the analysis around that.\n\n"
+            + (f"Earlier, at {co2}, I {ach2_fmt}. "
+               f"Working across these different environments taught me that data skills are transferable, but context matters. "
+               f"You cannot produce useful analysis without understanding the problem you are solving.\n\n"
+               if ach2_fmt and co2 else "")
+            + f"I bring hands-on proficiency in {top3}, but more importantly, I bring the discipline to use those tools in service of a real question. "
+            f"I would welcome the opportunity to discuss how my approach to analysis can contribute to the outcomes your team is working toward.",
 
-            f"Most candidates list tools they have used. Let me show you what I have built. "
-            f"At {co1}, I {ach1_fmt}. That work did not happen by accident \u2014 it came from "
-            f"a structured approach to understanding the data, cleaning it thoroughly, and presenting "
-            f"findings in a way that non-technical stakeholders could act on. "
-            f"I bring the same discipline to every project, backed by hands-on experience with {top3}.{mid_section}"
-            f"I am not looking for a role where I simply run reports. I want to build the systems "
-            f"and analyses that help your team make smarter, faster decisions. "
-            f"I would welcome a conversation about how my experience fits what you need.",
+            f"Your {job_title} role caught my attention because the description focuses on impact, not just output — which mirrors how I have approached every data project in my career.\n\n"
+            f"At {co1}, I {ach1_fmt}. What made that work effective was not the tool or the technique — it was the clarity about who needed the information and what they would do with it. "
+            f"That focus on actionable insights has defined every dashboard, report, and analysis I have delivered.\n\n"
+            + (f"My earlier experience at {co2} reinforced this: {ach2_fmt}. "
+               f"Each role has sharpened my ability to translate messy real-world data into clear, decision-ready outputs.\n\n"
+               if ach2_fmt and co2 else "")
+            + f"Technically, my work spans {top3}. But the real skill I bring is the judgment to know which analysis is worth doing, "
+            f"how to validate the inputs, and how to present findings so they actually get used. "
+            f"I would welcome a conversation about how I can contribute to your team's objectives.",
 
-            f"Your {job_title} role requires someone who can move beyond surface-level reporting "
-            f"into analysis that drives real decisions. That has been the focus of my career so far. "
-            f"At {co1}, I {ach1_fmt}. I did this by combining technical skills in {top3} "
-            f"with a clear focus on what decision-makers actually needed to see.{mid_section}"
-            f"I approach every analysis the same way: understand the question first, then build "
-            f"the right methodology to answer it. The result is work that gets used \u2014 not filed away. "
-            f"I would welcome the opportunity to bring this approach to your organization and contribute "
-            f"to the outcomes your team is working toward.",
+            f"Most candidates lead with tools. I lead with outcomes — because that is what determines whether analysis gets used or filed away.\n\n"
+            f"At {co1}, I {ach1_fmt}. This is not a claim I make lightly — every number in that statement is verifiable. "
+            f"The work involved {', '.join(top_skills[:2])} expertise, but more importantly, it required understanding what would actually move the needle for the business. "
+            f"That combination of technical skill and business judgment is what I bring to every project.\n\n"
+            + (f"My work at {co2} confirmed this approach: {ach2_fmt}. "
+               f"Whether working with big datasets or messy spreadsheets, the principle is the same: "
+               f"start with the question, build the right method to answer it, and present the findings so they drive action.\n\n"
+               if ach2_fmt and co2 else "")
+            + f"I would welcome the opportunity to discuss how my experience and approach can support the outcomes your team is working toward — "
+            f"and I am happy to share specific examples of the work described above.",
         ]
     else:
         cover_templates = [
-            f"Your need for a {job_title} who can deliver analysis that actually gets used "
-            f"aligns with how I have approached every project in my career. "
-            f"My work across {top3} has focused on one thing: turning raw information into "
-            f"decisions that stick. Whether building dashboards, cleaning messy datasets, "
-            f"or designing recurring reports, I prioritise clarity, accuracy, and usefulness. "
-            f"I do not just deliver numbers \u2014 I deliver context, so stakeholders know "
-            f"what the data means and what to do next. I would welcome a conversation about "
-            f"how my experience can support the outcomes your team is driving.",
+            f"Your {job_title} role requires someone who can move beyond surface-level reporting into analysis that shapes decisions. "
+            f"That focus has defined my career so far.\n\n"
+            f"My experience across {top3} has been built on a straightforward principle: data only creates value when it changes what people decide. "
+            f"Every dashboard, every report, every dataset cleaned — each one was done with a specific decision in mind. "
+            f"I do not believe in analysis that sits unread. Every output I produce is designed to inform, persuade, or enable action.\n\n"
+            f"I would welcome a conversation about how my background in data analysis and reporting "
+            f"can support your team\u2019s objectives and contribute to the outcomes that matter to your organization.",
 
-            f"I am writing because your {job_title} role calls for someone who connects "
-            f"analytical depth with practical business judgment. My experience in {top3} "
-            f"has been built on that principle: data only matters when it changes how people decide. "
-            f"Every dashboard I have built, every dataset I have cleaned, and every report I have "
-            f"delivered was designed with that question in mind. I bring the same philosophy "
-            f"to your team \u2014 along with the technical skills and process discipline needed "
-            f"to produce work that stakeholders trust and act on. I would welcome the chance "
-            f"to discuss what I can contribute.",
+            f"Most candidates will list the tools they know. What I want to demonstrate is the work those tools have produced.\n\n"
+            f"Across my experience with {top3}, the common thread has been a focus on outcomes over outputs. "
+            f"Whether building recurring dashboards, cleaning messy datasets, or designing one-off analyses for leadership, "
+            f"every deliverable starts with the same question: who is going to use this, and what will they decide based on it? "
+            f"That question keeps the analysis grounded in real decisions, not abstract reporting.\n\n"
+            f"I would welcome the opportunity to discuss how I can bring this approach to your organization and contribute "
+            f"to the outcomes your team is working toward.",
 
-            f"Most candidates list what they know. I focus on what I have achieved. "
-            f"With expertise in {top3}, I have consistently delivered analysis that gets used — "
-            f"from dashboards that track KPIs to ad-hoc analyses that reallocate budgets. "
-            f"My approach is simple: start with the decision that needs to be made, work backward "
-            f"to the data required, and present findings in a way that is immediately actionable. "
-            f"I do not believe in reports that sit unread. Every output I produce is designed "
-            f"to inform, persuade, or enable action. I would welcome a conversation about "
-            f"how I can bring this mindset to your organization.",
+            f"Your search for a {job_title} who can turn raw data into decisions aligns directly with how I work.\n\n"
+            f"With hands-on experience in {top3}, I have consistently delivered analysis that stakeholders trust and act on. "
+            f"The method is simple: understand the decision first, then build the analysis around it. "
+            f"The result is work that does not just sit in a shared drive — it informs budgets, shifts strategies, and improves programs.\n\n"
+            f"I would welcome a conversation about how my experience and approach can contribute to the work your team is doing.",
         ]
     cover = cover_templates[rng() % len(cover_templates)]
 
@@ -803,42 +871,42 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
 def _describe_group(domain: str, skills: list, salt: int = 0) -> str:
     templates = {
         "Data Analytics & Engineering": [
-            f"Built analytical workflows using {', '.join(skills[:3])} to process and transform data for reporting.",
-            f"Applied {', '.join(skills[:3])} to extract, clean, and model data for business intelligence and operational analytics.",
-            f"Used {', '.join(skills[:3])} to design data pipelines that reduced processing time and improved reporting accuracy.",
+            "Built end-to-end analytical pipelines that ingest, clean, and transform multi-source data into structured models ready for insight generation and decision support.",
+            "Applied statistical and programmatic methods to extract, validate, and model datasets, delivering business intelligence and operational analytics at scale.",
+            "Designed and maintained data processing systems that reduced manual handling, improved data integrity, and enabled faster delivery of analytical outputs.",
         ],
         "BI & Visualization": [
-            f"Created dashboards and visual reports using {', '.join(skills[:3])} to track KPIs and support decision-making.",
-            f"Designed interactive visualizations and executive scorecards in {', '.join(skills[:3])} to monitor performance metrics.",
-            f"Transformed raw data into actionable dashboards using {', '.join(skills[:3])}, enabling faster stakeholder decisions.",
+            "Created dashboards and visual reports that track KPIs, surface trends, and equip leadership with real-time visibility into operational performance.",
+            "Designed interactive data products and executive scorecards that monitor critical metrics and support evidence-based decision-making across teams.",
+            "Transformed raw datasets into actionable visual narratives, enabling stakeholders to spot patterns, ask better questions, and act on findings quickly.",
         ],
         "Cloud & Infrastructure": [
-            f"Managed data infrastructure using {', '.join(skills[:3])} for storage, processing, and analytics.",
-            f"Deployed and maintained cloud-based data solutions using {', '.join(skills[:3])} to support scalable analytics.",
-            f"Architected data workflows on {', '.join(skills[:3])} ensuring reliable data ingestion and transformation.",
+            "Managed cloud-based data environments for storage, compute, and analytics, ensuring reliable access, security, and cost-efficient scaling.",
+            "Deployed and maintained infrastructure that supports data ingestion, transformation, and serving at scale across distributed teams.",
+            "Architected data workflows on cloud platforms with automated pipelines, monitoring, and alerting to ensure consistent data availability.",
         ],
         "Database Management": [
-            f"Designed and queried databases using {', '.join(skills[:3])} to support ETL and reporting pipelines.",
-            f"Managed relational and non-relational databases in {', '.join(skills[:3])} with a focus on performance and data integrity.",
-            f"Built and optimized database schemas and queries using {', '.join(skills[:3])} to support analytics workflows.",
+            "Designed, queried, and optimized relational and non-relational databases to support analytical ETL pipelines and operational reporting.",
+            "Built and maintained database schemas, indexes, and views with attention to query performance, data integrity, and efficient storage.",
+            "Managed database environments across the full lifecycle — from schema design through migration, monitoring, and performance tuning.",
         ],
         "Project Management & Methods": [
-            f"Applied {', '.join(skills[:3])} to manage data projects and coordinate cross-functional teams.",
-            f"Led project delivery using {', '.join(skills[:3])} methodologies to ensure on-time, on-scope outcomes.",
-            f"Coordinated cross-team initiatives using {', '.join(skills[:3])}, balancing stakeholder needs with technical delivery.",
+            "Applied structured project management methodologies to lead data initiatives, coordinate cross-functional teams, and deliver on schedule.",
+            "Managed end-to-end delivery of analytical projects, balancing stakeholder requirements, technical constraints, and team capacity.",
+            "Facilitated cross-team coordination, requirements gathering, and iterative delivery to ensure analytical outputs aligned with business priorities.",
         ],
         "Data Collection & M&E": [
-            f"Designed data collection tools using {', '.join(skills[:3])} and tracked indicators across programmes.",
-            f"Built M&E frameworks and digital data collection systems using {', '.join(skills[:3])} to support program reporting.",
-            f"Developed and deployed data collection instruments in {', '.join(skills[:3])}, ensuring data quality and timely reporting.",
+            "Designed and deployed digital data collection instruments and M&E frameworks that ensured consistent, high-quality field data across programs.",
+            "Built indicator tracking systems and results frameworks that connected field-level data collection to program-level reporting and decision-making.",
+            "Developed and managed data collection workflows — from instrument design through field deployment, validation, and analysis — ensuring timely and accurate program reporting.",
         ],
     }
     choices = templates.get(domain)
     if choices:
         return choices[salt % len(choices)]
-    return [f"Proficient in {', '.join(skills[:3])} for data analysis and reporting.",
-            f"Skilled in applying {', '.join(skills[:3])} to deliver data-driven insights and operational improvements.",
-            f"Experienced in using {', '.join(skills[:3])} to support decision-making and drive measurable outcomes.",
+    return ["Proficient in data analysis and reporting with a focus on accuracy, clarity, and actionable insights.",
+            "Skilled in delivering data-driven outcomes — from raw data collection through cleaning, analysis, and stakeholder presentation.",
+            "Experienced in transforming complex data into clear, decision-ready outputs that support operational and strategic goals.",
     ][salt % 3]
 
 
@@ -1166,14 +1234,18 @@ def make_cv_from_scratch(
         "Leave as empty string \"\" if not provided.\n"
         "- Do NOT include 'References available upon request'.\n"
         "- Do NOT include a photo.\n"
-        "- Every achievement must start with an action verb and contain at least one number (%, $, count, time, volume).\n"
-        "- CRITICAL: EVERY experience entry MUST have 4-7 achievement bullets. "
-        "If a role has fewer than 4 achievements in the source, you MUST reconstruct them from the information available. "
-        "Zero-bullet experience entries will be rejected.\n"
+        "- Every achievement must start with an action verb and contain at least one number (%, $, count, time, volume) if the source data includes one.\n"
+        "- CRITICAL: ONLY use achievements/descriptions present in the source data. "
+        "You may rephrase for clarity and impact, but NEVER invent new accomplishments, metrics, projects, or outcomes. "
+        "If a role has fewer achievements in source data, output what exists. "
+        "FABRICATING ACHIEVEMENTS = CANDIDATE BLACKLISTED.\n"
+        "- CRITICAL: NEVER change or fabricate dates. Use exact dates from source data. "
+        "If start_date or end_date are missing from source, use empty string.\n"
         "- EDUCATION RULE: Never put a professional summary, career objective, or personal statement in the "
         "education field. Education entries MUST be degree + institution pairs only "
         "(e.g. 'BSc in Computer Science, University of Lagos'). If no proper education data exists, output empty array [].\n"
-        "- Skills must be an array of objects with 'domain', 'items', and 'description'. Each domain groups 3-6 related skills. The description must show tool + context + metric. NOT a flat list, NOT comma-separated.\n"
+        "- Skills must be an array of objects with 'domain', 'items', and 'description'. Each domain groups 3-6 related skills. The description must show tool + context + metric. Use real project examples from the candidate as evidence in the descriptions. NOT a flat list, NOT comma-separated.\n"
+         "- CRITICAL: In the skills descriptions, reference specific project examples (from the Projects section) to demonstrate each skill. E.g. 'Built a Power BI retail sales analysis dashboard that identified 3 underperforming product categories, enabling a 15% margin improvement.'\n"
         "- Experience in reverse chronological order (most recent first).\n"
         "- Summary must NEVER start with 'I am', 'A highly', 'A dedicated', 'An experienced'. "
         "Start directly with the job title.\n"
@@ -1369,7 +1441,11 @@ def generate_hr_email(
     education: list,
     api_keys: dict,
     target_type: str = "local",
+    match_score: int = 0,
+    keywords_hit: list | None = None,
 ) -> str | None:
+
+    jd_keywords = top_keywords(job_description, n=20)
 
     skills_flat = []
     for s in (skills or []):
@@ -1377,20 +1453,81 @@ def generate_hr_email(
             skills_flat.extend(s.get("items", []))
         elif isinstance(s, str):
             skills_flat.append(s)
-    skills_str = ", ".join(skills_flat[:12])
+    skills_lower = " ".join(skills_flat).lower()
+    skills_str = ", ".join(skills_flat[:15])
 
-    exp_brief = []
-    for e in (experiences or [])[:3]:
+    matched_kw = []
+    if keywords_hit:
+        matched_kw = keywords_hit
+    else:
+        matched_kw = [k for k in jd_keywords if k in skills_lower]
+
+    cv_lower = skills_lower
+    related_groups = []
+    missing_groups = []
+    for group_name, group_info in SKILL_TAXONOMY.items():
+        group_mentioned = any(kw in job_description.lower() for kw in group_info["keywords"])
+        if group_mentioned:
+            candidate_has = any(kw in cv_lower for kw in group_info["keywords"])
+            if candidate_has:
+                related_groups.append(group_name)
+            else:
+                missing_groups.append(group_name)
+
+    is_role_switch = False
+    past_titles = []
+    for e in (experiences or [])[:5]:
+        t = e.get("title", "")
+        if t:
+            past_titles.append(t)
+    if past_titles:
+        target_lower = job_title.lower()
+        is_role_switch = not any(kw in t.lower() for t in past_titles for kw in target_lower.split() if len(kw) > 2)
+
+    exp_matched = []
+    for e in (experiences or [])[:5]:
         title = e.get("title", "")
         company_e = e.get("company", "")
-        ach = e.get("achievements", [])
-        top_ach = ach[0] if ach else e.get("description", "")[:120]
-        exp_brief.append(f"- {title} @ {company_e}: {top_ach}")
-    exp_str = "\n".join(exp_brief) if exp_brief else "No experience data"
+        achs = e.get("achievements", [])
+        desc = e.get("description", "")
+        all_text = f"{title} {desc} {' '.join(achs)}".lower()
+        relevant_kws = [k for k in jd_keywords if k in all_text]
+        top_ach = achs[0] if achs else desc[:150]
+        exp_matched.append({
+            "title": title,
+            "company": company_e,
+            "top_achievement": top_ach[:200],
+            "matched_jd_keywords": relevant_kws,
+        })
+
+    exp_detail = []
+    for e in exp_matched:
+        line = f"- {e['title']} @ {e['company']}: {e['top_achievement']}"
+        if e["matched_jd_keywords"]:
+            line += f"  [JD keywords matched: {', '.join(e['matched_jd_keywords'][:5])}]"
+        exp_detail.append(line)
+    exp_str = "\n".join(exp_detail) if exp_detail else "No experience data"
 
     edu_str = "; ".join(
         e.get("degree", e.get("title", "")) for e in (education or [])[:2]
     ) or "Not specified"
+
+    match_context = ""
+    if related_groups:
+        match_context += f"\nCandidate's skill areas that DIRECTLY match the JD: {', '.join(related_groups)}."
+    if missing_groups:
+        match_context += f"\nJD skill areas NOT in candidate's CV: {', '.join(missing_groups)}. Do NOT claim these. Reference transferable skills instead."
+    if matched_kw:
+        match_context += f"\nSpecific JD keywords the candidate has: {', '.join(matched_kw[:12])}."
+
+    transferable_section = ""
+    if is_role_switch and past_titles:
+        transferable_section = (
+            "\n## TRANSFERABLE SKILLS ##\n"
+            f"The candidate has never held a '{job_title}' role (past roles: {', '.join(past_titles[:3])}).\n"
+            "Map transferable skills from their past work to the JD requirements. "
+            "Reference a real achievement and show how the underlying skill applies to this role.\n"
+        )
 
     tone_instruction = (
         "Keep the tone warm, professional, and direct. Be confident but not arrogant."
@@ -1399,30 +1536,84 @@ def generate_hr_email(
     )
 
     prompt = (
-        "You are a career communications expert. Write a short, creative, straight-to-point email "
-        "from a candidate to the hiring manager at a company they are applying to.\n\n"
-        "## RULES ##\n"
-        "- MAX 150 words. Be concise.\n"
-        "- Start with a strong, specific hook about the company or role — not a generic greeting.\n"
-        "- Immediately state who you are and the role you're applying for.\n"
-        "- Include a bullet list (2-3 bullets) of specific selling points with real project examples and numbers.\n"
-        "- No generic phrases. No 'I am writing to apply'. No 'I am excited'. No 'passionate'.\n"
-        "- Use the candidate's real experience, metrics, and tools from the data below.\n"
-        "- End with a clear, action-geared call to action (e.g. 'I would love to discuss how my experience in X can help Y achieve Z').\n"
-        "- Sign off with the candidate's name.\n"
-        "- Do NOT use placeholders or brackets. Every fact must come from the data provided.\n"
-        f"- {tone_instruction}\n"
-        "- Return ONLY the email body text. No subject line. No explanation. No JSON. No markdown.\n\n"
-        "## CANDIDATE DATA ##\n"
+        "You are a career communications expert writing an outreach email from a job applicant to a hiring manager.\n"
+        "This email will be sent directly — it must read like a real person wrote it, not a template.\n\n"
+
+        "## UNIQUENESS DIRECTIVE — ANTI-SLOP ##\n"
+        "CRITICAL: This email must sound like a specific human wrote it about their specific experience targeting this specific role. "
+        "If 10 candidates with similar backgrounds applied, each email must be clearly different — different openers, different examples, different hooks. "
+        "AI-generated patterns are instantly recognizable and get deleted.\n\n"
+
+        "Concrete rules:\n"
+        "- Vary sentence openings. No two sentences should start the same way.\n"
+        "- Never use a phrase that could appear in any other candidate's email.\n"
+        "- Every claim must reference a REAL fact from the candidate data below.\n"
+        "- Every skill mentioned must be LINKED to a specific JD requirement — not listed in isolation.\n"
+        "- If you mention a tool or method, state WHAT was built/done with it and the OUTCOME.\n"
+        "- Numbers, project names, and context make it real. Generic statements make it spam.\n\n"
+
+        "## BANNED PHRASES ##\n"
+        "Do NOT use ANY of these — they are instant red flags that mark the email as AI-generated:\n"
+        "- Openers: I am excited, I am writing to apply, I am confident, I am impressed by, "
+        "I would be a valuable addition, I believe I am the ideal candidate, It is with great enthusiasm, "
+        "I came across, I am reaching out\n"
+        "- Jargon: leverage, synergy, proven track record, drive business growth, equipped me with, "
+        "I believe, in today's competitive landscape, think outside the box, best-in-class, "
+        "world-class, end-to-end, deep dive, low-hanging fruit, move the needle, pain point, "
+        "game-changer, circle back, holistic, robust, scalable (unless actual tech), value proposition\n"
+        "- Buzzwords: passionate, enthusiastic, team player, detail-oriented, results-driven, "
+        "proactive, self-starter, go-getter, rockstar, ninja, guru, hardworking, dedicated, motivated\n"
+        "- Generic praise: industry-leading, cutting-edge, state-of-the-art, market-leading, dynamic, innovative (unless naming something specific)\n"
+        "- Weak endings: I look forward to hearing from you (alone), Thank you for your consideration (alone)\n\n"
+
+        "## EMAIL STRUCTURE — NARRATIVE FLOW ##\n"
+        "Line 1: SUBJECT — format exactly: \"Subject: Re: [Job Title] — [Candidate Name]\"\n"
+        "Line 2: blank line\n"
+        "Line 3: Greeting\n"
+        "Line 4: blank line\n\n"
+        "Paragraph 1 — The Hook (2-3 sentences):\n"
+        "  Sentence 1: THE HOOK. Must stop them from scrolling. Start with a specific observation about the company's "
+        "work, a problem from the JD, a recent milestone, or a shared mission connection. NOT who you are. NOT the role.\n"
+        "  Sentence 2-3: Connect that company context to your own experience, THEN state your name and the role.\n"
+        "  Transition: End this paragraph with a sentence that points toward your evidence "
+        "(e.g. 'This is a problem I've solved before.' or 'Here's what I'd bring to that challenge.')\n\n"
+        "Paragraph 2 — Your Evidence (2-4 sentences):\n"
+        "  Start with your single most relevant achievement. Company + what you did + tool/method + measurable result. "
+        "Connect it to the specific JD requirement from your hook.\n"
+        "  Add context: scope, scale, complexity. Let the numbers speak.\n"
+        "  Last sentence: Transition to breadth. 'I also bring...' or 'Beyond this, my background in...'\n\n"
+        "Paragraph 3 — Why You Specifically (2-3 sentences):\n"
+        "  A second strength from a different angle — different skill, different context, different tool. "
+        "Show range without repeating P2.\n"
+        "  End by tying this back to the company's specific need from the JD.\n\n"
+        "Closing (1-2 sentences):\n"
+        "  Name something specific you'd like to discuss — tie back to the hook from P1 or the achievement in P2. "
+        "Close the loop. Make it clear you want to talk about their specific problem, not just get an interview.\n"
+        "Sign-off: \"Best\" or \"Best regards\" on its own line, then candidate name on next line.\n\n"
+
+        f"## JD-CV MATCH INTELLIGENCE ##\n"
+        f"JD Priority Keywords: {', '.join(jd_keywords)}\n"
+        f"Match Score: {match_score or 'N/A'}%\n"
+        + match_context
+        + transferable_section
+
+        + f"\n\n## CANDIDATE DATA ##\n"
         f"Name: {candidate_name}\n"
-        f"Summary: {summary[:400]}\n"
+        f"Summary: {summary[:600]}\n"
         f"Key Skills: {skills_str}\n"
         f"Education: {edu_str}\n"
-        f"Experience:\n{exp_str}\n\n"
+        f"Experience (with JD keyword matches):\n{exp_str}\n\n"
+
         f"## TARGET ROLE ##\n"
         f"Title: {job_title}\n"
         f"Company: {company}\n"
-        f"Description (keywords): {job_description[:800]}\n"
+        f"Description: {job_description[:2000]}\n\n"
+
+        f"## RULES ##\n"
+        f"- MAX 250 words of body text (excluding subject and sign-off).\n"
+        f"- {tone_instruction}\n"
+        "- Return ONLY the email text. No JSON. No markdown. No explanation. No code fences.\n"
+        "- The subject line must be on the very first line.\n"
     )
 
-    return _call_any(prompt, api_keys, max_tokens=600)
+    return _call_any(prompt, api_keys, max_tokens=800)

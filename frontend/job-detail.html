@@ -9,7 +9,7 @@
 <body>
 <div class="app-layout">
   <aside class="sidebar" id="sidebar">
-    <a href="dashboard.html" class="sidebar-brand">
+    <a href="index.html" class="sidebar-brand">
       <div class="brand-icon">J</div>
       <h1>Job<span>lin</span></h1>
     </a>
@@ -54,6 +54,12 @@
           </span>
           <span class="nav-label">Admin Panel</span>
         </a>
+        <a href="admin-analytics.html" class="nav-item">
+          <span class="nav-icon">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+          </span>
+          <span class="nav-label">Analytics</span>
+        </a>
       </div>
     </nav>
     <div class="sidebar-footer">
@@ -92,6 +98,9 @@
       <div class="card job-detail">
         <div id="jobContent">
           <div class="empty-state"><div class="spinner spinner-lg"></div></div>
+        </div>
+        <div id="appliedSection" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-default)">
+          <button class="btn btn-sm" id="appliedBtn" onclick="toggleApplied()" style="min-width:140px"></button>
         </div>
       </div>
 
@@ -137,6 +146,19 @@
 let jobId = null;
 let jobData = null;
 
+function parseEmail(text) {
+  text = (text || '').trim();
+  let subject = '', body = text;
+  if (text.startsWith('Subject:')) {
+    const idx = text.indexOf('\n');
+    if (idx > -1) {
+      subject = text.substring(0, idx).replace(/^Subject:\s*/i, '');
+      body = text.substring(idx + 1).trim();
+    }
+  }
+  return { subject, body };
+}
+
 async function loadJob() {
   jobId = new URLSearchParams(window.location.search).get("id");
   if (!jobId) { document.getElementById("jobContent").innerHTML = '<div class="empty-state"><div class="empty-icon">&#128196;</div><h3>No job selected</h3><p><a href="jobs.html">Browse jobs</a></p></div>'; return; }
@@ -161,9 +183,31 @@ async function loadJob() {
       <div class="description">${escHtml(j.description || "No description available.")}</div>`;
     document.getElementById("tailorSection").style.display = "block";
     document.getElementById("emailSection").style.display = "block";
+    updateAppliedBtn(j.is_applied);
   } catch (err) {
     document.getElementById("jobContent").innerHTML = `<div class="empty-state"><h3>Error</h3><p>${escHtml(err.message)}</p></div>`;
   }
+}
+
+function updateAppliedBtn(applied) {
+  const section = document.getElementById("appliedSection");
+  const btn = document.getElementById("appliedBtn");
+  section.style.display = "block";
+  btn.className = applied ? "btn btn-sm btn-success" : "btn btn-sm btn-secondary";
+  btn.innerHTML = applied ? "&#10003; Applied" : "Mark as Applied";
+}
+
+async function toggleApplied() {
+  const btn = document.getElementById("appliedBtn");
+  btn.disabled = true;
+  try {
+    const result = await apiFetch("PATCH", `/api/jobs/${jobId}/applied`);
+    updateAppliedBtn(result.applied);
+    showToast(result.applied ? "Marked as applied!" : "Unmarked");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+  btn.disabled = false;
 }
 
 async function tailorJob() {
@@ -177,9 +221,11 @@ async function tailorJob() {
     const result = await apiFetch("POST", `/api/tailor/${jobId}${genEmail ? '?generate_email=true' : ''}`);
     let emailHtml = "";
     if (result.hr_email) {
+      const { subject, body } = parseEmail(result.hr_email);
       emailHtml = `<div class="result-section">
         <div class="result-section-title">HR Email <span style="font-weight:400;font-size:11px;color:var(--text-muted)">(copy-paste ready)</span></div>
-        <div class="result-section-body" style="white-space:pre-wrap;font-family:sans-serif;font-size:13px;line-height:1.7;background:var(--bg-secondary);border:1px solid var(--border);border-radius:6px;padding:12px">${escHtml(result.hr_email)}</div>
+        ${subject ? `<div style="background:var(--bg-surface-hover);border:1px solid var(--border-default);border-radius:6px 6px 0 0;padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:none"><strong style="color:var(--text-default)">Subject:</strong> ${escHtml(subject)}</div>` : ''}
+        <div class="result-section-body" style="white-space:pre-wrap;font-family:sans-serif;font-size:13px;line-height:1.7;background:var(--bg-surface-hover);border:1px solid var(--border-default);border-radius:${subject ? '0 0 6px 6px' : '6px'};padding:12px">${escHtml(body)}</div>
         <button class="btn btn-secondary btn-sm" style="margin-top:6px" onclick="navigator.clipboard.writeText(${JSON.stringify(result.hr_email)}).then(()=>showToast('Copied!')).catch(()=>showToast('Failed','error'))">Copy Email</button>
       </div>`;
     }
@@ -221,7 +267,8 @@ async function generateEmail() {
 
   try {
     const result = await apiFetch("POST", `/api/jobs/${jobId}/email-hr`);
-    resultDiv.innerHTML = `<div class="email-preview" style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;padding:16px;white-space:pre-wrap;font-size:13px;line-height:1.7;font-family:sans-serif">${escHtml(result.email)}</div>`;
+    const { subject, body } = parseEmail(result.email);
+    resultDiv.innerHTML = `${subject ? `<div style="background:var(--bg-surface-hover);border:1px solid var(--border-default);border-radius:6px 6px 0 0;padding:8px 12px;font-size:12px;color:var(--text-muted);border-bottom:none"><strong style="color:var(--text-default)">Subject:</strong> ${escHtml(subject)}</div>` : ''}<div class="email-preview" style="background:var(--bg-surface-hover);border:1px solid var(--border-default);border-radius:${subject ? '0 0 6px 6px' : '6px'};padding:16px;white-space:pre-wrap;font-size:13px;line-height:1.7;font-family:sans-serif" data-fulltext="${escHtml(result.email)}">${escHtml(body)}</div>`;
     document.getElementById("copyEmailBtn").style.display = "inline-flex";
     showToast("Email generated!");
   } catch (err) {
@@ -231,8 +278,9 @@ async function generateEmail() {
 }
 
 function copyEmail() {
-  const text = document.querySelector(".email-preview")?.textContent;
-  if (!text) return;
+  const el = document.querySelector(".email-preview");
+  if (!el) return;
+  const text = el.dataset.fulltext || el.textContent;
   navigator.clipboard.writeText(text).then(() => showToast("Copied to clipboard!")).catch(() => showToast("Failed to copy", "error"));
 }
 

@@ -58,8 +58,8 @@ def run_nightly_scrape() -> dict:
     for cat, name, cfg in PUBLIC_BOARDS:
         if not cfg.get("enabled", True):
             continue
-        board_got_jobs = False
         board_start = time.time()
+        board_urls = set()
         for query in queries:
             if len(all_jobs) >= _MAX_JOBS * 2:
                 break
@@ -69,10 +69,11 @@ def run_nightly_scrape() -> dict:
             jobs = _scrape_board(name, cat, query)
             if jobs:
                 all_jobs.extend(jobs)
-                board_got_jobs = True
                 board_yields[name] = board_yields.get(name, 0) + len(jobs)
-                if board_got_jobs:
+                new_urls = {j.get("url", "") for j in jobs if j.get("url")}
+                if board_urls and new_urls and new_urls.issubset(board_urls):
                     break
+                board_urls.update(new_urls)
 
     # Dedup by URL
     seen = set()

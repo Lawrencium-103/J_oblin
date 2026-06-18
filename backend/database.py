@@ -1,6 +1,7 @@
 import hashlib
 import secrets
 import json
+import re
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from backend.config import DATABASE_PATH
@@ -29,7 +30,12 @@ def _now_sql():
 
 def _now_offset_sql(days_expr: str):
     if _is_pg():
-        return f"CURRENT_TIMESTAMP - INTERVAL '{days_expr}'"
+        expr = str(days_expr).strip()
+        if expr.startswith("-"):
+            return f"CURRENT_TIMESTAMP - INTERVAL '{expr[1:].strip()}'"
+        if expr.startswith("+"):
+            return f"CURRENT_TIMESTAMP + INTERVAL '{expr[1:].strip()}'"
+        return f"CURRENT_TIMESTAMP - INTERVAL '{expr}'"
     return f"datetime('now', '{days_expr}')"
 
 
@@ -49,6 +55,12 @@ def _date_col(col: str):
     if _is_pg():
         return f"{col}::timestamp"
     return col
+
+
+def _day_bucket_sql(col: str):
+    if _is_pg():
+        return f"TO_CHAR({col}::timestamp, 'YYYY-MM-DD')"
+    return f"SUBSTR({col}, 1, 10)"
 
 
 def _fix_sql(sql: str) -> str:
@@ -125,6 +137,7 @@ CREATE TABLE IF NOT EXISTS user_job_links (
     status TEXT DEFAULT 'new',
     tailored_cv_path TEXT,
     tailored_cover_path TEXT,
+    applied INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, job_id)
 );
@@ -146,6 +159,15 @@ CREATE TABLE IF NOT EXISTS job_categories (
     icon TEXT DEFAULT '',
     keywords TEXT NOT NULL,
     color TEXT DEFAULT '#059669'
+);
+
+CREATE TABLE IF NOT EXISTS user_activity_log (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    ip_address TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 """
 
@@ -206,6 +228,7 @@ CREATE TABLE IF NOT EXISTS user_job_links (
     status TEXT DEFAULT 'new',
     tailored_cv_path TEXT,
     tailored_cover_path TEXT,
+    applied INTEGER DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id, job_id)
 );
@@ -227,6 +250,15 @@ CREATE TABLE IF NOT EXISTS job_categories (
     icon TEXT DEFAULT '',
     keywords TEXT NOT NULL,
     color TEXT DEFAULT '#059669'
+);
+
+CREATE TABLE IF NOT EXISTS user_activity_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL,
+    action TEXT NOT NULL,
+    details TEXT DEFAULT '',
+    ip_address TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
 );
 """
 
@@ -293,6 +325,8 @@ def init_db():
             _safe_alter(conn, "ALTER TABLE user_cv ADD COLUMN IF NOT EXISTS raw_text TEXT DEFAULT ''")
             _safe_alter(conn, "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0")
             _safe_alter(conn, "ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS cv_gen_count INTEGER DEFAULT 0")
+            _safe_alter(conn, "ALTER TABLE global_jobs ADD COLUMN IF NOT EXISTS match_score REAL DEFAULT 0")
+            _safe_alter(conn, "ALTER TABLE user_job_links ADD COLUMN IF NOT EXISTS applied INTEGER DEFAULT 0")
             _seed_categories(conn)
             _seed_admin_user(conn)
             _backfill_match_scores(conn)
@@ -309,6 +343,14 @@ def init_db():
                 pass
             try:
                 conn.execute("ALTER TABLE user_settings ADD COLUMN cv_gen_count INTEGER DEFAULT 0")
+            except _sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE global_jobs ADD COLUMN match_score REAL DEFAULT 0")
+            except _sqlite3.OperationalError:
+                pass
+            try:
+                conn.execute("ALTER TABLE user_job_links ADD COLUMN applied INTEGER DEFAULT 0")
             except _sqlite3.OperationalError:
                 pass
             _seed_categories(conn)
@@ -337,6 +379,7 @@ def _seed_categories(conn):
         ("remote", "Remote / Anywhere", "wifi", "remote,work from home,telecommute,virtual,distributed,anywhere,global", "#0891b2"),
         ("design-creative", "Design & Creative", "pen-tool", "graphic designer,ui designer,ux designer,ui/ux,product designer,visual designer,motion designer,video editor,illustrator,creative director,web designer,figma,designer,design,ux research,multimedia,creative", "#8b5cf6"),
         ("content-writing", "Content & Writing", "edit", "content writer,copywriter,technical writer,editor,proofreader,content strategist,seo writer,ghostwriter,blog writer,writer,content creator,journalist,editorial", "#ec4899"),
+        ("web3-blockchain", "Web3 & Blockchain", "link", "web3,blockchain,solidity,smart contract,ethereum,bitcoin,crypto,defi,nft,solana,rust,web 3,blockchain developer,crypto analyst,tokenomics,dapp,decentralized,web3 developer,blockchain engineer,crypto currency,metaverse,chainlink,hardhat,foundry", "#8b5cf6"),
     ]
     for slug, name, icon, keywords, color in categories:
         sql = _insert_on_conflict(
@@ -479,7 +522,7 @@ def get_and_increment_cv_gen_count(user_id: int) -> int:
     with get_db() as conn:
         rows = _exec(conn, "SELECT cv_gen_count FROM user_settings WHERE user_id = ?", (user_id,)).fetchall()
         if not rows:
-            _exec(conn, "INSERT INTO user_settings (user_id, use_default_api, cv_gen_count) VALUES (?, 1, 1)")
+            _exec(conn, "INSERT INTO user_settings (user_id, use_default_api, cv_gen_count) VALUES (?, 1, 1)", (user_id,))
             return 1
         current = int(rows[0]["cv_gen_count"] or 0)
         _exec(conn, "UPDATE user_settings SET cv_gen_count = ? WHERE user_id = ?", (current + 1, user_id))
@@ -567,6 +610,40 @@ def _compute_match_score(job: dict, category: str) -> float:
     score += min(matches * 3.0, 70.0)
     return round(min(score, 100.0), 1)
 
+
+_NG_CITIES = {"lagos","abuja","ibadan","port harcourt","kano","enugu","owerri","aba","jos",
+               "ilorin","kaduna","warri","benin city","maiduguri","zaria","akure","aba",
+               "abeokuta","ondo","osogbo","ife","bauchi","calabar","uyo","asaba",
+               "awka","nnewi","onitsha","yola","gombe","katsina","sokoto","kaduna"}
+_REMOTE_KW = {"remote","work from home","telecommute","home based","home-based",
+              "fully remote","remote-first","virtual","anywhere"}
+
+def classify_location(location: str) -> str:
+    if not location:
+        return "other"
+    loc = location.lower().strip()
+    if any(kw in loc for kw in _REMOTE_KW):
+        return "remote"
+    if "nigeria" in loc:
+        return "nigeria"
+    for city in _NG_CITIES:
+        if city in loc:
+            return "nigeria"
+    return "international"
+
+
+def reclassify_jobs():
+    count = 0
+    with get_db() as conn:
+        rows = _exec(conn, "SELECT id, title, description, job_category FROM global_jobs").fetchall()
+        for r in rows:
+            new_cat = classify_job_title(r["title"], r["description"] or "")
+            if new_cat != r["job_category"]:
+                _exec(conn, "UPDATE global_jobs SET job_category = ? WHERE id = ?", (new_cat, r["id"]))
+                count += 1
+    return count
+
+
 def save_global_jobs(jobs: list[dict]) -> int:
     saved = 0
     with get_db() as conn:
@@ -600,11 +677,12 @@ def save_global_jobs(jobs: list[dict]) -> int:
                     if c.rowcount > 0:
                         saved += 1
                 else:
+                    before = conn.total_changes
                     conn.execute(sql, p)
-                    if conn.total_changes > 0:
+                    if conn.total_changes > before:
                         saved += 1
-            except Exception:
-                pass
+            except Exception as e:
+                print(f"[db] save_global_jobs error for {job.get('url','')}: {e}")
     return saved
 
 
@@ -616,9 +694,8 @@ def classify_job_title(title: str, description: str = "") -> str:
     for slug, info in JOB_CATEGORIES.items():
         score = 0
         for kw in info["keywords"]:
-            if kw in text:
-                score += text.count(kw)
-        if score > best_score:
+            score += len(re.findall(r'\b' + re.escape(kw) + r'\b', text))
+        if score >= best_score:
             best_score = score
             best_cat = slug
     return best_cat
@@ -658,32 +735,66 @@ def get_global_jobs(
     source: str = "",
     search: str = "",
     is_graduate: bool = None,
+    location: str = "",
+    user_id: int = None,
+    applied: bool = None,
     limit: int = 200,
     offset: int = 0,
     sort: str = "date",
 ):
     with get_db() as conn:
-        conditions = ["is_active = 1"]
-        params = []
+        conditions = ["gj.is_active = 1"]
+        where_params = []
         if category:
-            conditions.append("job_category = ?")
-            params.append(category)
+            conditions.append("gj.job_category = ?")
+            where_params.append(category)
         if source:
-            conditions.append("source = ?")
-            params.append(source)
+            conditions.append("gj.source = ?")
+            where_params.append(source)
         if search:
-            conditions.append("(title LIKE ? OR company LIKE ? OR description LIKE ?)")
+            conditions.append("(gj.title LIKE ? OR gj.company LIKE ? OR gj.description LIKE ?)")
             search_param = f"%{search}%"
-            params.extend([search_param, search_param, search_param])
+            where_params.extend([search_param, search_param, search_param])
         if is_graduate is not None:
-            conditions.append("is_graduate = ?")
-            params.append(1 if is_graduate else 0)
+            conditions.append("gj.is_graduate = ?")
+            where_params.append(1 if is_graduate else 0)
+        if location == "nigeria":
+            city_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _NG_CITIES)
+            conditions.append(f"(LOWER(gj.location) LIKE '%nigeria%' OR {city_likes})")
+            where_params.extend([f"%{c}%" for c in _NG_CITIES])
+        elif location == "remote":
+            remote_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _REMOTE_KW)
+            conditions.append(f"({remote_likes})")
+            where_params.extend([f"%{kw}%" for kw in _REMOTE_KW])
+        elif location == "international":
+            city_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _NG_CITIES)
+            remote_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _REMOTE_KW)
+            conditions.append(f"NOT (LOWER(gj.location) LIKE '%nigeria%' OR {city_likes} OR {remote_likes})")
+            where_params.extend([f"%{c}%" for c in _NG_CITIES] + [f"%{kw}%" for kw in _REMOTE_KW])
 
-        order = "date_found DESC, posted_date DESC" if sort == "date" else "match_score DESC, date_found DESC"
+        join = ""
+        join_params = []
+        select_applied = "0 AS is_applied"
+        if user_id is not None and applied is not None:
+            if applied:
+                join = "INNER JOIN user_job_links ujl ON ujl.job_id = gj.id AND ujl.user_id = ? AND ujl.applied = 1"
+                join_params.append(user_id)
+            else:
+                join = "LEFT JOIN user_job_links ujl ON ujl.job_id = gj.id AND ujl.user_id = ?"
+                conditions.append("(ujl.applied IS NULL OR ujl.applied = 0)")
+                join_params.append(user_id)
+            select_applied = "COALESCE(ujl.applied, 0) AS is_applied"
+        elif user_id is not None:
+            join = "LEFT JOIN user_job_links ujl ON ujl.job_id = gj.id AND ujl.user_id = ?"
+            join_params.append(user_id)
+            select_applied = "COALESCE(ujl.applied, 0) AS is_applied"
+
+        order = "gj.date_found DESC, gj.posted_date DESC" if sort == "date" else "gj.match_score DESC, gj.date_found DESC"
         where = " AND ".join(conditions)
-        query = f"SELECT * FROM global_jobs WHERE {where} ORDER BY {order} LIMIT ? OFFSET ?"
-        count_query = f"SELECT COUNT(*) as cnt FROM global_jobs WHERE {where}"
+        query = f"SELECT gj.*, {select_applied} FROM global_jobs gj {join} WHERE {where} ORDER BY {order} LIMIT ? OFFSET ?"
+        count_query = f"SELECT COUNT(*) as cnt FROM global_jobs gj {join} WHERE {where}"
 
+        params = join_params + where_params
         all_params = params + [limit, offset]
         rows = _exec(conn, query, all_params).fetchall()
         total_row = _exec(conn, count_query, params).fetchone()
@@ -691,9 +802,16 @@ def get_global_jobs(
         return [dict(r) for r in rows], total
 
 
-def get_global_job(job_id: int):
+def get_global_job(job_id: int, user_id: int = None):
     with get_db() as conn:
-        rows = _exec(conn, "SELECT * FROM global_jobs WHERE id = ?", (job_id,)).fetchall()
+        if user_id is not None:
+            rows = _exec(
+                conn,
+                "SELECT gj.*, COALESCE(ujl.applied, 0) AS is_applied FROM global_jobs gj LEFT JOIN user_job_links ujl ON ujl.job_id = gj.id AND ujl.user_id = ? WHERE gj.id = ?",
+                (user_id, job_id),
+            ).fetchall()
+        else:
+            rows = _exec(conn, "SELECT *, 0 AS is_applied FROM global_jobs WHERE id = ?", (job_id,)).fetchall()
         return dict(rows[0]) if rows else None
 
 
@@ -750,6 +868,47 @@ def update_link_tailoring(user_id: int, job_id: int, cv_path: str, cover_path: s
         )
 
 
+def set_job_applied(user_id: int, job_id: int, applied: bool = True):
+    with get_db() as conn:
+        try:
+            sql = _insert_on_conflict(
+                "INSERT OR IGNORE INTO user_job_links (user_id, job_id) VALUES (?, ?)",
+                "user_id, job_id",
+            )
+            _exec(conn, sql, (user_id, job_id))
+            _exec(
+                conn,
+                "UPDATE user_job_links SET applied = ? WHERE user_id = ? AND job_id = ?",
+                (1 if applied else 0, user_id, job_id),
+            )
+            return True
+        except Exception:
+            return False
+
+
+def toggle_job_applied(user_id: int, job_id: int) -> bool:
+    with get_db() as conn:
+        try:
+            rows = _exec(
+                conn,
+                "SELECT applied FROM user_job_links WHERE user_id = ? AND job_id = ?",
+                (user_id, job_id),
+            ).fetchall()
+            if rows:
+                new_val = 0 if rows[0]["applied"] else 1
+                _exec(
+                    conn,
+                    "UPDATE user_job_links SET applied = ? WHERE user_id = ? AND job_id = ?",
+                    (new_val, user_id, job_id),
+                )
+            else:
+                _exec(conn, "INSERT INTO user_job_links (user_id, job_id, applied) VALUES (?, ?, 1)", (user_id, job_id))
+                new_val = 1
+            return bool(new_val)
+        except Exception:
+            return False
+
+
 # ── Categories ──────────────────────────────────────────────────────────────
 
 def get_categories():
@@ -759,6 +918,16 @@ def get_categories():
 
 
 # ── Stats ───────────────────────────────────────────────────────────────────
+
+def get_recent_jobs_public(limit: int = 15):
+    with get_db() as conn:
+        rows = _exec(
+            conn,
+            "SELECT id, title, company, location, source, job_category, date_found FROM global_jobs WHERE is_active = 1 ORDER BY date_found DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
 
 def get_global_stats():
     with get_db() as conn:
@@ -800,11 +969,23 @@ def get_global_stats():
             "total": total_cnt,
             "by_category": {r["job_category"]: r["cnt"] for r in by_cat},
             "by_source": {r["source"]: r["cnt"] for r in by_source},
+            "by_location": _get_location_breakdown(conn),
             "recent_24h": recent_cnt,
             "last_scraped": last_scraped,
             "new_today": today_cnt,
             "new_24h": yesterday_cnt,
         }
+
+
+def _get_location_breakdown(conn):
+    rows = _exec(conn, "SELECT location FROM global_jobs WHERE is_active = 1 AND location IS NOT NULL AND location != ''").fetchall()
+    counts = {"nigeria": 0, "remote": 0, "international": 0, "unspecified": 0}
+    for r in rows:
+        loc = classify_location(r["location"])
+        counts[loc] = counts.get(loc, 0) + 1
+    unspecified = _exec(conn, "SELECT COUNT(*) as cnt FROM global_jobs WHERE is_active = 1 AND (location IS NULL OR location = '')").fetchone()
+    counts["unspecified"] = unspecified["cnt"] if unspecified else 0
+    return counts
 
 
 # ── Cleanup (for cron) ──────────────────────────────────────────────────────
@@ -821,3 +1002,112 @@ def deactivate_old_jobs(days: int = 7):
             "DELETE FROM user_job_links WHERE job_id IN (SELECT id FROM global_jobs WHERE is_active = 0)",
         )
         return removed
+
+
+# ── Activity Log ─────────────────────────────────────────────────────────────
+
+def log_activity(user_id: int, action: str, details: str = "", ip_address: str = ""):
+    with get_db() as conn:
+        _exec(
+            conn,
+            "INSERT INTO user_activity_log (user_id, action, details, ip_address) VALUES (?, ?, ?, ?)",
+            (user_id, action, details, ip_address),
+        )
+
+
+def get_activity_log(limit: int = 100, offset: int = 0) -> list[dict]:
+    with get_db() as conn:
+        rows = _exec(
+            conn,
+            f"SELECT a.*, u.name, u.email FROM user_activity_log a "
+            f"LEFT JOIN users u ON u.id = a.user_id "
+            f"ORDER BY a.created_at DESC LIMIT ? OFFSET ?",
+            (limit, offset),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+def get_activity_stats():
+    with get_db() as conn:
+        total_users = _exec(conn, "SELECT COUNT(*) as cnt FROM users").fetchone()
+        total_actions = _exec(conn, "SELECT COUNT(*) as cnt FROM user_activity_log").fetchone()
+        active_today = _exec(
+            conn,
+            f"SELECT COUNT(DISTINCT user_id) as cnt FROM user_activity_log "
+            f"WHERE {_date_col('created_at')} >= {_start_of_day_sql()}",
+        ).fetchone()
+
+        cv_gens = _exec(
+            conn,
+            "SELECT COUNT(*) as cnt FROM user_activity_log WHERE action = 'cv_generated'",
+        ).fetchone()
+
+        action_dist = _exec(
+            conn,
+            "SELECT action, COUNT(*) as cnt FROM user_activity_log GROUP BY action ORDER BY cnt DESC",
+        ).fetchall()
+
+        timeline = _exec(
+            conn,
+            f"SELECT {_day_bucket_sql('created_at')} as day, COUNT(*) as cnt "
+            f"FROM user_activity_log "
+            f"WHERE {_date_col('created_at')} >= {_now_offset_sql('-30 day')} "
+            f"GROUP BY day ORDER BY day",
+        ).fetchall()
+
+        top_users = _exec(
+            conn,
+            f"SELECT a.user_id, u.name, u.email, COUNT(*) as cnt "
+            f"FROM user_activity_log a LEFT JOIN users u ON u.id = a.user_id "
+            f"GROUP BY a.user_id ORDER BY cnt DESC LIMIT 10",
+        ).fetchall()
+
+        users_list = _exec(
+            conn,
+            "SELECT id, email, name, is_admin, created_at FROM users ORDER BY created_at DESC LIMIT 50",
+        ).fetchall()
+
+        daily = _exec(
+            conn,
+            f"SELECT {_day_bucket_sql('created_at')} as day, COUNT(*) as cnt "
+            f"FROM user_activity_log "
+            f"WHERE {_date_col('created_at')} >= {_now_offset_sql('-60 day')} "
+            f"GROUP BY day ORDER BY day",
+        ).fetchall()
+
+        if _is_pg():
+            month_sql = "TO_CHAR(created_at::timestamp, 'YYYY-MM')"
+            year_sql = "TO_CHAR(created_at::timestamp, 'YYYY')"
+        else:
+            month_sql = "SUBSTR(created_at, 1, 7)"
+            year_sql = "SUBSTR(created_at, 1, 4)"
+
+        monthly = _exec(
+            conn,
+            f"SELECT {month_sql} as month, COUNT(*) as cnt "
+            f"FROM user_activity_log "
+            f"WHERE created_at >= {_now_offset_sql('-365 day')} "
+            f"GROUP BY month ORDER BY month",
+        ).fetchall()
+
+        yearly = _exec(
+            conn,
+            f"SELECT {year_sql} as year, COUNT(*) as cnt "
+            f"FROM user_activity_log "
+            f"WHERE created_at >= {_now_offset_sql('-3 year')} "
+            f"GROUP BY year ORDER BY year",
+        ).fetchall()
+
+        return {
+            "total_users": total_users["cnt"] if total_users else 0,
+            "total_actions": total_actions["cnt"] if total_actions else 0,
+            "active_today": active_today["cnt"] if active_today else 0,
+            "total_cv_generations": cv_gens["cnt"] if cv_gens else 0,
+            "action_distribution": {r["action"]: r["cnt"] for r in action_dist},
+            "timeline": [{"date": r["day"], "count": r["cnt"]} for r in timeline],
+            "top_users": [{"user_id": r["user_id"], "name": r["name"] or "Unknown", "email": r["email"], "count": r["cnt"]} for r in top_users],
+            "users_list": [{"id": r["id"], "email": r["email"], "name": r["name"], "is_admin": r["is_admin"], "joined": r["created_at"]} for r in users_list],
+            "daily": [{"day": r["day"], "count": r["cnt"]} for r in daily],
+            "monthly": [{"month": r["month"], "count": r["cnt"]} for r in monthly],
+            "yearly": [{"year": r["year"], "count": r["cnt"]} for r in yearly],
+        }

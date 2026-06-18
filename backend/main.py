@@ -15,28 +15,33 @@ from backend.database import (
     save_api_keys, get_api_keys, get_effective_api_keys,
     save_user_settings, get_user_settings, get_and_increment_cv_gen_count,
     save_cv, get_cv, get_cv_default, save_cv_raw_text, get_cv_raw_text,
-    save_global_jobs, get_global_jobs, get_global_job, get_global_stats,
+    save_global_jobs, get_global_jobs, get_global_job, get_global_stats, get_recent_jobs_public,
     get_categories, classify_job_title,
     link_user_job, get_user_job_link, get_user_linked_jobs, update_link_tailoring,
+    toggle_job_applied,
     deactivate_old_jobs,
     create_reset_token, get_valid_token, mark_token_used, update_password,
+    log_activity, get_activity_stats, get_activity_log,
 )
-from backend.auth import hash_password, verify_password, create_access_token, get_current_user
-from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text, generate_hr_email
+from backend.auth import hash_password, verify_password, create_access_token, get_current_user, optional_user
+from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text, generate_hr_email, score_job_match, top_keywords
 from backend.cv_quality import score_cv_quality
 from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
 
-def _file_slug(name: str, company: str = "", counter: int = 0) -> str:
-    parts = [str(counter).zfill(2)]
-    if name:
-        parts.append(re.sub(r"[^a-zA-Z0-9]", "", name)[:20])
-    if company:
-        scompany = re.sub(r"[^a-zA-Z0-9]", "", company)[:10]
-        if scompany:
-            parts.append(scompany)
-    suffix = hashlib.md5(f"{counter}_{name}_{company}".encode()).hexdigest()[:6]
-    return "_".join(parts) + f"_{suffix}" if parts else f"{str(counter).zfill(2)}_{suffix}_cv"
+def _file_slug(name: str, company: str = "", counter: int = 0, user_id: int = 0) -> str:
+    pad = max(2, len(str(abs(counter or 0))))
+    seq = str(counter).zfill(pad)
+    name_part = re.sub(r"[^a-zA-Z0-9]", "", name)[:20] if name else ""
+    company_part = re.sub(r"[^a-zA-Z0-9]", "", company)[:10] if company else ""
+    suffix = hashlib.md5(f"{user_id}_{counter}_{name}_{company}".encode()).hexdigest()[:6]
+    parts = [seq]
+    if name_part:
+        parts.append(name_part)
+    if company_part:
+        parts.append(company_part)
+    parts.append(suffix)
+    return "_".join(parts)
 from backend.cv_diversity import randomize_tailored_cv
 from backend.excel_export import export_jobs_to_excel
 
@@ -112,6 +117,7 @@ def login(req: LoginRequest):
         raise HTTPException(401, "Invalid email or password")
     is_admin = bool(user.get("is_admin", 0))
     token = create_access_token(user["id"], user["email"], is_admin=is_admin)
+    log_activity(user["id"], "login", f"User {user['email']} logged in")
     return {"token": token, "user": {"id": user["id"], "email": user["email"], "name": user.get("name", ""), "is_admin": is_admin}}
 
 
@@ -237,7 +243,7 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
 
         name = (cv_data.get("personal_info") or {}).get("name", "")
         counter = get_and_increment_cv_gen_count(user_id)
-        slug = _file_slug(name, counter=counter)
+        slug = _file_slug(name, counter=counter, user_id=user_id)
         cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
         cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
         profile = get_cv_profile(str(user_id), counter=counter)
@@ -245,6 +251,8 @@ def make_cv(req: MakeCVRequest, current_user: dict = Depends(get_current_user)):
         generate_cv_pdf(cv_data, cv_pdf_path, target_type=req.target_type, profile=profile, cv_seed=f"{user_id}_cv_{counter}")
     except Exception as e:
         raise HTTPException(500, f"Document generation failed: {type(e).__name__}: {e}")
+
+    log_activity(user_id, "cv_generated", f"Make CV from scratch (#{counter})")
 
     return {
         "status": "ok",
@@ -311,7 +319,9 @@ def _scrape_board(board_name: str, cat: str, query: str) -> list[dict]:
 
 
 @app.post("/api/scrape")
-def scrape(req: ScrapeRequest):
+def scrape(req: ScrapeRequest, current_user: dict = Depends(get_current_user)):
+    if not current_user.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
     query = req.title.strip() or "Data Analyst"
     all_jobs = []
     for cat, boards in JOB_BOARDS.items():
@@ -330,9 +340,11 @@ def scrape(req: ScrapeRequest):
 # ── Global Jobs Routes ──────────────────────────────────────────────────────
 
 @app.post("/api/scrape/cron")
-def scrape_cron(req: ScrapeRequest, token: str = Query("")):
-    if CRON_TOKEN and token != CRON_TOKEN:
-        raise HTTPException(403, "Invalid token")
+def scrape_cron(req: ScrapeRequest, token: str = Query(""), current_user: dict = Depends(optional_user)):
+    is_cron = CRON_TOKEN and token == CRON_TOKEN
+    is_admin_user = current_user and current_user.get("is_admin")
+    if not is_cron and not is_admin_user:
+        raise HTTPException(403, "Admin access required")
     threading.Thread(target=run_nightly_scrape, daemon=True).start()
     return {"status": "started", "message": "Scraping in background"}
 
@@ -349,7 +361,9 @@ def check_network():
     return results
 
 @app.get("/api/scrape/test")
-def scrape_test(board: str = ""):
+def scrape_test(board: str = "", current_user: dict = Depends(get_current_user)):
+    if not current_user.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
     from backend.scrapers.nigeria import NigerianJobScraper
     from backend.database import save_global_jobs, get_global_stats
     s = NigerianJobScraper()
@@ -424,16 +438,25 @@ def scrape_test(board: str = ""):
 @app.get("/api/jobs")
 def list_global_jobs(
     category: str = Query(""), source: str = Query(""), search: str = Query(""),
-    is_graduate: bool = Query(None), sort: str = Query("date"),
-    limit: int = Query(100), offset: int = Query(0),
+    is_graduate: bool = Query(None), location: str = Query(""),
+    applied: bool = Query(None),
+    sort: str = Query("date"), limit: int = Query(100), offset: int = Query(0),
+    current_user: dict = Depends(get_current_user),
 ):
-    jobs, total = get_global_jobs(category, source, search, is_graduate, limit, offset, sort)
+    user_id = current_user["user_id"]
+    if offset == 0 and (search or category or source or location):
+        details = f"search={search}&category={category}&source={source}&location={location}"
+        try:
+            log_activity(user_id, "search", details)
+        except Exception:
+            pass
+    jobs, total = get_global_jobs(category, source, search, is_graduate, location, user_id, applied, limit, offset, sort)
     return {"jobs": jobs, "total": total, "count": len(jobs)}
 
 
 @app.get("/api/jobs/{job_id}")
-def get_job(job_id: int):
-    job = get_global_job(job_id)
+def get_job(job_id: int, current_user: dict = Depends(get_current_user)):
+    job = get_global_job(job_id, current_user["user_id"])
     if not job:
         raise HTTPException(404, "Job not found")
     return job
@@ -454,6 +477,12 @@ def link_job(job_id: int, current_user: dict = Depends(get_current_user)):
 def my_jobs(current_user: dict = Depends(get_current_user)):
     jobs = get_user_linked_jobs(current_user["user_id"])
     return {"jobs": jobs, "count": len(jobs)}
+
+
+@app.patch("/api/jobs/{job_id}/applied")
+def toggle_applied(job_id: int, current_user: dict = Depends(get_current_user)):
+    new_val = toggle_job_applied(current_user["user_id"], job_id)
+    return {"applied": new_val}
 
 
 # ── Manual Job Entry ────────────────────────────────────────────────────────
@@ -669,7 +698,7 @@ def tailor_from_job_data(
     diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
     tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
 
-    slug = _file_slug(name, job.get("company", ""), counter=counter)
+    slug = _file_slug(name, job.get("company", ""), counter=counter, user_id=user_id)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
@@ -678,7 +707,9 @@ def tailor_from_job_data(
     generate_cv_docx(tailored_cv, cv_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
     generate_cover_docx(result.get("cover_letter", "") or "", cover_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
     generate_cv_pdf(tailored_cv, cv_pdf_path, target_type=target_type, profile=profile, cv_seed=diversity_seed)
-    generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
+    generate_cover_pdf(result.get("cover_letter") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
+
+    log_activity(user_id, "cv_generated", f"Manual tailor from data: {job.get('title', '')[:50]}")
 
     hr_email = None
     if job.get("generate_email"):
@@ -694,6 +725,8 @@ def tailor_from_job_data(
             education=cv_data.get("education", []),
             api_keys=api_keys,
             target_type=target_type,
+            match_score=result.get("match_score", 0),
+            keywords_hit=result.get("keywords_hit", []),
         )
 
     return {
@@ -719,6 +752,7 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), gene
     job = get_global_job(job_id)
     if not job:
         raise HTTPException(404, "Job not found")
+    log_activity(user_id, "tailor", f"Tailored for job #{job_id}: {job.get('title', '')[:50]}")
 
     user_cv_json = get_cv(user_id)
     if not user_cv_json:
@@ -752,7 +786,7 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), gene
     diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
     tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
 
-    slug = _file_slug(name, job.get("company", ""), counter=counter)
+    slug = _file_slug(name, job.get("company", ""), counter=counter, user_id=user_id)
     cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
     cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
     cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
@@ -765,6 +799,8 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), gene
     generate_cover_pdf(result.get("cover_letter", "") or "", cover_pdf_path, personal_info=tailored_cv.get("personal_info"), company=job.get("company", ""), profile=profile)
 
     update_link_tailoring(user_id, job_id, cv_path, cover_path)
+
+    log_activity(user_id, "cv_generated", f"Manual tailor: {job.get('title', '')[:50]}")
 
     hr_email = None
     if generate_email:
@@ -780,6 +816,8 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), gene
             education=cv_data.get("education", []),
             api_keys=api_keys,
             target_type=target_type,
+            match_score=result.get("match_score", 0),
+            keywords_hit=result.get("keywords_hit", []),
         )
 
     return {
@@ -819,6 +857,9 @@ def email_hr(job_id: int, current_user: dict = Depends(get_current_user)):
     personal = cv_data.get("personal_info") or {}
     target_type = "international" if job.get("category", "") in ("international", "remote") else "local"
 
+    ms = score_job_match(job.get("title", ""), job.get("description", ""), cv_data)
+    kw_hit = top_keywords(job.get("description", ""))
+
     email = generate_hr_email(
         job_title=job.get("title", ""),
         company=job.get("company", ""),
@@ -830,6 +871,8 @@ def email_hr(job_id: int, current_user: dict = Depends(get_current_user)):
         education=cv_data.get("education", []),
         api_keys=api_keys,
         target_type=target_type,
+        match_score=ms,
+        keywords_hit=kw_hit,
     )
 
     if not email:
@@ -866,7 +909,10 @@ def download(job_id: int, doc_type: str, current_user: dict = Depends(get_curren
     path = link.get("tailored_cv_path") if doc_type == "cv" else link.get("tailored_cover_path")
     if not path or not os.path.exists(path):
         raise HTTPException(404, "No tailored file found. Tailor first.")
-    filename = f"{doc_type}_{link.get('title', 'job')[:30].replace(' ', '_')}.docx"
+    label = "CV" if doc_type == "cv" else "Cover_Letter"
+    title_slug = re.sub(r"[^a-zA-Z0-9]", "", link.get("title", "Job"))[:25]
+    company_slug = re.sub(r"[^a-zA-Z0-9]", "", link.get("company", ""))[:15]
+    filename = f"{label}_{title_slug}_{company_slug}_{job_id}_{datetime.now().strftime('%Y-%m-%d')}.docx"
     return FileResponse(path, filename=filename, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
 
@@ -894,9 +940,50 @@ def stats():
         raise HTTPException(500, f"Stats error: {type(e).__name__}: {e}")
 
 
+@app.get("/api/recent-jobs")
+def recent_jobs_endpoint():
+    import logging
+    logging.info("recent_jobs_endpoint called")
+    try:
+        jobs = get_recent_jobs_public(15)
+        return {"jobs": jobs}
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(500, f"Failed to fetch recent jobs: {type(e).__name__}: {e}")
+
+
 @app.get("/api/health")
 def health():
     return {"status": "ok", "timestamp": datetime.now().isoformat()}
+
+
+# ── Admin Analytics ─────────────────────────────────────────────────────────
+
+@app.get("/api/admin/analytics/overview")
+def admin_analytics_overview(current_user: dict = Depends(get_current_user)):
+    if not current_user.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
+    return get_activity_stats()
+
+
+@app.get("/api/admin/analytics/log")
+def admin_analytics_log(
+    limit: int = Query(100), offset: int = Query(0),
+    current_user: dict = Depends(get_current_user),
+):
+    if not current_user.get("is_admin"):
+        raise HTTPException(403, "Admin access required")
+    return {"entries": get_activity_log(limit, offset)}
+
+
+@app.post("/api/track")
+def track_action(
+    action: str = Body(...), details: str = Body(""),
+    current_user: dict = Depends(get_current_user),
+):
+    log_activity(current_user["user_id"], action, details)
+    return {"status": "ok"}
 
 
 @app.get("/api/cleanup")

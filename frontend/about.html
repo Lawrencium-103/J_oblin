@@ -9,177 +9,186 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root {
-  --color-primary-400: #34d399;
-  --color-primary-500: #059669;
-  --color-primary-600: #047857;
-  --color-neutral-0: #ffffff;
-  --color-neutral-50: #f8fafc;
-  --color-neutral-100: #f1f5f9;
-  --color-neutral-200: #e2e8f0;
-  --color-neutral-300: #cbd5e1;
-  --color-neutral-400: #94a3b8;
-  --color-neutral-500: #64748b;
-  --color-neutral-600: #475569;
-  --color-neutral-700: #334155;
-  --color-neutral-800: #1e293b;
-  --color-neutral-900: #0f172a;
-  --color-neutral-950: #020617;
+  --primary: #0d9488;
+  --primary-dark: #0f766e;
+  --primary-light: #14b8a6;
+  --primary-50: rgba(13,148,136,0.08);
+  --primary-100: rgba(13,148,136,0.15);
+  --text-default: #1a1a2e;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --bg-app: #f5f8f7;
+  --bg-surface: #ffffff;
+  --bg-surface-muted: #f0f5f3;
+  --line: #e2e8f0;
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --radius-lg: 16px;
+  --radius-md: 10px;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
   font-family: var(--font-sans);
-  background: var(--color-neutral-0);
-  color: var(--color-neutral-800);
+  background: var(--bg-app);
+  color: var(--text-default);
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+::selection { background: var(--primary-100); color: var(--primary); }
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-app); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+
 nav {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  z-index: 100;
-  padding: 14px 40px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.3s;
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 40px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: all 0.3s ease; background: transparent;
 }
-nav.scrolled { background: rgba(255,255,255,0.95); backdrop-filter: blur(12px); box-shadow: 0 1px 8px rgba(0,0,0,0.08); }
-.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--color-neutral-800); font-weight: 800; font-size: 20px; }
-.nav-brand-icon { width: 34px; height: 34px; background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-600)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #fff; }
-.nav-brand span { color: var(--color-primary-500); }
+nav.scrolled { background: rgba(255,255,255,0.92); backdrop-filter: blur(20px); border-bottom: 1px solid var(--line); padding: 10px 40px; }
+.nav-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text-default); font-weight: 800; font-size: 20px; transition: opacity 0.3s; }
+.nav-brand:hover { opacity: 0.8; }
+.nav-brand-icon { width: 34px; height: 34px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 800; color: #fff; }
+.nav-brand span { color: var(--primary); }
 .nav-links { display: flex; align-items: center; gap: 24px; }
-.nav-links a { text-decoration: none; color: var(--color-neutral-600); font-size: 14px; font-weight: 500; transition: color 0.2s; }
-.nav-links a:hover { color: var(--color-primary-500); }
-.nav-cta { background: var(--color-primary-500); color: #fff !important; padding: 8px 20px; border-radius: 9999px; font-weight: 600; transition: all 0.2s !important; }
-.nav-cta:hover { background: var(--color-primary-600) !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(5,150,105,0.3); }
+.nav-links a { text-decoration: none; color: var(--text-muted); font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: var(--primary); }
+.nav-cta { background: var(--primary); color: #fff !important; padding: 8px 20px; border-radius: 9999px; font-weight: 700; transition: all 0.2s !important; }
+.nav-cta:hover { background: var(--primary-dark) !important; transform: translateY(-1px); color: #fff !important; }
 
 .hero {
   padding: 120px 40px 80px;
-  max-width: 1100px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  align-items: center;
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 60px; align-items: center;
 }
-.hero-left h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.15; }
-.hero-left h1 span { color: var(--color-primary-500); }
-.hero-left .title-role { font-size: 18px; color: var(--color-primary-500); font-weight: 600; margin-top: 12px; margin-bottom: 20px; }
-.hero-left .contact-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 24px; }
-.hero-left .contact-row a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 9999px; font-size: 14px; font-weight: 500; text-decoration: none; border: 1px solid var(--color-neutral-200); color: var(--color-neutral-700); transition: all 0.2s; }
-.hero-left .contact-row a:hover { border-color: var(--color-primary-500); color: var(--color-primary-500); background: rgba(5,150,105,0.04); }
-.hero-left .contact-row .btn-primary-link { background: var(--color-primary-500); color: #fff; border-color: var(--color-primary-500); }
-.hero-left .contact-row .btn-primary-link:hover { background: var(--color-primary-600); color: #fff; }
-.hero-right {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+.hero-left h1 { font-size: 44px; font-weight: 900; letter-spacing: -0.04em; line-height: 1.15; color: var(--text-default); }
+.hero-left h1 span { color: var(--primary); }
+.hero-left .title-role { font-size: 18px; color: var(--primary); font-weight: 600; margin-top: 12px; margin-bottom: 20px; }
+.hero-left .contact-row { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.hero-left .contact-row a { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 9999px; font-size: 14px; font-weight: 500; text-decoration: none; border: 1px solid var(--line); color: var(--text-muted); transition: all 0.2s; }
+.hero-left .contact-row a:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-50); }
+.hero-left .contact-row .btn-primary-link { background: var(--primary); color: #fff !important; border-color: var(--primary); font-weight: 700; }
+.hero-left .contact-row .btn-primary-link:hover { background: var(--primary-dark); border-color: var(--primary-dark); }
+.hero-right { display: flex; align-items: center; justify-content: center; }
 .hero-avatar {
-  width: 220px;
-  height: 220px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--color-primary-400), var(--color-primary-600));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 72px;
-  font-weight: 900;
-  color: #fff;
-  box-shadow: 0 20px 60px rgba(5,150,105,0.2);
+  width: 220px; height: 220px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-light));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 72px; font-weight: 900; color: #fff;
+  box-shadow: 0 8px 40px rgba(13,148,136,0.2);
   user-select: none;
 }
 
 .section { padding: 60px 40px; max-width: 1100px; margin: 0 auto; }
-.section-label { font-size: 12px; font-weight: 700; color: var(--color-primary-500); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
-.section h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; }
-.section .subtitle { color: var(--color-neutral-500); font-size: 16px; line-height: 1.6; max-width: 680px; }
+.section-label { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+.section h2 { font-size: 32px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 16px; color: var(--text-default); }
+.section .subtitle { color: var(--text-muted); font-size: 16px; line-height: 1.6; max-width: 680px; }
 
-.summary-text {
-  font-size: 16px;
-  line-height: 1.8;
-  color: var(--color-neutral-600);
-  margin-top: 20px;
-  max-width: 800px;
-}
+.summary-text { font-size: 16px; line-height: 1.8; color: var(--text-muted); max-width: 800px; }
 
-/* ── Projects ── */
 .projects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 24px;
-  margin-top: 40px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px; margin-top: 40px;
 }
 .project-card {
-  border: 1px solid var(--color-neutral-200);
-  border-radius: 16px;
-  padding: 28px;
-  transition: all 0.25s;
-  display: flex;
-  flex-direction: column;
+  border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 24px;
+  transition: all 0.25s; display: flex; flex-direction: column;
+  background: var(--bg-surface);
 }
-.project-card:hover { border-color: var(--color-primary-200); box-shadow: 0 8px 24px rgba(0,0,0,0.06); transform: translateY(-3px); }
-.project-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--color-neutral-800); }
-.project-card p { font-size: 13px; line-height: 1.6; color: var(--color-neutral-500); flex: 1; }
+.project-card:hover { border-color: var(--primary-100); box-shadow: 0 4px 20px rgba(13,148,136,0.08); transform: translateY(-3px); }
+.project-card h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
+.project-card p { font-size: 13px; line-height: 1.6; color: var(--text-muted); flex: 1; }
 .project-card .tech-tags { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0; }
-.project-card .tech-tag { font-size: 11px; padding: 3px 10px; border-radius: 9999px; background: rgba(5,150,105,0.08); color: var(--color-primary-600); font-weight: 500; }
-.project-card .project-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--color-primary-500); text-decoration: none; margin-top: 8px; }
-.project-card .project-link:hover { color: var(--color-primary-600); gap: 8px; }
+.project-card .tech-tag { font-size: 11px; padding: 3px 10px; border-radius: 9999px; background: var(--primary-50); color: var(--primary); font-weight: 500; }
+.project-card .project-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none; margin-top: 8px; }
+.project-card .project-link:hover { gap: 8px; }
 
-/* ── Skills ── */
 .skills-cloud { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
-.skills-cloud span { padding: 6px 16px; border-radius: 9999px; background: var(--color-neutral-100); color: var(--color-neutral-700); font-size: 13px; font-weight: 500; transition: all 0.2s; }
-.skills-cloud span:hover { background: rgba(5,150,105,0.1); color: var(--color-primary-600); }
+.skills-cloud span { padding: 6px 16px; border-radius: 9999px; background: var(--primary-50); color: var(--primary); font-size: 13px; font-weight: 500; border: 1px solid var(--primary-100); transition: all 0.2s; }
+.skills-cloud span:hover { background: var(--primary-100); }
 
-/* ── How to Use ── */
 .howto-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 24px;
-  margin-top: 40px;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px; margin-top: 40px;
 }
 .howto-step {
-  border: 1px solid var(--color-neutral-200);
-  border-radius: 16px;
-  padding: 28px;
-  text-align: center;
+  border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 28px; background: var(--bg-surface);
 }
-.howto-step .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--color-primary-500); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; margin-bottom: 14px; }
+.howto-step .step-num { width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; margin-bottom: 14px; }
 .howto-step h3 { font-size: 16px; font-weight: 700; margin-bottom: 8px; }
-.howto-step p { font-size: 13px; color: var(--color-neutral-500); line-height: 1.6; }
+.howto-step p { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
 
-/* ── CTA ── */
-.cta-section {
-  background: linear-gradient(135deg, rgba(5,150,105,0.05), rgba(5,150,105,0.02));
-  border-radius: 24px;
-  padding: 60px 40px;
-  text-align: center;
-  max-width: 1100px;
-  margin: 0 auto 60px;
+.howto-section {
+  background: var(--bg-surface-muted);
+  padding: 80px 40px;
 }
-.cta-section h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; }
-.cta-section p { color: var(--color-neutral-500); margin-bottom: 28px; font-size: 16px; }
-.cta-section .btn-cta { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 9999px; background: var(--color-primary-500); color: #fff; font-size: 16px; font-weight: 600; text-decoration: none; transition: all 0.25s; }
-.cta-section .btn-cta:hover { background: var(--color-primary-600); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(5,150,105,0.3); }
+.howto-section .subsection-title { max-width: 800px; margin: 0 auto 48px; }
+.howto-detailed { max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
+.howto-card {
+  background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-lg); overflow: hidden; transition: all 0.3s ease;
+}
+.howto-card:hover { border-color: var(--primary-100); box-shadow: 0 4px 20px rgba(13,148,136,0.06); }
+.howto-card-header {
+  display: flex; align-items: center; gap: 14px; padding: 20px 24px;
+  background: var(--primary-50); border-bottom: 1px solid var(--line);
+}
+.howto-card-header h3 { font-size: 17px; font-weight: 700; color: var(--text-default); margin: 0; }
+.howto-step-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--primary); color: #fff; font-size: 13px; font-weight: 800; flex-shrink: 0;
+}
+.howto-card-body { padding: 20px 24px 24px; }
+.howto-card-body p { font-size: 14px; line-height: 1.7; color: var(--text-muted); margin-bottom: 14px; }
+.howto-card-body ul { margin: 0 0 0 18px; padding: 0; }
+.howto-card-body li { font-size: 14px; line-height: 1.7; color: var(--text-muted); margin-bottom: 6px; }
+.howto-card-body li strong { color: var(--text-default); }
+.howto-tip {
+  background: var(--primary-50); border: 1px solid var(--primary-100);
+  border-radius: var(--radius-md); padding: 12px 16px; margin-top: 14px; font-size: 13px;
+}
+.howto-tip strong { color: var(--primary); }
+.howto-cta {
+  max-width: 900px; margin: 40px auto 0; text-align: center;
+  padding: 40px; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-lg);
+}
+.howto-cta h3 { font-size: 24px; font-weight: 800; margin-bottom: 10px; }
+.howto-cta p { font-size: 15px; color: var(--text-muted); margin-bottom: 24px; }
+.howto-cta-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 36px; border-radius: 9999px;
+  background: var(--primary); color: #fff; font-size: 16px; font-weight: 700;
+  text-decoration: none; transition: all 0.25s;
+}
+.howto-cta-btn:hover { background: var(--primary-dark); transform: translateY(-2px); color: #fff; }
 
-footer { text-align: center; padding: 40px; color: var(--color-neutral-400); font-size: 13px; border-top: 1px solid var(--color-neutral-100); }
-footer a { color: var(--color-primary-500); text-decoration: none; }
+.cta-section {
+  background: linear-gradient(135deg, var(--primary-50), rgba(13,148,136,0.04));
+  border-radius: var(--radius-lg); padding: 60px 40px; text-align: center;
+  max-width: 1100px; margin: 0 auto 60px; border: 1px solid var(--primary-100);
+}
+.cta-section h2 { font-size: 32px; font-weight: 800; margin-bottom: 12px; color: var(--text-default); }
+.cta-section p { color: var(--text-muted); margin-bottom: 28px; font-size: 16px; }
+.cta-section .btn-cta { display: inline-flex; align-items: center; gap: 8px; padding: 14px 32px; border-radius: 9999px; background: var(--primary); color: #fff; font-size: 16px; font-weight: 700; text-decoration: none; transition: all 0.25s; }
+.cta-section .btn-cta:hover { background: var(--primary-dark); transform: translateY(-2px); color: #fff; }
 
-body { animation: fadeIn 0.4s ease-out; }
-@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  @media (max-width: 768px) {
-    nav { padding: 12px 20px; }
-    .nav-links a:not(.nav-cta) { display: none; }
-    .hero { grid-template-columns: 1fr; padding: 90px 20px 30px; gap: 30px; text-align: center; }
-    .hero-left h1 { font-size: 32px; }
-    .hero-left .contact-row { justify-content: center; }
-    .hero-avatar { width: 140px; height: 140px; font-size: 52px; }
-    .section { padding: 36px 20px; }
-    .section h2 { font-size: 26px; }
-    .projects-grid { grid-template-columns: 1fr; }
-    .cta-section { margin: 0 20px 28px; padding: 32px 20px; }
-  }
+footer { text-align: center; padding: 40px; color: var(--text-subtle); font-size: 13px; border-top: 1px solid var(--line); }
+footer a { color: var(--primary); }
+
+@media (max-width: 768px) {
+  nav { padding: 12px 20px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .hero { grid-template-columns: 1fr; padding: 90px 20px 30px; gap: 30px; text-align: center; }
+  .hero-left h1 { font-size: 32px; }
+  .hero-left .contact-row { justify-content: center; }
+  .hero-avatar { width: 140px; height: 140px; font-size: 52px; }
+  .section { padding: 36px 20px; }
+  .section h2 { font-size: 26px; }
+  .projects-grid { grid-template-columns: 1fr; }
+  .cta-section { margin: 0 20px 28px; padding: 32px 20px; border-radius: var(--radius-md); }
+}
 </style>
 </head>
 <body>
@@ -191,19 +200,18 @@ body { animation: fadeIn 0.4s ease-out; }
   </a>
   <div class="nav-links">
     <a href="index.html#features">Features</a>
-    <a href="about.html" style="color:var(--color-primary-500);font-weight:600;">About</a>
+    <a href="about.html" style="color:var(--primary);font-weight:600;">About</a>
     <a href="login.html">Sign In</a>
     <a href="register.html" class="nav-cta">Get Started Free</a>
   </div>
 </nav>
 
-<!-- ── Hero ── -->
 <section class="hero">
   <div class="hero-left">
     <h1>Lawrence <span>Oladeji</span></h1>
     <div class="title-role">AI-Native Data Analyst &amp; Full-Stack Developer</div>
-    <p style="color:var(--color-neutral-500);font-size:15px;line-height:1.7;">
-      I build tools that turn raw data into decisions — from AI-powered job matching to
+    <p style="color:var(--text-muted);font-size:15px;line-height:1.7;">
+      I build tools that turn raw data into decisions, from AI-powered job matching to
       public health intelligence platforms serving millions.
     </p>
     <div class="contact-row">
@@ -230,7 +238,6 @@ body { animation: fadeIn 0.4s ease-out; }
   </div>
 </section>
 
-<!-- ── Summary ── -->
 <section class="section">
   <div class="section-label">Career Summary</div>
   <h2>What I Do</h2>
@@ -243,14 +250,13 @@ body { animation: fadeIn 0.4s ease-out; }
   </p>
   <p class="summary-text" style="margin-top:14px;">
     Experienced in Monitoring &amp; Evaluation, health system strengthening, and building
-    capacity of cross-functional teams. I build full-stack applications — from geospatial
-    health dashboards to AI-powered content engines — deployed on modern stacks
+    capacity of cross-functional teams.     I build full-stack applications, from geospatial
+    health dashboards to AI-powered content engines, deployed on modern stacks
     (Next.js, FastAPI, Docker, Vercel). Passionate about using technology to solve
     real-world problems in Nigeria and across Africa.
   </p>
 </section>
 
-<!-- ── Skills ── -->
 <section class="section">
   <div class="section-label">Technical Skills</div>
   <h2>Stack &amp; Tools</h2>
@@ -265,11 +271,10 @@ body { animation: fadeIn 0.4s ease-out; }
   </div>
 </section>
 
-<!-- ── Projects ── -->
 <section class="section">
   <div class="section-label">Featured Work</div>
   <h2>Projects I've Built</h2>
-  <p class="subtitle">Live applications — from public health intelligence to AI matchmaking engines.</p>
+  <p class="subtitle">Live applications spanning public health intelligence, startup discovery, and AI matchmaking.</p>
   <div class="projects-grid">
 
     <div class="project-card">
@@ -302,28 +307,28 @@ body { animation: fadeIn 0.4s ease-out; }
 
     <div class="project-card">
       <h3>LinkyGen Intelligence</h3>
-      <p>Advanced AI application utilizing multi-agentic LangGraph architecture to streamline high-quality dynamic content pipelines with intelligent routing and generation.</p>
+      <p>Multi-agent content generation system built on LangGraph for routing, drafting, and editing written material. Designed to produce consistent long-form content with human review at each stage.</p>
       <div class="tech-tags"><span class="tech-tag">LangGraph</span><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span></div>
       <a href="https://linkygen.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
 
     <div class="project-card">
       <h3>SESA — Smart Energy Storage Arbitrage</h3>
-      <p>Stochastic optimization engine built on Agentic AI orchestration to minimize smart building electricity costs via BESS arbitrage using multi-agent decision making.</p>
+      <p>Optimization engine for battery energy storage systems that decides when to charge and discharge based on real-time electricity prices, reducing building energy costs.</p>
       <div class="tech-tags"><span class="tech-tag">Multi-Agent</span><span class="tech-tag">Python</span><span class="tech-tag">Optimization</span></div>
       <a href="https://sesa-energy.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
 
     <div class="project-card">
       <h3>Stratos Content Empire</h3>
-      <p>Strategic AI marketing tool powered by LangGraph multi-agent orchestration mapping pinpoint audience intent for precision content targeting.</p>
+      <p>Content marketing tool that maps audience segments to tailored messaging using multi-step LLM workflows. Generates drafts aligned to specific campaign goals.</p>
       <div class="tech-tags"><span class="tech-tag">LangGraph</span><span class="tech-tag">Streamlit</span><span class="tech-tag">LLM</span></div>
       <a href="https://stratos-content.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
 
     <div class="project-card">
       <h3>XGen Studio</h3>
-      <p>Viral writing assistant leveraging multi-agent LLM workflow (CrewAI + LangChain) to scale brand growth through highly-humanized narrative generation.</p>
+      <p>Writing assistant combining CrewAI and LangChain for brand content production. Produces draft articles, social posts, and email sequences for review and publication.</p>
       <div class="tech-tags"><span class="tech-tag">CrewAI</span><span class="tech-tag">LangChain</span><span class="tech-tag">Python</span></div>
       <a href="https://xgenstudio.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
@@ -337,14 +342,14 @@ body { animation: fadeIn 0.4s ease-out; }
 
     <div class="project-card">
       <h3>Finstratz Analytics</h3>
-      <p>Python-based financial monitoring suite utilizing deep learning (TensorFlow, Scikit-learn) to forecast US stock price trends, market volatility, and generate buy/sell recommendations.</p>
+      <p>Stock market monitoring tool using TensorFlow and Scikit-learn to track US stock trends, volatility patterns, and suggest potential buy or sell signals based on historical data.</p>
       <div class="tech-tags"><span class="tech-tag">TensorFlow</span><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span></div>
       <a href="https://finstratz.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
 
     <div class="project-card">
       <h3>Stanbic IBTC Portfolio Simulator</h3>
-      <p>Financial modeling application generating robust performance forecasts across Money Market portfolios with interactive simulation capabilities.</p>
+      <p>Portfolio simulation tool for Money Market funds. Users adjust allocation parameters and see projected returns based on historical fund performance data.</p>
       <div class="tech-tags"><span class="tech-tag">Python</span><span class="tech-tag">Streamlit</span><span class="tech-tag">Financial Modeling</span></div>
       <a href="https://stanbic-ibtc-portfolio-simulation.streamlit.app/" target="_blank" class="project-link">View Live →</a>
     </div>
@@ -352,34 +357,209 @@ body { animation: fadeIn 0.4s ease-out; }
   </div>
 </section>
 
-<!-- ── How to Use Joblin ── -->
-<section class="section">
-  <div class="section-label">Quick Start</div>
-  <h2>How to Use Joblin</h2>
-  <p class="subtitle">Three steps to land your next role. No fluff. No hidden fees.</p>
-  <div class="howto-grid">
-    <div class="howto-step">
-      <div class="step-num">1</div>
-      <h3>Create Your Account</h3>
-      <p>Sign up with your email and password. Free, no credit card. You get instant access to all features including the free AI model.</p>
+<section class="howto-section">
+  <div class="section-label">API Setup</div>
+  <h2>Get Your Free API Key</h2>
+  <p class="subtitle" style="max-width:800px;">
+    Joblin works with a free built-in model, but you can get faster and better results by
+    adding your own API key from NVIDIA or Groq. Both are free to sign up and give you credits
+    to start immediately. No credit card required.
+  </p>
+
+  <div class="howto-detailed">
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">N</span>
+        <h3>NVIDIA (build.nvidia.com)</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>NVIDIA offers a free API tier with generous credits for new users. Their Nemotron and Llama models are great for CV tailoring.</p>
+        <ul>
+          <li><strong>Step 1:</strong> Go to <a href="https://build.nvidia.com" target="_blank">build.nvidia.com</a> and click "Sign Up" in the top right corner.</li>
+          <li><strong>Step 2:</strong> Sign up with your Google account, Microsoft account, or any email address. Fill in your name and create a password.</li>
+          <li><strong>Step 3:</strong> Check your email for a confirmation link. Click it to verify your account.</li>
+          <li><strong>Step 4:</strong> Once logged in, click your profile picture or initials in the top right, then select "Personal Settings" or "API Keys" from the menu.</li>
+          <li><strong>Step 5:</strong> Click "Generate New Key" or "Create API Key". Give it a name like "joblin-app" so you can remember it.</li>
+          <li><strong>Step 6:</strong> Copy the key that appears (it starts with "nvapi-"). It looks something like <code style="background:#f0f5f3;padding:2px 6px;border-radius:4px;font-size:12px">nvapi-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx</code>.</li>
+          <li><strong>Step 7:</strong> Paste this key into Joblin's Settings page under "NVIDIA API Key" and click Save.</li>
+        </ul>
+        <div class="howto-tip">
+          <strong>Tip:</strong> NVIDIA gives you free credits when you sign up. You can check your remaining credits in your dashboard at build.nvidia.com. If you run out, just generate a new key or switch to the free built-in model in Settings.
+        </div>
+      </div>
     </div>
-    <div class="howto-step">
-      <div class="step-num">2</div>
-      <h3>Paste Your CV</h3>
-      <p>Go to <strong>Make My CV</strong> and paste your raw career text or use the voice narration feature. Add your target job title — Joblin learns your profile.</p>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">G</span>
+        <h3>Groq (console.groq.com)</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Groq provides ultra-fast inference with their own LPU hardware. Their free tier includes the Llama and Mixtral models and resets daily.</p>
+        <ul>
+          <li><strong>Step 1:</strong> Go to <a href="https://console.groq.com" target="_blank">console.groq.com</a> and click "Sign Up" or "Get Started".</li>
+          <li><strong>Step 2:</strong> You can sign up with your Google account or GitHub account for the quickest setup. Alternatively, use your email address.</li>
+          <li><strong>Step 3:</strong> Verify your email if you signed up with email. Google/GitHub sign-ups are instant.</li>
+          <li><strong>Step 4:</strong> After logging in, look for "API Keys" in the left sidebar menu. Click it.</li>
+          <li><strong>Step 5:</strong> Click "Create API Key". Give it a name like "joblin-app".</li>
+          <li><strong>Step 6:</strong> Copy the key that appears (it starts with "gsk_"). It looks something like <code style="background:#f0f5f3;padding:2px 6px;border-radius:4px;font-size:12px">gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code>.</li>
+          <li><strong>Step 7:</strong> Paste this key into Joblin's Settings page under "Groq API Key" and click Save.</li>
+        </ul>
+        <div class="howto-tip">
+          <strong>Tip:</strong> Groq's free tier gives you a daily limit (usually thousands of requests). Check your usage at console.groq.com under "Rate Limits". The free tier resets every 24 hours, so you never need to pay.
+        </div>
+      </div>
     </div>
-    <div class="howto-step">
-      <div class="step-num">3</div>
-      <h3>Match &amp; Tailor</h3>
-      <p>Browse jobs from 30+ boards or paste a specific role. Click <strong>Tailor My CV</strong> — Joblin rewrites your CV and cover letter for that exact job. Download as PDF or DOCX.</p>
+
+    <div class="howto-card">
+      <div class="howto-card-header" style="background:#fff;border-bottom:1px solid var(--line)">
+        <span class="howto-step-badge" style="background:#0d9488">S</span>
+        <h3>Where to Enter Your Key in Joblin</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Once you have your API key from NVIDIA or Groq:</p>
+        <ul>
+          <li>Log into Joblin and click <strong>Settings</strong> in the sidebar.</li>
+          <li>Scroll to the <strong>API Keys</strong> section.</li>
+          <li>Paste your NVIDIA key or Groq key into the corresponding field.</li>
+          <li>Click <strong>Save</strong>. Joblin will test the key to make sure it works.</li>
+          <li>You can also toggle between the built-in free model and your own key at any time.</li>
+        </ul>
+        <div class="howto-tip">
+          <strong>Heads up:</strong> Your API keys are encrypted and stored securely. Joblin never shares them. You can remove them anytime from the same Settings page.
+        </div>
+      </div>
     </div>
-  </div>
-  <div style="text-align:center;margin-top:36px;">
-    <a href="register.html" class="nav-cta" style="display:inline-flex;padding:14px 32px;font-size:16px;text-decoration:none;">Start Matching Jobs Now</a>
+
   </div>
 </section>
 
-<!-- ── CTA ── -->
+<section class="howto-section">
+  <div class="section-label">Complete Guide</div>
+  <h2>How to Use Joblin</h2>
+  <p class="subtitle" style="max-width:800px;">
+    Joblin is built for Nigerian job seekers who want to stop applying blind and start targeting every application.
+    Here is exactly how it works, from account creation to walking into your interview.
+  </p>
+
+  <div class="howto-detailed">
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">1</span>
+        <h3>Create Your Account</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Sign up at <a href="register.html">joblin.app/register</a> with your name, email, and password. No credit card needed. No trial period. The free AI model is included from day one.</p>
+        <ul>
+          <li>Your data stays yours, encrypted and private</li>
+          <li>You can toggle between the free default AI and your own API keys in Settings</li>
+          <li>Once registered, you land on the Dashboard, your command centre</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">2</span>
+        <h3>Build Your CV Profile</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Joblin needs to know who you are before it can match you. You have three ways to build your CV:</p>
+        <ul>
+          <li><strong>Make My CV (Recommended):</strong> Paste your raw career text — previous roles, achievements, education, projects. Joblin's AI extracts everything into a structured CV. You can speak it using the voice narration feature if you prefer.</li>
+          <li><strong>CV Editor:</strong> Use the structured form to fill in each section manually. Great for fine-tuning specific details.</li>
+          <li><strong>Plain Text Import:</strong> Paste any existing CV as raw text and the AI parses it into sections automatically.</li>
+        </ul>
+        <p class="howto-tip">
+          <strong>Tip:</strong> Include specific numbers in your achievements (percentages, amounts, volumes) — the AI uses these to build stronger bullets when tailoring.
+        </p>
+      </div>
+    </div>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">3</span>
+        <h3>Add Your Target Jobs</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Tell Joblin what you are looking for. There are four ways to find jobs:</p>
+        <ul>
+          <li><strong>Browse Jobs:</strong> Joblin scrapes 40+ job boards (LinkedIn, Indeed, MyJobMag, Hot Nigerian Jobs, UN, WHO, Web3, Greenhouse, Ashby, and more). Filter by category, source, graduate level, or search by keyword.</li>
+          <li><strong>Manual Entry:</strong> Paste a job URL or manually type the title, company, and description of any role you found elsewhere.</li>
+          <li><strong>Category Browsing:</strong> Filter by sector — Tech, NGO/Development, Oil &amp; Gas, Government, Finance, Health, Web3/Crypto, International Remote.</li>
+          <li><strong>Match Scores:</strong> Every job shows a match score (0-100) based on keyword overlap with your CV profile — so you know which ones to prioritize.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">4</span>
+        <h3>Tailor Your CV &amp; Cover Letter</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>This is where Joblin does what no template can. Click <strong>Tailor My CV</strong> on any job — the AI rewrites your entire CV for that specific role:</p>
+        <ul>
+          <li><strong>Professional Summary</strong> — rewritten to mirror the job description and lead with your most relevant achievement</li>
+          <li><strong>Core Competencies</strong> — regrouped and reworded to match the skills the employer is asking for</li>
+          <li><strong>Experience Bullets</strong> — every achievement bullet is rewritten to show relevance to the target role. You keep the same title and company; the language shifts to demonstrate transferable skills</li>
+          <li><strong>Cover Letter</strong> — a full 4-5 paragraph letter written specifically for this job, not a fill-in-the-blank template. It references the company, ties your past work to their needs, and avoids every banned AI cliche</li>
+          <li><strong>HR Email</strong> — optional short pitch email you can send directly to the hiring manager</li>
+        </ul>
+        <p class="howto-tip">
+          <strong>Note:</strong> Joblin never fabricates experience. It reframes what you have done to show why it matters for the role you are applying for.
+        </p>
+      </div>
+    </div>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">5</span>
+        <h3>Download &amp; Apply</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Once tailored, download your documents:</p>
+        <ul>
+          <li><strong>CV</strong> — available as DOCX and PDF. Professionally formatted with clean single-column ATS-friendly layout. Multiple design templates applied randomly so every generation looks different.</li>
+          <li><strong>Cover Letter</strong> — also in DOCX and PDF. Proper letter format with your contact header, date, salutation, body paragraphs, and sign-off.</li>
+          <li><strong>HR Email</strong> — copy the generated email or use it as a draft in your mail client.</li>
+        </ul>
+        <p class="howto-tip">
+          <strong>Pro tip:</strong> Always review the tailored CV before sending. Read every bullet. If something does not sound like you, edit it in the CV Editor and regenerate. The AI gives you a starting point — your judgment makes it final.
+        </p>
+      </div>
+    </div>
+
+    <div class="howto-card">
+      <div class="howto-card-header">
+        <span class="howto-step-badge">6</span>
+        <h3>Repeat &amp; Improve</h3>
+      </div>
+      <div class="howto-card-body">
+        <p>Each time you tailor for a different job, Joblin saves a new version. Your original CV stays untouched — only the tailored copy changes.</p>
+        <ul>
+          <li>Tailor as many jobs as you want — no limits</li>
+          <li>Update your CV profile anytime and regenerations reflect the latest version</li>
+          <li>The match scores help you focus on jobs where you have the strongest alignment</li>
+          <li>Use the quality scores on each tailored CV to check: are there enough metrics? Is the cover letter strong enough?</li>
+        </ul>
+        <p class="howto-tip">
+          <strong>Reminder:</strong> Joblin updates job listings every 15 minutes from 40+ sources. Check back regularly for new matches.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="howto-cta">
+    <h3>Start in 60 Seconds</h3>
+    <p>Create an account, paste your CV, and start matching. The free AI model is ready — no setup needed.</p>
+    <a href="register.html" class="howto-cta-btn">Create Free Account</a>
+  </div>
+</section>
+
 <section class="cta-section">
   <h2>Built for Nigerian Job Seekers</h2>
   <p>Free AI model included. No subscription. No hidden charges. Just your next opportunity.</p>

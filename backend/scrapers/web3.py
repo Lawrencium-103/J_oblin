@@ -61,7 +61,7 @@ class Web3JobScraper(BaseScraper):
                             from datetime import datetime
                             posted = datetime.utcfromtimestamp(created).strftime("%Y-%m-%d")
                         jobs.append(self._make_job(title, company, location, "",
-                                                    url_val, "jobsolana", CAT, posted))
+                                                        url_val, "jobsolana", CAT, posted))
                     return self._filter_by_query(self.filter_fresh(jobs), query)
             except Exception as e:
                 print(f"[jobsolana] __NEXT_DATA__ parse: {e}")
