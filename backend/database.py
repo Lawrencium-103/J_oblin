@@ -760,7 +760,8 @@ def get_global_jobs(
             where_params.append(1 if is_graduate else 0)
         if location == "nigeria":
             city_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _NG_CITIES)
-            conditions.append(f"(LOWER(gj.location) LIKE '%nigeria%' OR {city_likes})")
+            conditions.append(f"(LOWER(gj.location) LIKE ? OR {city_likes})")
+            where_params.append("%nigeria%")
             where_params.extend([f"%{c}%" for c in _NG_CITIES])
         elif location == "remote":
             remote_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _REMOTE_KW)
@@ -769,7 +770,8 @@ def get_global_jobs(
         elif location == "international":
             city_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _NG_CITIES)
             remote_likes = " OR ".join(f"LOWER(gj.location) LIKE ?" for _ in _REMOTE_KW)
-            conditions.append(f"NOT (LOWER(gj.location) LIKE '%nigeria%' OR {city_likes} OR {remote_likes})")
+            conditions.append(f"NOT (LOWER(gj.location) LIKE ? OR {city_likes} OR {remote_likes})")
+            where_params.append("%nigeria%")
             where_params.extend([f"%{c}%" for c in _NG_CITIES] + [f"%{kw}%" for kw in _REMOTE_KW])
 
         join = ""
