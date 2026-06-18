@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: joblin
+    name: joblin-hx5a
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: starter
