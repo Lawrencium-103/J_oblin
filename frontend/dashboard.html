@@ -253,6 +253,7 @@ body { background: #ffffff; }
           <p class="subtitle">Overview of your job search activity</p>
         </div>
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span style="font-size:12px;color:#94a3b8" id="currentDate"></span>
           <div class="last-updated">
             <span class="live-dot"></span>
             <span>Updated <span id="lastScrapedTime">—</span></span>
@@ -362,6 +363,7 @@ body { background: #ffffff; }
 
 <script src="app.js"></script>
 <script>
+document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-NG', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 const DAILY_MOTIVATIONS = [
   { kicker: "Your next win is closer than you think", message: "Every tailored CV you send raises your odds. One more application today could be the one.", action: "Open one high-match role and apply now." },
   { kicker: "Effort compounds", message: "The work you put in today makes tomorrow easier. Keep building momentum — your consistency is your superpower.", action: "Save or apply to one role before you stop for the day." },

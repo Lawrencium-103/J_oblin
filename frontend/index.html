@@ -1807,7 +1807,7 @@ autoSlide = setInterval(nextSlide, 6000);
     }
     grid.innerHTML = data.jobs.slice(0, 15).map(j => {
       const ago = j.date_found ? timeAgo(new Date(j.date_found.replace(' ', 'T') + 'Z')) : '';
-      const jobUrl = 'job-detail.html?id=' + j.id;
+      const jobUrl = j.url || 'job-detail.html?id=' + j.id;
       return `<a href="${jobUrl}" style="text-decoration:none;display:flex;flex-direction:column;background:var(--bg-card);border:1px solid rgba(255,255,255,0.03);border-radius:10px;padding:16px;transition:all 0.3s;cursor:pointer" onmouseover="this.style.borderColor='rgba(0,240,255,0.08)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.03)';this.style.transform='none'">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
           <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;border:1px solid rgba(255,255,255,0.03);border-radius:3px">${escHtml(j.job_category || 'General')}</span>
