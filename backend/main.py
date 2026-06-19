@@ -62,6 +62,11 @@ async def lifespan(app: FastAPI):
     yield
     if scheduler:
         scheduler.shutdown()
+        if hasattr(scheduler, "_lock_fd") and scheduler._lock_fd:
+            try:
+                scheduler._lock_fd.close()
+            except Exception:
+                pass
 
 
 app = FastAPI(title="Joblin", version="2.0.0", lifespan=lifespan)

@@ -112,10 +112,26 @@ def run_nightly_scrape() -> dict:
 
 def setup_scheduler(app):
     try:
+        import fcntl
+    except ImportError:
+        fcntl = None
+
+    # File lock: only one uvicorn worker starts the scheduler
+    if fcntl:
+        try:
+            lock_fd = open("/tmp/scheduler.lock", "w")
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            return None
+    else:
+        lock_fd = None
+
+    try:
         from apscheduler.schedulers.background import BackgroundScheduler
         from apscheduler.triggers.cron import CronTrigger
 
         scheduler = BackgroundScheduler()
+        scheduler._lock_fd = lock_fd  # keep ref alive so the lock isn't released
 
         # Run at 6:00 AM daily
         scheduler.add_job(
