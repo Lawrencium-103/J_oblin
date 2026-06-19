@@ -96,7 +96,7 @@ function truncate(text, len) {
 function isJunkJob(job) {
   const junkTitles = /view profile|my saved|account.*privacy|update.*profile|sign in|log in|create.*account|page not found|error|loading/i;
   if (!job.title || junkTitles.test(job.title)) return true;
-  if (job.company === 'Unknown' || job.company === 'unknown' || !job.company) return true;
+  if (!job.company && job.description && job.description.length < 20) return true;
   if (job.job_category === 'other' && (!job.description || job.description.length < 20)) return true;
   return false;
 }
@@ -106,7 +106,7 @@ async function loadJobs() {
   box.value = 'Loading jobs...';
   try {
     const r = await fetch('/api/recent-jobs');
-    if (!r.ok) { box.value = 'Failed to load jobs.'; return; }
+    if (!r.ok) { const err = await r.text().catch(() => ''); box.value = 'Failed to load jobs: ' + (err.slice(0, 200) || r.status); return; }
     const data = await r.json();
     currentJobs = data.jobs || [];
     const catFilter = document.getElementById('categoryFilter').value;
