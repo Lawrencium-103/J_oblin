@@ -822,7 +822,7 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
 
             f"Most candidates lead with tools. I lead with outcomes — because that is what determines whether analysis gets used or filed away.\n\n"
             f"At {co1}, I {ach1_fmt}. This is not a claim I make lightly — every number in that statement is verifiable. "
-            f"The work involved {', '.join(top_skills[:2])} expertise, but more importantly, it required understanding what would actually move the needle for the business. "
+            f"The work involved {top2} expertise, but more importantly, it required understanding what would actually move the needle for the business. "
             f"That combination of technical skill and business judgment is what I bring to every project.\n\n"
             + (f"My work at {co2} confirmed this approach: {ach2_fmt}. "
                f"Whether working with big datasets or messy spreadsheets, the principle is the same: "
