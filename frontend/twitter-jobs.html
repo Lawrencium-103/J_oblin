@@ -81,6 +81,7 @@
 
 <script src="app.js"></script>
 <script>
+if (!isAdmin()) { window.location.href = 'dashboard.html'; }
 let currentJobs = [];
 
 function escHtml(str) {
