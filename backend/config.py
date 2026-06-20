@@ -20,6 +20,8 @@ GENERATED_DIR = DATA_DIR / "generated"
 GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_NVIDIA_KEY = os.environ.get("JOBLIN_OPENROUTER_KEY", "")
+DEFAULT_GROQ_KEY = os.environ.get("JOBLIN_GROQ_KEY", "")
+DEFAULT_GEMINI_KEY = os.environ.get("JOBLIN_GEMINI_KEY", "")
 
 JWT_SECRET = os.environ.get("JOBLIN_JWT_SECRET", "joblin-dev-secret-change-in-production")
 JWT_ALGORITHM = "HS256"

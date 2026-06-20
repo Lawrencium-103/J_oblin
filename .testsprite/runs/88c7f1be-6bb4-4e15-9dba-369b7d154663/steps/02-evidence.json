@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 2,
+    "summary": "Step 2 'Expected the site branding to contain 'Joblin' in the header.' failed. Error: TEST BLOCKED\n\nThe test cannot proceed as scripted because the site navigation does not include a 'Login' link, which the test requires to continue via UI navigation. Observations:\n- The homepage loaded successfully and the hero section with 'STOP APPLYING BLIND. LET AI TARGET EVERY JOB' is visible.\n- The Featured / Matched jobs panel with job cards (e.g., Graduate Intern, Junior Data Analyst) is visible.\n- The top navigation shows 'How It Works', 'Results', 'About', and 'Register', but no 'Login' navigation link is present.\n\nBecause the explicit assertion 'Navigation links to Login, Register, About are present' is not satisfied (Login link missing), the task is blocked from proceeding exactly as specified. The login page may still exist at /login.html (can be reached directly), but the required navigation link is absent, so the test is marked blocked.",
+    "path": "steps/02-snapshot.html"
+  }
+]

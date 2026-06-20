@@ -77,47 +77,58 @@ def _call_groq(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
         return None
 
 
-def _call_nim(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
+FALLBACK_MODELS = [
+    "openrouter/free",
+    "meta-llama/llama-3.1-70b-instruct:free",
+    "microsoft/phi-4:free",
+]
+
+
+def _call_openrouter(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
     if not api_key:
         return None
-    for attempt in range(3):
-        try:
-            resp = _req.post(
-                "https://openrouter.ai/api/v1/chat/completions",
-                headers={
-                    "Authorization": f"Bearer {api_key}",
-                    "Content-Type": "application/json",
-                    "HTTP-Referer": "http://localhost:8002",
-                },
-                json={
-                    "model": "openrouter/free",
-                    "messages": [
-                        {"role": "system", "content": "You are a professional CV writer. Output only valid JSON."},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "max_tokens": max_tokens,
-                    "temperature": 0.7,
-                    "stream": False,
-                },
-                timeout=60,
-            )
-            raw = resp.text
+    for model in FALLBACK_MODELS:
+        for attempt in range(2):
             try:
-                data = json.loads(raw)
-            except json.JSONDecodeError:
-                print(f"[llm/nim] JSON parse error. status={resp.status_code}, raw={raw[:300]}")
-                return None
-            if "choices" not in data:
-                print(f"[llm/nim] unexpected response: {str(data)[:200]}")
-                return None
-            return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            if attempt < 2:
-                import time as _t
-                _t.sleep(2)
-                continue
-            print(f"[llm/nim] error ({attempt+1} attempts): {type(e).__name__}: {e}")
-            return None
+                resp = _req.post(
+                    "https://openrouter.ai/api/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {api_key}",
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "http://localhost:8002",
+                    },
+                    json={
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are a professional CV writer. Output only valid JSON."},
+                            {"role": "user", "content": prompt},
+                        ],
+                        "max_tokens": max_tokens,
+                        "temperature": 0.7,
+                        "stream": False,
+                    },
+                    timeout=60,
+                )
+                raw = resp.text
+                if resp.status_code != 200:
+                    print(f"[llm/openrouter] {model} returned {resp.status_code}, trying next model")
+                    break
+                try:
+                    data = json.loads(raw)
+                except json.JSONDecodeError:
+                    print(f"[llm/openrouter] {model} JSON parse error, trying next model")
+                    break
+                if "choices" not in data:
+                    print(f"[llm/openrouter] {model} unexpected response: {str(data)[:100]}, trying next model")
+                    break
+                return data["choices"][0]["message"]["content"]
+            except Exception as e:
+                if attempt < 1:
+                    import time as _t
+                    _t.sleep(2)
+                    continue
+                print(f"[llm/openrouter] {model} failed ({type(e).__name__}: {e}), trying next model")
+                break
     return None
 
 
@@ -166,15 +177,18 @@ def _call_gemma(prompt: str, api_key: str, max_tokens: int = 512) -> str | None:
 
 
 def _call_any(prompt: str, api_keys: dict, max_tokens: int = 512) -> str | None:
-    if not any(api_keys.values()):
+    has_any = any(v for v in api_keys.values())
+    if not has_any:
         print("[llm] No API keys available — will use rule-based fallback")
-    result = _call_nim(prompt, api_keys.get("nvidia", ""), max_tokens)
-    if result: return result
     result = _call_groq(prompt, api_keys.get("groq", ""), max_tokens)
+    if result: return result
+    result = _call_openrouter(prompt, api_keys.get("nvidia", ""), max_tokens)
     if result: return result
     result = _call_gemini(prompt, api_keys.get("gemini", ""), max_tokens)
     if result: return result
     result = _call_gemma(prompt, api_keys.get("gemini", ""), max_tokens)
+    if not result and has_any:
+        print("[llm] All providers failed -- falling back to rule-based")
     return result
 
 
@@ -537,9 +551,14 @@ def tailor_application(
     )
 
     raw = _call_any(prompt, api_keys, max_tokens=4000)
-    provider = "groq" if api_keys.get("groq") else "rule-based"
-    if raw and provider == "rule-based":
-        provider = "nim" if api_keys.get("nvidia") else "rule-based"
+    if raw and api_keys.get("groq"):
+        provider = "groq"
+    elif raw and api_keys.get("nvidia"):
+        provider = "openrouter"
+    elif raw and api_keys.get("gemini"):
+        provider = "gemini"
+    else:
+        provider = "rule-based"
 
     if raw:
         result = _parse_json(raw)
@@ -601,20 +620,46 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
         rng_seed = (rng_seed * 1103515245 + 12345) & 0x7fffffff
         return rng_seed
 
-    # Build grouped skills from taxonomy
+    # Build grouped skills from taxonomy — ensure at least 3 groups
     grouped = []
+    scored_groups = []
     for gname, ginfo in SKILL_TAXONOMY.items():
-        hits = [s for s in unique_top if any(kw in s for kw in ginfo["keywords"])]
-        if hits:
-            grouped.append({
-                "domain": gname,
-                "items": hits,
-                "description": _describe_group(gname, hits, rng()),
-            })
+        jd_hits = [s for s in unique_top if any(kw in s for kw in ginfo["keywords"])]
+        cv_hits = [s for s in flat if any(kw in s for kw in ginfo["keywords"])]
+        score = len(jd_hits) * 2 + len(cv_hits)
+        if jd_hits or cv_hits:
+            items = jd_hits[:6] if jd_hits else cv_hits[:6]
+            scored_groups.append((score, gname, items))
+    scored_groups.sort(key=lambda x: -x[0])
+    for _, gname, items in scored_groups:
+        grouped.append({
+            "domain": gname,
+            "items": items,
+            "description": _describe_group(gname, items, rng()),
+        })
+    # Fill to at least 3 groups with best-matching remaining taxonomy groups
+    if len(grouped) < 3:
+        fallback_order = [
+            "Data Analytics & Engineering", "BI & Visualization", "Database Management",
+            "Project Management & Methods", "Data Collection & M&E", "Cloud & Infrastructure",
+        ]
+        used = {g["domain"] for g in grouped}
+        for gname in fallback_order:
+            if len(grouped) >= 3:
+                break
+            if gname not in used:
+                ginfo = SKILL_TAXONOMY.get(gname, {})
+                kw = ginfo.get("keywords", [])
+                relevant = [w for w in flat if any(k in w for k in kw)][:6] or [kw[0]]
+                grouped.append({
+                    "domain": gname,
+                    "items": relevant[:6],
+                    "description": _describe_group(gname, relevant[:3], rng()),
+                })
     if not grouped:
         grouped.append({
             "domain": "Data & Analytics",
-            "items": unique_top[:6],
+            "items": unique_top[:6] or ["data", "analytics"],
             "description": [
                 "Built analytical pipelines turning raw data into decision-ready dashboards.",
                 "Designed ETL processes that cut reporting latency by 60% and improved data accuracy.",
@@ -726,7 +771,7 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
     for e in exp_raw:
         for a in (e.get("achievements", []) or []):
             if any(c.isdigit() for c in a):
-                best_achievement = a[:150]
+                best_achievement = a
                 break
         if best_achievement:
             break
@@ -736,29 +781,32 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
             return s
         return s[0].lower() + s[1:]
 
+    def _truncate_word_boundary(text, max_len=150):
+        if len(text) <= max_len:
+            return text
+        cut = text.rfind(" ", 0, max_len)
+        if cut > 80:
+            return text[:cut] + "..."
+        return text[:max_len-3] + "..."
+
     if best_achievement:
-        ba_mid = _cap_first(best_achievement).rstrip(".").strip()
-        if len(ba_mid) > 150:
-            cut = ba_mid.rfind(" ", 0, 150)
-            if cut > 80:
-                ba_mid = ba_mid[:cut] + "..."
+        ba_mid = _truncate_word_boundary(_cap_first(best_achievement).rstrip(".").strip())
         summary_templates = [
             f"{job_title} who {ba_mid}. "
-            f"That work draws on {top3} expertise and a consistent track record of delivering analysis "
-            f"that stakeholders actually use — not just reports that sit on shelves. "
+            f"That work draws on {top3} expertise and a track record of delivering analysis "
+            f"that stakeholders actually use. "
             f"Every project starts with the same discipline: understand the question, validate the data, "
-            f"then build the right methodology to answer it.",
+            f"then build the right method to answer it.",
 
-            f"For the {job_title} role being hired for, the relevant experience includes {ba_mid}. "
-            f"This sits on top of {rng() % 4 + 3} years working across {top3}, building dashboards, "
-            f"cleaning messy datasets, and designing reports that decision-makers trust enough to act on. "
+            f"{job_title} with a focus on turning data into decisions — {ba_mid}. "
+            f"This sits on top of {rng() % 4 + 3} years building dashboards, "
+            f"cleaning datasets, and designing reports that decision-makers trust enough to act on. "
             f"The thread through every project is the same: data only matters when it changes what people decide.",
 
-            f"At the core of this candidacy: {ba_mid}. "
+            f"Results-driven {job_title} who {ba_mid}. "
             f"That ability to move from raw data to decision-ready analysis is backed by "
             f"hands-on proficiency in {top3}. "
-            f"Every deliverable — whether a one-time deep-dive or a recurring dashboard — is built "
-            f"to answer a real question, not just to fill a template.",
+            f"Every deliverable is built to answer a real question, not just to fill a template.",
         ]
     else:
         summary_templates = [
@@ -782,12 +830,7 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
     # Helper to format achievement for mid-sentence use
     def _fmt_ach(ach_text):
         text = _cap_first(ach_text).strip(".").strip()
-        if len(text) > 150:
-            # Truncate at last space before 150
-            cut = text.rfind(" ", 0, 150)
-            if cut > 80:
-                text = text[:cut] + "..."
-        return text
+        return _truncate_word_boundary(text, 150)
 
     # Generate varied cover letter using candidate's actual experience
     if candidate_achievements:
@@ -801,35 +844,43 @@ def _rule_based(job_title, jd_kw, cv_skills, user_cv, company) -> dict:
             ach2_fmt = _fmt_ach(ach2["achievement"])
             co2 = ach2["company"]
         cover_templates = [
-            f"Your team is looking for a {job_title} who can deliver analysis that actually drives decisions — not just populate dashboards. That is exactly the work I have been doing.\n\n"
-            f"At {co1}, I led the effort to {ach1_fmt}. This was not a routine reporting task — it required understanding what the data actually meant for the business, cleaning and validating it, then presenting it in a way that prompted action. Every project I have taken on follows this pattern: start with the decision that needs to be made, work backward to the data needed, and build the analysis around that.\n\n"
-            + (f"Earlier, at {co2}, I {ach2_fmt}. "
-               f"Working across these different environments taught me that data skills are transferable, but context matters. "
-               f"You cannot produce useful analysis without understanding the problem you are solving.\n\n"
+            f"I have been following {company}'s work and was particularly drawn to this {job_title} role "
+            f"because of the emphasis on using data to drive operational decisions.\n\n"
+            f"At {co1}, {ach1_fmt}. This experience demonstrated that the most impactful analysis comes "
+            f"not from sophisticated tools alone, but from understanding the specific business question "
+            f"and designing the analysis around it.\n\n"
+            + (f"Previously at {co2}, {ach2_fmt}. "
+               f"Each environment has reinforced the same lesson: context shapes analysis, and "
+               f"the best insights come from knowing both the data and the decisions it needs to support.\n\n"
                if ach2_fmt and co2 else "")
-            + f"I bring hands-on proficiency in {top3}, but more importantly, I bring the discipline to use those tools in service of a real question. "
-            f"I would welcome the opportunity to discuss how my approach to analysis can contribute to the outcomes your team is working toward.",
+            + f"I bring hands-on experience with {top3}, applied consistently to deliver analysis that "
+            f"stakeholders trust and act on. I would welcome the opportunity to discuss how my "
+            f"experience aligns with the outcomes your team is targeting.",
 
-            f"Your {job_title} role caught my attention because the description focuses on impact, not just output — which mirrors how I have approached every data project in my career.\n\n"
-            f"At {co1}, I {ach1_fmt}. What made that work effective was not the tool or the technique — it was the clarity about who needed the information and what they would do with it. "
-            f"That focus on actionable insights has defined every dashboard, report, and analysis I have delivered.\n\n"
-            + (f"My earlier experience at {co2} reinforced this: {ach2_fmt}. "
-               f"Each role has sharpened my ability to translate messy real-world data into clear, decision-ready outputs.\n\n"
+            f"The {job_title} role at {company} stands out because the description focuses on impact — "
+            f"exactly how I have approached every data project in my career.\n\n"
+            f"At {co1}, {ach1_fmt}. What made this work effective was clarity about who needed the "
+            f"information and what they would do with it. That focus on actionable insights "
+            f"has defined every dashboard and report I have delivered.\n\n"
+            + (f"At {co2}, {ach2_fmt}. "
+               f"Each role has sharpened my ability to translate raw data into clear, "
+               f"decision-ready outputs that non-technical stakeholders can act on.\n\n"
                if ach2_fmt and co2 else "")
-            + f"Technically, my work spans {top3}. But the real skill I bring is the judgment to know which analysis is worth doing, "
-            f"how to validate the inputs, and how to present findings so they actually get used. "
-            f"I would welcome a conversation about how I can contribute to your team's objectives.",
+            + f"My technical toolkit includes {top3}, and I combine these with a focus on "
+            f"delivering work that informs real decisions — not just populating reports. "
+            f"I would welcome a conversation about how I can contribute to {company}'s objectives.",
 
-            f"Most candidates lead with tools. I lead with outcomes — because that is what determines whether analysis gets used or filed away.\n\n"
-            f"At {co1}, I {ach1_fmt}. This is not a claim I make lightly — every number in that statement is verifiable. "
-            f"The work involved {top2} expertise, but more importantly, it required understanding what would actually move the needle for the business. "
-            f"That combination of technical skill and business judgment is what I bring to every project.\n\n"
-            + (f"My work at {co2} confirmed this approach: {ach2_fmt}. "
-               f"Whether working with big datasets or messy spreadsheets, the principle is the same: "
-               f"start with the question, build the right method to answer it, and present the findings so they drive action.\n\n"
+            f"Your search for a {job_title} who can turn complex data into clear direction "
+            f"aligns directly with how I work.\n\n"
+            f"At {co1}, {ach1_fmt}. "
+            f"The work involved {top3}, but more importantly, it required understanding "
+            f"what would actually move the needle for the business.\n\n"
+            + (f"My experience at {co2} reinforced this approach: {ach2_fmt}. "
+               f"Whether working with large datasets or targeted analyses, the principle is the same: "
+               f"start with the question, build the right method, and present findings so they drive action.\n\n"
                if ach2_fmt and co2 else "")
-            + f"I would welcome the opportunity to discuss how my experience and approach can support the outcomes your team is working toward — "
-            f"and I am happy to share specific examples of the work described above.",
+            + f"I would welcome the opportunity to discuss how my experience and approach "
+            f"can support the outcomes your team is working toward.",
         ]
     else:
         cover_templates = [
@@ -917,86 +968,76 @@ def _generate_varied_bullets(desc: str, title: str, top_skills: list, rng_func=N
     else:
         rng = rng_func
 
-    metric_pools = {
-        "records": [(f"{v}+", u) for v in [5000, 10000, 25000, 50000, 75000, 100000] for u in ["records", "data points", "entries", "transactions"]],
-        "kpis": [(f"{v}+", u) for v in [8, 10, 15, 20, 25] for u in ["KPIs", "metrics", "indicators", "performance measures"]],
-        "reports": [(f"{v}+", u) for v in [5, 8, 10, 15, 20] for u in ["reports", "dashboards", "data products", "analytical outputs"]],
-        "teams": [(f"{v}+", u) for v in [3, 5, 7, 10, 12] for u in ["cross-functional teams", "stakeholder groups", "departments", "business units"]],
-        "accuracy": [(f"{v}%", u) for v in [95, 97, 98, 99] for u in ["accuracy", "completeness", "data integrity", "quality scores"]],
-        "time": [(f"{v}x", u) for v in [2, 3, 4] for u in ["faster turnaround", "quicker reporting cycles", "speed improvements"]] + [
-                 (f"reduced by {v}%", u) for v in [20, 25, 30, 35, 40, 50] for u in ["processing time", "report generation time", "manual effort"]],
-    }
+    skill_str = ", ".join(top_skills[:3]) if top_skills else "data tools"
+    role_lower = title.lower() if title else ""
 
-    metric_categories = list(metric_pools.keys())
+    noun_pool = ["reports", "datasets", "dashboards", "workflows", "data pipelines", "analytical outputs"]
+    team_pool = ["colleagues", "team members", "stakeholders", "cross-functional partners"]
+    impact_pool = ["reporting turnaround", "data access", "decision-making speed", "team productivity"]
 
-    def pick_metric(category):
-        pool = metric_pools[category]
-        return pool[rng() % len(pool)]
+    def pick(items):
+        return items[rng() % len(items)]
 
-    verb_pool = ["Extracted", "Cleaned", "Transformed", "Analysed", "Processed", "Validated",
-                 "Reconciled", "Consolidated", "Standardised", "Reviewed", "Audited", "Compiled"]
-    build_verbs = ["Built", "Designed", "Developed", "Created", "Deployed", "Launched", "Implemented", "Automated"]
-    collab_verbs = ["Partnered with", "Collaborated with", "Worked with", "Coordinated with", "Advised"]
-    impact_verbs = ["Improved", "Reduced", "Increased", "Streamlined", "Optimised", "Accelerated", "Enhanced"]
+    def rng_range(lo, hi):
+        return rng() % (hi - lo + 1) + lo
 
     bullets = []
 
-    # Bullet 1: Data extraction/processing
-    rec_val, rec_unit = pick_metric("records")
-    skill_str = ", ".join(top_skills[:2])
-    verb1 = verb_pool[rng() % len(verb_pool)]
+    is_data = any(kw in role_lower for kw in ["data", "analyst", "analytics", "bi", "business intelligence"])
+    is_dev = any(kw in role_lower for kw in ["developer", "engineer", "programmer", "software"])
+    is_me = any(kw in role_lower for kw in ["monitoring", "evaluation", "m&e", "meal"])
+    is_finance = any(kw in role_lower for kw in ["finance", "accounting", "audit"])
+
+    if is_data or is_dev:
+        bullets.append(
+            f"Used {skill_str} to extract, clean, and analyse data from multiple sources, "
+            f"producing {pick(noun_pool)} that supported day-to-day decision-making."
+        )
+    elif is_me:
+        bullets.append(
+            f"Applied {skill_str} to collect, validate, and report programme data, "
+            f"ensuring timely submission of {pick(noun_pool)} to stakeholders."
+        )
+    elif is_finance:
+        bullets.append(
+            f"Used {skill_str} to process and reconcile financial data, "
+            f"supporting accurate reporting and analysis."
+        )
+    else:
+        bullets.append(
+            f"Used {skill_str} to compile, clean, and present data from day-to-day operations, "
+            f"delivering {pick(noun_pool)} that informed team decisions."
+        )
+
     bullets.append(
-        f"{verb1} and transformed {rec_val} {rec_unit} from multiple sources using {skill_str}, "
-        f"supporting data-driven decision-making across the organisation."
+        f"Built and maintained {pick(noun_pool)} that tracked key metrics, "
+        f"enabling {pick(team_pool)} to monitor progress and identify issues early."
     )
 
-    # Bullet 2: Quality / cleaning
-    acc_val, acc_unit = pick_metric("accuracy")
-    verb2 = verb_pool[rng() % len(verb_pool)]
+    col_team = pick(team_pool)
     bullets.append(
-        f"{verb2} {rng() % 15 + 10}+ datasets and improved {acc_unit} to {acc_val} through "
-        f"standardised validation processes and data quality checks."
+        f"Worked with {col_team} to gather requirements, clarify data needs, "
+        f"and deliver analysis that addressed specific business questions."
     )
 
-    # Bullet 3: Reports/dashboards
-    rep_val, rep_unit = pick_metric("reports")
-    verb3 = build_verbs[rng() % len(build_verbs)]
     bullets.append(
-        f"{verb3} {rep_val} {rep_unit} for leadership and programme teams, "
-        f"enabling faster access to critical metrics."
+        f"Documented data processes and prepared guides, "
+        f"helping newer {pick(team_pool)} get started with standard tools and workflows."
     )
 
-    # Bullet 4: Collaboration
-    team_val, team_unit = pick_metric("teams")
-    verb4 = collab_verbs[rng() % len(collab_verbs)]
+    impact_area = pick(impact_pool)
     bullets.append(
-        f"{verb4} {team_val} {team_unit} to define data requirements and translate business needs "
-        f"into analytical deliverables."
+        f"Contributed to improved {impact_area} by streamlining how data was collected, "
+        f"validated, and shared across the team."
     )
 
-    # Bullet 5: Time impact
-    time_val, time_unit = pick_metric("time")
-    verb5 = impact_verbs[rng() % len(impact_verbs)]
-    bullets.append(
-        f"{verb5} {time_val} {time_unit} by introducing automated workflows and template-driven reporting."
-    )
+    if desc and len(desc) > 30:
+        clip = desc[:150].rstrip(".").strip()
+        bullets.append(
+            f"Supported ongoing projects by maintaining accurate records and "
+            f"ensuring data quality in line with {clip[:120]}."
+        )
 
-    # Bullet 6: Training / capacity building
-    verb6 = verb_pool[rng() % len(verb_pool)]
-    bullets.append(
-        f"{verb6} and documented data processes, training {rng() % 6 + 3} team members "
-        f"on best practices for data entry, validation, and reporting."
-    )
-
-    # Bullet 7: Stakeholder impact
-    kpi_val, kpi_unit = pick_metric("kpis")
-    verb7 = impact_verbs[rng() % len(impact_verbs)]
-    bullets.append(
-        f"Tracked and reported {kpi_val} {kpi_unit} monthly, helping leadership "
-        f"identify trends and reallocate resources for maximum impact."
-    )
-
-    # Shuffle to avoid same-order on every CV
     shuffled = list(bullets)
     for i in range(len(shuffled) - 1, 0, -1):
         j = rng() % (i + 1)
@@ -1262,11 +1303,14 @@ def make_cv_from_scratch(
     )
 
     raw = _call_any(prompt, api_keys, max_tokens=3000)
-    provider = "rule-based"
-    if raw:
-        provider = "groq" if api_keys.get("groq") else "gemini"
-        if provider == "gemini" and api_keys.get("nvidia"):
-            provider = "nim"
+    if raw and api_keys.get("groq"):
+        provider = "groq"
+    elif raw and api_keys.get("nvidia"):
+        provider = "openrouter"
+    elif raw and api_keys.get("gemini"):
+        provider = "gemini"
+    else:
+        provider = "rule-based"
 
     if raw:
         result = _parse_json(raw)

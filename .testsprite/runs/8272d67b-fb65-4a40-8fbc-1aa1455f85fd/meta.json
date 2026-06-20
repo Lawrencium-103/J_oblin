@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "cli-v1",
+  "snapshotId": "snap_e98477df52e3e960",
+  "testId": "5a93bda1-6d16-4627-aa50-e88d3ea26903",
+  "projectId": "2ca113ca-50e4-4327-bb69-243cd6f75e0c",
+  "codeVersion": "v1",
+  "runIdIfAvailable": "8272d67b-fb65-4a40-8fbc-1aa1455f85fd",
+  "targetUrl": "https://joblin-hx5a.onrender.com/",
+  "failedStepIndex": 2,
+  "failureKind": null,
+  "capturedAt": "2026-06-19T10:21:05.939Z",
+  "fetchedAt": "2026-06-19T10:36:32.232Z"
+}

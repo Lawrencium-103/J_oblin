@@ -1,0 +1,20 @@
+{
+  "testId": "588030f0-0e47-48be-b34c-bf3f9e7f525e",
+  "status": "blocked",
+  "startedAt": "2026-06-19T10:01:45.795Z",
+  "finishedAt": "2026-06-19T10:02:59.358Z",
+  "videoUrl": "https://testsprite-videos.s3.us-east-1.amazonaws.com/94e8f4e8-c0d1-7024-639f-a5c97551f3fb/1781863379099265//tmp/cdee914c-6b3d-4cbe-a6f1-c00d740cd228/result.webm",
+  "failureAnalysisUrl": null,
+  "snapshotId": "snap_9efddb6ad2f3f372",
+  "runIdIfAvailable": "88c7f1be-6bb4-4e15-9dba-369b7d154663",
+  "codeVersion": "v1",
+  "targetUrl": "https://joblin-hx5a.onrender.com/",
+  "targetUrlSource": "run",
+  "failedStepIndex": 2,
+  "failureKind": null,
+  "summary": {
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  }
+}

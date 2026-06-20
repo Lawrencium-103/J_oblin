@@ -289,9 +289,13 @@ async function downloadFile(type) {
     const token = getToken();
     const r = await fetch(`${API}/api/download/${jobId}/${type}`, { headers: { Authorization: `Bearer ${token}` } });
     if (!r.ok) { showToast("Download failed", "error"); return; }
+    const disp = r.headers.get("Content-Disposition") || "";
+    const match = disp.match(/filename\*?=(?:UTF-8'')?["']?([^"'\s;]+)/i);
     const blob = await r.blob();
     const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = `${type}.docx`; a.click();
+    a.href = URL.createObjectURL(blob);
+    a.download = match ? match[1] : `${type}.docx`;
+    a.click();
     URL.revokeObjectURL(a.href);
   } catch (err) { showToast(err.message, "error"); }
 }

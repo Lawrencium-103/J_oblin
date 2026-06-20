@@ -1,0 +1,8 @@
+[
+  {
+    "kind": "snapshot",
+    "stepIndex": 1,
+    "summary": "Step 1 'Navigate to https://joblin-hx5a.onrender.com/' passed.",
+    "path": "steps/01-snapshot.html"
+  }
+]

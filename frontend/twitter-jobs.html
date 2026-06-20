@@ -46,6 +46,7 @@
 </nav>
 <div class="sidebar-footer">
 <div class="sidebar-user"><div class="user-avatar" id="avatarInitial">U</div><div class="user-details"><span class="user-name" id="user-name"></span><span class="user-email" id="user-email"></span></div></div>
+<button class="logout-btn" id="adminToggle" onclick="toggleAdminMode()" style="display:none"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span id="adminToggleLabel">Admin View</span></button>
 <button class="logout-btn" onclick="logout()"><span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg></span><span>Sign Out</span></button>
 </div>
 </aside>
@@ -115,10 +116,14 @@ async function loadJobs() {
     if (catFilter) filtered = filtered.filter(j => j.job_category === catFilter);
     filtered = filtered.filter(j => !isJunkJob(j));
     const selected = filtered.slice(0, count);
-    generateTweet(selected);
+    if (selected.length === 0) {
+      box.value = 'No recent jobs found.\n\nThis page shows jobs scraped from job boards. If no jobs appear:\n1. The system may still be scraping — check back later\n2. An admin can trigger a fresh scrape from the Dashboard\n3. Try a different category filter';
+    } else {
+      generateTweet(selected);
+    }
     populateCategories(currentJobs);
   } catch (e) {
-    box.value = 'Error loading jobs: ' + e.message;
+    box.value = 'Error: ' + e.message + '\n\nThe Twitter Posts page needs the job database. If the server just started, jobs may not be loaded yet.';
   }
 }
 

@@ -1,6 +1,6 @@
 import time
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from backend.config import PUBLIC_BOARDS, CRON_QUERIES
 from backend.database import save_global_jobs, deactivate_old_jobs, get_global_stats
@@ -110,61 +110,3 @@ def run_nightly_scrape() -> dict:
     return result
 
 
-def setup_scheduler(app):
-    try:
-        import fcntl
-    except ImportError:
-        fcntl = None
-
-    # File lock: only one uvicorn worker starts the scheduler
-    if fcntl:
-        try:
-            lock_fd = open("/tmp/scheduler.lock", "w")
-            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
-            return None
-    else:
-        lock_fd = None
-
-    try:
-        from apscheduler.schedulers.background import BackgroundScheduler
-        from apscheduler.triggers.cron import CronTrigger
-
-        scheduler = BackgroundScheduler()
-        scheduler._lock_fd = lock_fd  # keep ref alive so the lock isn't released
-
-        # Run at 6:00 AM daily
-        scheduler.add_job(
-            run_nightly_scrape,
-            CronTrigger(hour=6, minute=0),
-            id="morning_scrape",
-            replace_existing=True,
-        )
-
-        # Run at 3:00 PM daily
-        scheduler.add_job(
-            run_nightly_scrape,
-            CronTrigger(hour=15, minute=0),
-            id="afternoon_scrape",
-            replace_existing=True,
-        )
-
-        # Also run once on startup (after 60s delay — lets the server warm up)
-        scheduler.add_job(
-            run_nightly_scrape,
-            trigger="date",
-            run_date=datetime.now() + timedelta(seconds=60),
-            id="startup_scrape",
-            replace_existing=True,
-            max_instances=1,
-        )
-
-        scheduler.start()
-        print("[cron] Scheduler started. Scrapes at 6:00 AM and 3:00 PM daily.")
-        return scheduler
-    except ImportError:
-        print("[cron] APScheduler not installed. Install with: pip install apscheduler")
-        return None
-    except Exception as e:
-        print(f"[cron] Failed to start scheduler: {e}")
-        return None

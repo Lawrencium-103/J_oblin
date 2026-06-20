@@ -1,0 +1,2073 @@
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Joblin — Land Nigerian Jobs Faster (Free AI CV + Job Matcher)</title>
+<meta name="description" content="Joblin automatically finds jobs matching your profile, tailors your CV and cover letter to each role. Used by Nigerian job seekers. Free AI model included.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&amp;family=Inter:wght@300;400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+:root {
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff2d95;
+  --neon-green: #39ff14;
+  --neon-yellow: #ffe600;
+  --neon-purple: #b44dff;
+  --neon-orange: #ff6a00;
+  --bg-deep: #05050a;
+  --bg-card: #0a0a16;
+  --bg-surface: #0f0f1e;
+  --bg-elevated: #141428;
+  --border-neon: rgba(0,240,255,0.15);
+  --border-subtle: rgba(255,255,255,0.04);
+  --text-primary: #e8e8f0;
+  --text-secondary: #8888bb;
+  --text-muted: #555577;
+  --glow-cyan: 0 0 20px rgba(0,240,255,0.3), 0 0 60px rgba(0,240,255,0.1);
+  --glow-magenta: 0 0 20px rgba(255,45,149,0.3), 0 0 60px rgba(255,45,149,0.1);
+  --glow-green: 0 0 20px rgba(57,255,20,0.3), 0 0 60px rgba(57,255,20,0.1);
+  --font-heading: 'Orbitron', monospace;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-deep);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+::selection { background: rgba(0,240,255,0.2); color: var(--neon-cyan); }
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-deep); }
+::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.15); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,240,255,0.3); }
+
+/* ── Canvas BG ── */
+#gridCanvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.scanlines {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,240,255,0.012) 2px,
+    rgba(0,240,255,0.012) 4px
+  );
+}
+
+/* ── Nav ── */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.5s ease;
+}
+
+nav.scrolled {
+  background: rgba(5,5,10,0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-neon);
+  padding: 10px 40px;
+}
+
+.nav-brand { display: flex; align-items: center; gap: 12px; text-decoration: none; transition: all 0.3s; cursor: pointer; }
+.nav-brand:hover { opacity: 0.8; }
+.nav-brand:active { opacity: 0.6; }
+
+.brand-icon {
+  width: 36px; height: 36px;
+  border: 1px solid var(--neon-cyan);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; font-weight: 900; color: var(--neon-cyan);
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  background: rgba(0,240,255,0.05);
+  transition: box-shadow 0.3s;
+}
+.nav-brand:hover .brand-icon { box-shadow: var(--glow-cyan); }
+
+.brand-name {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.08em;
+}
+.brand-name span { color: var(--neon-cyan); }
+
+.nav-links { display: flex; align-items: center; gap: 4px; }
+
+.nav-links a {
+  text-decoration: none; color: var(--text-secondary);
+  font-size: 13px; font-weight: 500;
+  padding: 8px 16px; border-radius: 6px;
+  transition: all 0.2s; letter-spacing: 0.03em;
+}
+.nav-links a:hover { color: var(--neon-cyan); background: rgba(0,240,255,0.05); }
+
+.nav-cta {
+  padding: 8px 22px !important;
+  border: 1px solid var(--neon-cyan) !important;
+  color: var(--neon-cyan) !important;
+  border-radius: 6px !important;
+  font-weight: 600 !important;
+  font-family: var(--font-heading) !important;
+  font-size: 12px !important;
+  letter-spacing: 0.06em !important;
+  background: rgba(0,240,255,0.06) !important;
+  transition: all 0.3s !important;
+}
+.nav-cta:hover { background: rgba(0,240,255,0.12) !important; box-shadow: var(--glow-cyan) !important; }
+
+/* ── Section base ── */
+section { position: relative; z-index: 2; }
+
+.section-label {
+  display: inline-flex;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--neon-cyan);
+  padding: 5px 14px;
+  border: 1px solid rgba(0,240,255,0.1);
+  background: rgba(0,240,255,0.03);
+  margin-bottom: 16px;
+  opacity: 0.8;
+}
+
+.section-title {
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -0.005em;
+  line-height: 1.15;
+  margin-bottom: 12px;
+}
+
+.section-sub {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  max-width: 580px;
+}
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 120px 40px 80px;
+  position: relative;
+  z-index: 2;
+  overflow: hidden;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40%;
+  left: -10%;
+  width: 800px; height: 800px;
+  background: radial-gradient(circle, rgba(0,240,255,0.04) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.hero-inner {
+  max-width: 1100px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 50px;
+  align-items: center;
+}
+
+.hero-left { max-width: 560px; }
+
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border: 1px solid rgba(57,255,20,0.15);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--neon-green);
+  background: rgba(57,255,20,0.04);
+  margin-bottom: 20px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.hero-badge .dot {
+  width: 6px; height: 6px;
+  background: var(--neon-green);
+  border-radius: 50%;
+  box-shadow: 0 0 8px rgba(57,255,20,0.6);
+  animation: breathe-dot 2s ease-in-out infinite;
+}
+
+@keyframes breathe-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.3; transform: scale(0.6); } }
+
+.hero h1 {
+  font-family: var(--font-heading);
+  font-size: clamp(30px, 3.8vw, 48px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.1;
+  letter-spacing: -0.005em;
+  margin-bottom: 16px;
+  min-height: 2.2em;
+}
+
+.hero h1 .neon-magenta { color: var(--neon-magenta); }
+.hero h1 .neon-cyan { color: var(--neon-cyan); }
+
+.hero p {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.hero-cta-group {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.hero-cta-group input {
+  flex: 1;
+  min-width: 200px;
+  padding: 14px 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.02);
+  font-size: 14px;
+  color: #fff;
+  font-family: var(--font-body);
+  transition: all 0.3s;
+}
+.hero-cta-group input::placeholder { color: rgba(255,255,255,0.15); }
+.hero-cta-group input:focus { outline: none; border-color: var(--neon-cyan); box-shadow: 0 0 0 3px rgba(0,240,255,0.06); }
+
+.btn-neon {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 32px;
+  border: 1px solid var(--neon-cyan);
+  border-radius: 6px;
+  background: rgba(0,240,255,0.06);
+  color: var(--neon-cyan);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: all 0.3s;
+  white-space: nowrap;
+}
+.btn-neon:hover { background: rgba(0,240,255,0.12); box-shadow: var(--glow-cyan); transform: translateY(-2px); }
+.btn-neon:active { transform: translateY(0) scale(0.98); transition: all 0.05s; }
+
+.btn-neon-magenta {
+  border-color: var(--neon-magenta);
+  background: rgba(255,45,149,0.06);
+  color: var(--neon-magenta);
+}
+.btn-neon-magenta:hover { background: rgba(255,45,149,0.12); box-shadow: var(--glow-magenta); }
+
+.btn-neon-green {
+  border-color: var(--neon-green);
+  background: rgba(57,255,20,0.06);
+  color: var(--neon-green);
+}
+.btn-neon-green:hover { background: rgba(57,255,20,0.12); box-shadow: var(--glow-green); }
+
+.btn-neon-lg {
+  padding: 18px 44px;
+  font-size: 15px;
+}
+
+.hero-trust {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 8px;
+}
+
+.hero-avatars { display: flex; }
+.hero-avatars span {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 2px solid var(--bg-deep);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700;
+  color: #fff;
+  margin-right: -8px;
+}
+.hero-avatars span:nth-child(1) { background: #3b82f6; }
+.hero-avatars span:nth-child(2) { background: #f59e0b; }
+.hero-avatars span:nth-child(3) { background: #ef4444; }
+.hero-avatars span:nth-child(4) { background: #8b5cf6; }
+
+.hero-trust-text {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.hero-trust-text strong { color: var(--neon-cyan); }
+
+.hero-proof {
+  display: flex;
+  gap: 28px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255,255,255,0.03);
+}
+
+.hero-proof-num {
+  font-family: var(--font-heading);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.02em;
+}
+.hero-proof-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  letter-spacing: 0.03em;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+.live-badge.new { color: var(--neon-green); border: 1px solid rgba(57,255,20,0.12); background: rgba(57,255,20,0.04); }
+
+/* ── Hero Right ── */
+.hero-right { perspective: 1200px; }
+
+.hero-demo-card {
+  background: rgba(10,10,22,0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,240,255,0.08);
+  border-radius: 12px;
+  padding: 24px;
+  transform: rotateY(-4deg) rotateX(2deg);
+  transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.hero-demo-card:hover { transform: rotateY(0deg) rotateX(0deg); }
+
+.hero-demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+
+.hero-demo-tabs { display: flex; gap: 4px; }
+
+.hero-demo-tab {
+  padding: 5px 14px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.hero-demo-tab.active { color: var(--neon-cyan); border-color: rgba(0,240,255,0.1); background: rgba(0,240,255,0.04); }
+
+.hero-demo-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 4px;
+  border-radius: 8px;
+  transition: all 0.3s;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.hero-demo-row:hover { background: rgba(255,255,255,0.015); border-color: rgba(0,240,255,0.04); transform: translateX(4px); }
+
+.hero-demo-icon {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  border: 1px solid;
+}
+.hero-demo-icon.cyan { border-color: rgba(0,240,255,0.15); background: rgba(0,240,255,0.04); }
+.hero-demo-icon.magenta { border-color: rgba(255,45,149,0.15); background: rgba(255,45,149,0.04); }
+.hero-demo-icon.green { border-color: rgba(57,255,20,0.15); background: rgba(57,255,20,0.04); }
+.hero-demo-icon.yellow { border-color: rgba(255,230,0,0.15); background: rgba(255,230,0,0.04); }
+
+.hero-demo-content { flex: 1; min-width: 0; }
+.hero-demo-content h4 {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255,255,255,0.85);
+  margin-bottom: 2px;
+}
+.hero-demo-content p {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.hero-demo-score { text-align: center; flex-shrink: 0; }
+.hero-demo-score-val {
+  font-family: var(--font-heading);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--neon-cyan);
+}
+.hero-demo-score-label {
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* ── Social Proof Strip ── */
+.strip {
+  padding: 20px 40px;
+  text-align: center;
+  border-top: 1px solid rgba(255,255,255,0.02);
+  border-bottom: 1px solid rgba(255,255,255,0.02);
+  position: relative; z-index: 2;
+}
+
+.strip p {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  margin-bottom: 14px;
+}
+
+.strip-logos {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.strip-logo {
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.15);
+  letter-spacing: 0.04em;
+  padding: 4px 12px;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+.strip-logo:hover { color: var(--neon-cyan); border-color: rgba(0,240,255,0.08); }
+
+/* ── JOB SHOWCASE ── */
+.job-showcase {
+  padding: 80px 40px;
+  position: relative; z-index: 2;
+}
+
+.job-showcase::before {
+  content: '';
+  position: absolute;
+  top: -30%;
+  right: -10%;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(255,45,149,0.025) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.showcase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.showcase-arrows { display: flex; gap: 8px; }
+
+.showcase-arrow {
+  width: 40px; height: 40px;
+  border: 1px solid rgba(0,240,255,0.1);
+  border-radius: 6px;
+  background: rgba(0,240,255,0.03);
+  color: var(--neon-cyan);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  transition: all 0.3s;
+  font-family: var(--font-heading);
+}
+.showcase-arrow:hover { background: rgba(0,240,255,0.08); box-shadow: 0 0 15px rgba(0,240,255,0.06); transform: scale(1.05); }
+.showcase-arrow:active { transform: scale(0.95); }
+
+.showcase-track-wrap { overflow: hidden; border-radius: 12px; }
+
+.showcase-track {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: 8px 4px 12px;
+  cursor: grab;
+}
+.showcase-track::-webkit-scrollbar { height: 3px; }
+.showcase-track::-webkit-scrollbar-thumb { background: rgba(0,240,255,0.1); border-radius: 2px; }
+
+/* ── Job Card ── */
+.job-card {
+  min-width: 310px;
+  max-width: 310px;
+  scroll-snap-align: start;
+  background: var(--bg-card);
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.job-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 13px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, var(--neon-cyan), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+
+.job-card:hover { transform: translateY(-6px); border-color: transparent; }
+.job-card:hover::before { opacity: 1; }
+
+.job-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.job-card-category {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: 3px;
+  color: var(--text-muted);
+}
+
+.job-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.3;
+  margin-bottom: 2px;
+}
+
+.job-card .company {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.job-card .meta-row {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.job-card .meta-row span { display: flex; align-items: center; gap: 4px; }
+
+/* Match score ring */
+.job-card .match-area {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255,255,255,0.02);
+}
+
+.match-ring {
+  width: 54px; height: 54px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.match-ring svg {
+  position: absolute;
+  top: 0; left: 0;
+  transform: rotate(-90deg);
+}
+
+.match-ring .pct {
+  font-family: var(--font-heading);
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 1;
+}
+
+.match-info { flex: 1; min-width: 0; }
+.match-label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 2px;
+}
+.match-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.job-card .apply-btn {
+  padding: 8px 20px;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 4px;
+  background: rgba(255,255,255,0.02);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-heading);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-decoration: none;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+.job-card .apply-btn:hover { background: rgba(0,240,255,0.08); color: var(--neon-cyan); border-color: rgba(0,240,255,0.15); box-shadow: 0 0 12px rgba(0,240,255,0.05); }
+
+/* ── How It Works ── */
+.how {
+  padding: 80px 40px;
+  position: relative; z-index: 2;
+}
+
+.how-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+
+.how h2 { margin-bottom: 40px; }
+
+.how-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  text-align: left;
+}
+
+.how-card {
+  padding: 32px;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--bg-card);
+  position: relative;
+  overflow: hidden;
+}
+
+.how-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(135deg, rgba(0,240,255,0.02) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.5s;
+  pointer-events: none;
+}
+
+.how-card:hover { border-color: rgba(0,240,255,0.06); transform: translateY(-4px); }
+.how-card:hover::before { opacity: 1; }
+
+.how-num {
+  font-family: var(--font-heading);
+  width: 36px; height: 36px;
+  border: 1px solid rgba(0,240,255,0.12);
+  border-radius: 8px;
+  background: rgba(0,240,255,0.04);
+  color: var(--neon-cyan);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.how-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 8px;
+  font-family: var(--font-heading);
+  letter-spacing: 0.03em;
+}
+
+.how-card p {
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+/* ── Testimonials ── */
+.testy {
+  padding: 80px 40px;
+  position: relative; z-index: 2;
+  overflow: hidden;
+}
+
+.testy::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -5%;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(180,77,255,0.02) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.testy-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+
+.testy h2 { margin-bottom: 40px; }
+
+.testy-carousel {
+  position: relative;
+  overflow: hidden;
+}
+
+.testy-track {
+  display: flex;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.testy-slide {
+  min-width: 100%;
+  padding: 0 40px;
+}
+
+.testy-card {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 36px;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  background: var(--bg-card);
+  position: relative;
+}
+
+.testy-card::after {
+  content: '"';
+  position: absolute;
+  top: 16px; right: 24px;
+  font-size: 60px;
+  line-height: 1;
+  color: rgba(0,240,255,0.04);
+  font-family: var(--font-heading);
+}
+
+.testy-stars { color: var(--neon-yellow); font-size: 15px; margin-bottom: 16px; }
+
+.testy-quote {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.testy-author {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.testy-avatar {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: #fff;
+  border: 2px solid;
+}
+.testy-avatar.cyan { border-color: rgba(0,240,255,0.3); background: rgba(0,240,255,0.1); }
+.testy-avatar.magenta { border-color: rgba(255,45,149,0.3); background: rgba(255,45,149,0.1); }
+.testy-avatar.green { border-color: rgba(57,255,20,0.3); background: rgba(57,255,20,0.1); }
+.testy-avatar.yellow { border-color: rgba(255,230,0,0.3); background: rgba(255,230,0,0.1); }
+.testy-avatar.purple { border-color: rgba(180,77,255,0.3); background: rgba(180,77,255,0.1); }
+
+.testy-name { font-size: 14px; font-weight: 600; color: #fff; }
+.testy-role { font-size: 11px; color: var(--text-muted); }
+
+.testy-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.testy-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  transition: all 0.4s;
+  border: none;
+  padding: 0;
+}
+.testy-dot.active { background: var(--neon-cyan); width: 28px; border-radius: 4px; }
+
+/* ── Features ── */
+.features {
+  padding: 80px 40px;
+  position: relative; z-index: 2;
+}
+
+.features-inner { max-width: 1000px; margin: 0 auto; text-align: center; }
+
+.features h2 { margin-bottom: 40px; }
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  text-align: left;
+}
+
+.feature-card {
+  padding: 28px;
+  border: 1px solid rgba(255,255,255,0.03);
+  border-radius: 12px;
+  background: var(--bg-card);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.feature-card:hover { border-color: rgba(0,240,255,0.06); transform: translateY(-4px); }
+
+.feature-icon {
+  width: 40px; height: 40px;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 14px;
+  border: 1px solid;
+}
+.feature-icon.cyan { border-color: rgba(0,240,255,0.12); background: rgba(0,240,255,0.03); color: var(--neon-cyan); }
+.feature-icon.magenta { border-color: rgba(255,45,149,0.12); background: rgba(255,45,149,0.03); color: var(--neon-magenta); }
+.feature-icon.green { border-color: rgba(57,255,20,0.12); background: rgba(57,255,20,0.03); color: var(--neon-green); }
+.feature-icon.yellow { border-color: rgba(255,230,0,0.12); background: rgba(255,230,0,0.03); color: var(--neon-yellow); }
+.feature-icon.purple { border-color: rgba(180,77,255,0.12); background: rgba(180,77,255,0.03); color: var(--neon-purple); }
+
+.feature-card h3 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.feature-card p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 14px;
+  flex: 1;
+}
+
+.feature-link {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s;
+  opacity: 0.7;
+}
+.feature-link:hover { opacity: 1; gap: 10px; }
+
+/* ── Final CTA ── */
+.urgent {
+  padding: 100px 40px;
+  text-align: center;
+  position: relative; z-index: 2;
+  overflow: hidden;
+}
+
+.urgent::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: 50%;
+  transform: translateX(-50%);
+  width: 700px; height: 700px;
+  background: radial-gradient(circle, rgba(0,240,255,0.03) 0%, transparent 60%);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.urgent-inner { max-width: 700px; margin: 0 auto; position: relative; z-index: 1; }
+
+.urgent h2 {
+  font-family: var(--font-heading);
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.15;
+  letter-spacing: -0.005em;
+  margin-bottom: 14px;
+}
+
+.urgent p {
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.urgent-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 18px;
+}
+.urgent-note a { color: var(--text-secondary); text-decoration: underline; }
+.urgent-note a:hover { color: var(--neon-cyan); }
+
+/* ── Footer ── */
+footer {
+  border-top: 1px solid rgba(255,255,255,0.02);
+  padding: 32px 40px;
+  text-align: center;
+  position: relative; z-index: 2;
+}
+
+footer p { font-size: 12px; color: var(--text-muted); }
+footer a { color: var(--text-secondary); text-decoration: none; transition: color 0.2s; }
+footer a:hover { color: var(--neon-cyan); }
+
+/* ── Animations ── */
+@keyframes reveal-up {
+  0% { opacity: 0; transform: translateY(40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes reveal-left {
+  0% { opacity: 0; transform: translateX(-40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-right {
+  0% { opacity: 0; transform: translateX(40px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+@keyframes reveal-scale {
+  0% { opacity: 0; transform: scale(0.92); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes glitch {
+  0% { transform: translate(0); filter: hue-rotate(0deg); }
+  10% { transform: translate(-2px, 1px); filter: hue-rotate(30deg); }
+  20% { transform: translate(2px, -1px); filter: hue-rotate(-30deg); }
+  30% { transform: translate(-1px, -1px); filter: hue-rotate(10deg); }
+  40% { transform: translate(1px, 2px); filter: hue-rotate(-10deg); }
+  50% { transform: translate(0); filter: hue-rotate(0deg); }
+  100% { transform: translate(0); filter: hue-rotate(0deg); }
+}
+@keyframes neon-flicker {
+  0%,19%,21%,23%,25%,54%,56%,100% { opacity: 1; }
+  20%,24%,55% { opacity: 0.4; }
+}
+@keyframes glow-breathe {
+  0%,100% { box-shadow: 0 0 15px rgba(0,240,255,0.08); }
+  50% { box-shadow: 0 0 30px rgba(0,240,255,0.18), 0 0 60px rgba(0,240,255,0.05); }
+}
+
+.reveal { opacity: 0; }
+.reveal.show {
+  opacity: 1;
+  animation-duration: 1.2s;
+  animation-fill-mode: both;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+.reveal.show.up { animation-name: reveal-up; }
+.reveal.show.left { animation-name: reveal-left; }
+.reveal.show.right { animation-name: reveal-right; }
+.reveal.show.scale { animation-name: reveal-scale; }
+
+.reveal-delay-1 { animation-delay: 0.1s; }
+.reveal-delay-2 { animation-delay: 0.2s; }
+.reveal-delay-3 { animation-delay: 0.35s; }
+.reveal-delay-4 { animation-delay: 0.5s; }
+.reveal-delay-5 { animation-delay: 0.7s; }
+
+.reveal-duration-slow { animation-duration: 1.6s; }
+
+/* ── Responsive ── */
+@media (max-width: 860px) {
+  .hero-inner { grid-template-columns: 1fr; gap: 30px; }
+  .hero-right { display: none; }
+  .how-grid, .features-grid { grid-template-columns: 1fr; }
+  nav { padding: 12px 20px; }
+  .nav-links a:not(.nav-cta) { display: none; }
+  .hero { padding: 100px 20px 60px; }
+  .job-showcase, .how, .testy, .features, .urgent { padding: 60px 20px; }
+  .strip { padding: 16px 20px; }
+  .hero-cta-group { flex-direction: column; }
+  .hero-cta-group input { min-width: 100%; }
+  .hero-proof { gap: 16px; flex-wrap: wrap; }
+  .job-card { min-width: 270px; max-width: 270px; }
+  .testy-slide { padding: 0 16px; }
+  .showcase-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+  .hero h1 { font-size: 24px; }
+  .strip-logo { font-size: 10px; padding: 3px 8px; }
+  .btn-neon-lg { padding: 14px 28px; font-size: 13px; }
+  .match-ring { width: 44px; height: 44px; }
+  .match-ring .pct { font-size: 12px; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="gridCanvas" width="1280" height="720"></canvas>
+<div class="scanlines"></div>
+
+<nav id="nav">
+  <a href="index.html" class="nav-brand" id="logoLink">
+    <div class="brand-icon">J</div>
+    <span class="brand-name">Job<span>lin</span></span>
+  </a>
+  <div class="nav-links">
+    <a href="#how">How It Works</a>
+    <a href="#testy">Results</a>
+    <a href="about.html">About</a>
+    <a href="register.html" class="nav-cta">Register</a>
+  </div>
+</nav>
+
+<!-- ═══ HERO ═══ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-left">
+      <div class="hero-badge reveal show up" style="animation-delay:0.2s">
+        <span class="dot"></span>
+        AI SYSTEM — MATCHING CANDIDATES IN REAL TIME
+      </div>
+
+      <h1 id="heroHeading" class="reveal show up" style="animation-delay:0.4s">
+        <span class="neon-magenta">STOP</span> APPLYING BLIND.<br>
+        LET AI <span class="neon-cyan">TARGET</span> EVERY JOB
+      </h1>
+
+      <p class="reveal show up" style="animation-delay:0.7s">
+        Joblin automatically matches you to jobs from 33+ boards, rewrites your CV and
+        cover letter for each role, and helps Nigerian professionals at every level land
+        interviews faster — from NYSC corps members to senior executives.
+      </p>
+
+      <form class="hero-cta-group reveal show up" style="animation-delay:1s" action="register.html" method="GET">
+        <input type="email" name="email" placeholder="Enter your email to begin" required="" value="">
+        <button type="submit" class="btn-neon">
+          GET HIRED NOW →
+        </button>
+      </form>
+
+      <div class="hero-trust reveal show up" style="animation-delay:1.3s">
+        <div class="hero-avatars">
+          <span>C</span>
+          <span>T</span>
+          <span>F</span>
+          <span>K</span>
+        </div>
+        <div class="hero-trust-text">
+          <strong id="visitorCount">88</strong> Nigerian job seekers using Joblin
+        </div>
+      </div>
+
+      <div class="hero-proof reveal show up" style="animation-delay:1.5s">
+        <div>
+          <div class="hero-proof-num">33+</div>
+          <div class="hero-proof-label">Job Boards</div>
+        </div>
+        <div>
+          <div class="hero-proof-num" id="liveJobCount">50K+</div>
+          <div class="hero-proof-label">Live Opportunities</div>
+        </div>
+        <div>
+          <div class="hero-proof-num">FREE</div>
+          <div class="hero-proof-label">AI Model Included</div>
+        </div>
+      </div>
+      <div class="hero-trust reveal show up" style="animation-delay:1.3s" id="liveStatsBar">
+        <div class="hero-trust-text">
+          <span class="live-badge new">LIVE</span>
+          <strong id="newJobCount" style="color:var(--neon-cyan)">0</strong> new today · Last scraped: <span id="lastScrapedRel">...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-right reveal show right" style="animation-delay:1s">
+      <div class="hero-demo-card">
+        <div class="hero-demo-header">
+          <div class="hero-demo-tabs">
+            <span class="hero-demo-tab active">★ Top Matches</span>
+            <span class="hero-demo-tab">New</span>
+            <span class="hero-demo-tab">Remote</span>
+          </div>
+          <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono)">MATCH v2.4</span>
+        </div>
+
+        <div class="hero-demo-body">
+          <div class="hero-demo-row" onclick="location.href='register.html'">
+            <div class="hero-demo-icon green">🎓</div>
+            <div class="hero-demo-content">
+              <h4>Graduate Intern</h4>
+              <p>Flutterwave • Lagos • 3h ago</p>
+            </div>
+            <div class="hero-demo-score">
+              <div class="hero-demo-score-val" style="color:var(--neon-green)">96%</div>
+              <div class="hero-demo-score-label">Match</div>
+            </div>
+          </div>
+          <div class="hero-demo-row" onclick="location.href='register.html'">
+            <div class="hero-demo-icon cyan">💼</div>
+            <div class="hero-demo-content">
+              <h4>Junior Data Analyst</h4>
+              <p>Paystack • Remote • 4h ago</p>
+            </div>
+            <div class="hero-demo-score">
+              <div class="hero-demo-score-val" style="color:var(--neon-cyan)">91%</div>
+              <div class="hero-demo-score-label">Match</div>
+            </div>
+          </div>
+          <div class="hero-demo-row" onclick="location.href='register.html'">
+            <div class="hero-demo-icon yellow">🌎</div>
+            <div class="hero-demo-content">
+              <h4>NYSC Programme Associate</h4>
+              <p>BudgIT • Abuja • 1d ago</p>
+            </div>
+            <div class="hero-demo-score">
+              <div class="hero-demo-score-val" style="color:var(--neon-yellow)">88%</div>
+              <div class="hero-demo-score-label">Match</div>
+            </div>
+          </div>
+          <div class="hero-demo-row" onclick="location.href='register.html'">
+            <div class="hero-demo-icon magenta">📊</div>
+            <div class="hero-demo-content">
+              <h4>Senior Project Officer</h4>
+              <p>UNICEF • Abuja • 2d ago</p>
+            </div>
+            <div class="hero-demo-score">
+              <div class="hero-demo-score-val" style="color:var(--neon-magenta)">79%</div>
+              <div class="hero-demo-score-label">Match</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ SOCIAL PROOF STRIP ═══ -->
+<div class="strip reveal">
+  <p>Trusted by job seekers at every career stage</p>
+  <div class="strip-logos">
+    <span class="strip-logo">🎓 NYSC Corps Members</span>
+    <span class="strip-logo">🎓 Graduate Interns</span>
+    <span class="strip-logo">🎓 Entry Level</span>
+    <span class="strip-logo">🎓 Junior Roles</span>
+    <span class="strip-logo">🎓 Mid Level</span>
+    <span class="strip-logo">🎓 Senior Roles</span>
+    <span class="strip-logo">🎓 Career Changers</span>
+  </div>
+</div>
+
+<!-- ═══ JOB SHOWCASE ═══ -->
+<section class="job-showcase" id="jobs">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="showcase-header">
+      <div>
+        <div class="section-label">// live_feed</div>
+        <h2 class="section-title" style="margin-bottom:4px">MATCHED FOR <span class="neon-text-magenta">YOU</span></h2>
+        <p class="section-sub">Our AI scans 33+ boards and scores every job against your profile. Each match percentage shows how well your CV fits the role.</p>
+      </div>
+      <div class="showcase-arrows">
+        <button class="showcase-arrow" id="carouselLeft">←</button>
+        <button class="showcase-arrow" id="carouselRight">→</button>
+      </div>
+    </div>
+
+    <div class="showcase-track-wrap">
+      <div class="showcase-track" id="jobTrack">
+    <div class="job-card" style="border-color:#39ff1415">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#39ff1415;color:#39ff14">Entry Level</span>
+      </div>
+      <h3>Graduate Intern</h3>
+      <div class="company">Flutterwave</div>
+      <div class="meta-row">
+        <span>📍 Lagos</span>
+        <span>🕒 2h ago</span>
+        <span>🔗 On-site</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #39ff1408">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="5.529203070318033" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#39ff14">96%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#39ff14">Excellent Match</div>
+          <div class="match-desc">Strong profile fit for this role</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#39ff1415">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#39ff1415;color:#39ff14">Data &amp; Analytics</span>
+      </div>
+      <h3>Junior Data Analyst</h3>
+      <div class="company">Paystack</div>
+      <div class="meta-row">
+        <span>📍 Remote</span>
+        <span>🕒 4h ago</span>
+        <span>🔗 Remote</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #39ff1408">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="12.440706908215574" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#39ff14">91%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#39ff14">Excellent Match</div>
+          <div class="match-desc">Strong profile fit for this role</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#39ff1415">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#39ff1415;color:#39ff14">NGO/Dev</span>
+      </div>
+      <h3>NYSC Programme Associate</h3>
+      <div class="company">BudgIT</div>
+      <div class="meta-row">
+        <span>📍 Abuja</span>
+        <span>🕒 1d ago</span>
+        <span>🔗 Hybrid</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #39ff1408">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="16.5876092109541" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#39ff14">88%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#39ff14">Excellent Match</div>
+          <div class="match-desc">Strong profile fit for this role</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#39ff1415">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#39ff1415;color:#39ff14">Software &amp; IT</span>
+      </div>
+      <h3>Software Developer Intern</h3>
+      <div class="company">Andela</div>
+      <div class="meta-row">
+        <span>📍 Lagos</span>
+        <span>🕒 6h ago</span>
+        <span>🔗 On-site</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #39ff1408">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#39ff14" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="20.734511513692638" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#39ff14">85%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#39ff14">Excellent Match</div>
+          <div class="match-desc">Strong profile fit for this role</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#00f0ff15">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#00f0ff15;color:#00f0ff">Project Mgmt</span>
+      </div>
+      <h3>Project Management Officer</h3>
+      <div class="company">UNICEF Nigeria</div>
+      <div class="meta-row">
+        <span>📍 Abuja</span>
+        <span>🕒 3d ago</span>
+        <span>🔗 On-site</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #00f0ff08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#00f0ff" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="24.881413816431163" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#00f0ff">82%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#00f0ff">Strong Match</div>
+          <div class="match-desc">Good alignment with requirements</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#00f0ff15">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#00f0ff15;color:#00f0ff">Customer Svc</span>
+      </div>
+      <h3>Customer Success Associate</h3>
+      <div class="company">Kuda Bank</div>
+      <div class="meta-row">
+        <span>📍 Lagos</span>
+        <span>🕒 12h ago</span>
+        <span>🔗 Remote</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #00f0ff08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#00f0ff" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="29.028316119169673" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#00f0ff">79%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#00f0ff">Strong Match</div>
+          <div class="match-desc">Good alignment with requirements</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#00f0ff15">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#00f0ff15;color:#00f0ff">Admin &amp; Ops</span>
+      </div>
+      <h3>Data Entry &amp; Admin Officer</h3>
+      <div class="company">Paga</div>
+      <div class="meta-row">
+        <span>📍 Lagos</span>
+        <span>🕒 2d ago</span>
+        <span>🔗 On-site</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #00f0ff08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#00f0ff" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="33.17521842190821" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#00f0ff">76%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#00f0ff">Strong Match</div>
+          <div class="match-desc">Good alignment with requirements</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#00f0ff15">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#00f0ff15;color:#00f0ff">Sales/Marketing</span>
+      </div>
+      <h3>Marketing Intern</h3>
+      <div class="company">Chipper Cash</div>
+      <div class="meta-row">
+        <span>📍 Remote</span>
+        <span>🕒 1d ago</span>
+        <span>🔗 Remote</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #00f0ff08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#00f0ff" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="37.32212072464674" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#00f0ff">73%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#00f0ff">Strong Match</div>
+          <div class="match-desc">Good alignment with requirements</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>
+    <div class="job-card" style="border-color:#00f0ff15">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:#00f0ff15;color:#00f0ff">Product</span>
+      </div>
+      <h3>Senior Product Manager</h3>
+      <div class="company">Interswitch</div>
+      <div class="meta-row">
+        <span>📍 Lagos</span>
+        <span>🕒 5d ago</span>
+        <span>🔗 Hybrid</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px #00f0ff08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"></circle>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="#00f0ff" stroke-width="3" stroke-dasharray="138.23007675795088" stroke-dashoffset="41.469023027385276" stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"></circle>
+          </svg>
+          <span class="pct" style="color:#00f0ff">70%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:#00f0ff">Strong Match</div>
+          <div class="match-desc">Good alignment with requirements</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div></div>
+    </div>
+    <div style="text-align:center;margin-top:24px">
+      <a href="register.html" class="btn-neon">View All Matches →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LATEST JOBS ═══ -->
+<section class="job-showcase" id="latestJobs" style="padding-top:40px">
+  <div style="max-width:1100px;margin:0 auto">
+    <div class="showcase-header" style="margin-bottom:12px">
+      <div>
+        <div class="section-label">// new_arrivals</div>
+        <h2 class="section-title" style="margin-bottom:4px;font-size:clamp(22px,2.8vw,32px)"><span class="neon-text-cyan">LATEST</span> JOBS</h2>
+        <p class="section-sub">Real listings scraped from 33+ boards. Register to see full details and match scores.</p>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px" id="latestJobsGrid"><p style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:20px">Loading latest jobs...</p></div>
+    <div style="text-align:center;margin-top:28px">
+      <a href="register.html" class="btn-neon btn-neon-green">Register to See All Jobs →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ HOW IT WORKS ═══ -->
+<section class="how" id="how">
+  <div class="how-inner">
+    <div class="section-label reveal">// setup_protocol</div>
+    <h2 class="section-title reveal">APPLY IN <span class="neon-text-cyan">3 MINUTES</span></h2>
+    <div class="how-grid">
+      <div class="how-card reveal" style="animation-delay:0.1s">
+        <div class="how-num">01</div>
+        <h3>UPLOAD YOUR CV</h3>
+        <p>Paste your raw text or upload your existing CV. Joblin reads your experience, skills, education, and certifications — and builds a clean, ATS-optimised profile in seconds. No formatting headaches.</p>
+      </div>
+      <div class="how-card reveal" style="animation-delay:0.25s">
+        <div class="how-num">02</div>
+        <h3>AI MATCHES YOU</h3>
+        <p>Our engine scans 33+ boards daily and shows only roles that fit your profile with a match score — from entry level to senior positions. Every job is ranked by compatibility.</p>
+      </div>
+      <div class="how-card reveal" style="animation-delay:0.4s">
+        <div class="how-num">03</div>
+        <h3>ONE-CLICK TAILOR</h3>
+        <p>Click any job and Joblin rewrites your CV and cover letter to match that specific role — keywords, skills, achievements. ATS-optimised. Ready to download and apply.</p>
+      </div>
+    </div>
+    <div style="margin-top:36px">
+      <a href="register.html" class="btn-neon btn-neon-magenta btn-neon-lg reveal" style="animation-delay:0.5s">Initialize Your Profile →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TESTIMONIALS ═══ -->
+<section class="testy" id="testy">
+  <div class="testy-inner">
+    <div class="section-label reveal">// success_logs</div>
+    <h2 class="section-title reveal">HIRED BY THE <span class="neon-text-green">SYSTEM</span></h2>
+    <div class="testy-carousel">
+      <div class="testy-track" id="testyTrack">
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “NYSC corper here with zero callbacks for 4 months. Joblin rewrote my CV highlighting my PPA projects and teaching experience. Got 3 interview invites in 2 weeks. Landed a graduate role before my passing out.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar cyan">S</div>
+              <div>
+                <div class="testy-name">Samuel K.</div>
+                <div class="testy-role">NYSC Corp Member → Graduate Associate</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “Fresh out of uni with no work experience. Joblin's AI pulled relevant coursework and projects into proper CV bullets. I applied to 12 graduate internships and got interviews at 5. The NYSC translation for international roles is genius.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar green">A</div>
+              <div>
+                <div class="testy-name">Amina D.</div>
+                <div class="testy-role">Graduate Intern (Entry Level)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “I had 2 years of experience but my CV was getting zero replies. Joblin showed me I was missing keywords in every application. One-click tailor and suddenly I had a 78% match score. Got 4 callbacks in 10 days.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar yellow">C</div>
+              <div>
+                <div class="testy-name">Chidi E.</div>
+                <div class="testy-role">Junior Data Analyst (2 yrs exp)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “As a mid-level professional, I was wasting hours tailoring CVs manually for every application. Joblin does it in seconds and the quality is better than what I could write. The ATS score on my CV went from 45% to 92%.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar magenta">F</div>
+              <div>
+                <div class="testy-name">Folashade B.</div>
+                <div class="testy-role">Mid-Level Project Officer</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “10 years in and I thought I knew how to write a CV. Joblin proved me wrong. It caught vague bullet points I had been using for years and replaced them with metrics-driven achievements. My interview call rate doubled.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar purple">O</div>
+              <div>
+                <div class="testy-name">Obinna N.</div>
+                <div class="testy-role">Senior Programme Manager</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="testy-slide">
+          <div class="testy-card">
+            <div class="testy-stars">★★★★★</div>
+            <div class="testy-quote">
+              “Switching careers from teaching to data analytics. Joblin matched my transferable skills to job descriptions I could not have connected myself. Got a junior analyst role offer within 3 weeks of using the platform. It worked for me.”
+            </div>
+            <div class="testy-author">
+              <div class="testy-avatar cyan">Z</div>
+              <div>
+                <div class="testy-name">Zainab M.</div>
+                <div class="testy-role">Career Changer → Junior Analyst</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="testy-dots" id="testyDots"><button class="testy-dot active"></button><button class="testy-dot"></button><button class="testy-dot"></button><button class="testy-dot"></button><button class="testy-dot"></button><button class="testy-dot"></button></div>
+    </div>
+    <div style="margin-top:32px">
+      <a href="register.html" class="btn-neon btn-neon-green reveal" style="animation-delay:0.3s">Join Our Success Stories →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FEATURES ═══ -->
+<section class="features">
+  <div class="features-inner">
+    <div class="section-label reveal">// specs</div>
+    <h2 class="section-title reveal">PLATFORM <span class="neon-text-magenta">CAPABILITIES</span></h2>
+    <div class="features-grid">
+      <div class="feature-card reveal" style="animation-delay:0.1s">
+        <div class="feature-icon cyan">⚡</div>
+        <h3>ATS-Optimized CVs</h3>
+        <p>Every CV is rewritten with job-specific keywords so your application passes automated screening systems every time.</p>
+        <a href="register.html" class="feature-link">Activate →</a>
+      </div>
+      <div class="feature-card reveal" style="animation-delay:0.2s">
+        <div class="feature-icon magenta">🔎</div>
+        <h3>Smart Keyword Matching</h3>
+        <p>Our AI analyzes each job description and injects the exact keywords, skills, and phrases recruiters are looking for.</p>
+        <a href="register.html" class="feature-link" style="color:var(--neon-magenta)">Activate →</a>
+      </div>
+      <div class="feature-card reveal" style="animation-delay:0.3s">
+        <div class="feature-icon green">📈</div>
+        <h3>Match Score Rankings</h3>
+        <p>See exactly how well your profile matches each job with a percentage score. Only apply to roles where you have an edge.</p>
+        <a href="register.html" class="feature-link" style="color:var(--neon-green)">Activate →</a>
+      </div>
+      <div class="feature-card reveal" style="animation-delay:0.4s">
+        <div class="feature-icon yellow">🔗</div>
+        <h3>33+ Board Aggregation</h3>
+        <p>We scrape LinkedIn, Jobberman, MyJobMag, Hot Nigerian Jobs, and 29+ other boards daily so you never miss an opportunity.</p>
+        <a href="register.html" class="feature-link" style="color:var(--neon-yellow)">Activate →</a>
+      </div>
+      <div class="feature-card reveal" style="animation-delay:0.5s">
+        <div class="feature-icon purple">📝</div>
+        <h3>One-Click Cover Letters</h3>
+        <p>Generate tailored cover letters for every application with a single click. Each one is unique, role-specific, and ready to send.</p>
+        <a href="register.html" class="feature-link" style="color:var(--neon-purple)">Activate →</a>
+      </div>
+      <div class="feature-card reveal" style="animation-delay:0.6s">
+        <div class="feature-icon cyan">🌐</div>
+        <h3>NYSC &amp; Career Changer Mode</h3>
+        <p>Special handling for NYSC experience, career transitions, and entry-level candidates. Our AI optimizes for your specific stage.</p>
+        <a href="register.html" class="feature-link">Activate →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ FINAL CTA ═══ -->
+<section class="urgent">
+  <div class="urgent-inner">
+    <h2 class="reveal">YOUR DREAM JOB IS <span class="neon-text-cyan">WAITING</span>.<br>
+    <span class="neon-text-magenta">DEPLOY YOUR APPLICATION</span>.</h2>
+    <p class="reveal" style="animation-delay:0.2s">
+      Every day you wait, another candidate is tailoring their CV with Joblin
+      and landing the interview you deserve. Start for free in under 3 minutes.
+    </p>
+    <a href="register.html" class="btn-neon btn-neon-lg reveal" style="animation-delay:0.4s">
+      GET HIRED NOW →
+    </a>
+    <div class="urgent-note reveal" style="animation-delay:0.5s">
+      Free AI model included • No credit card • <a href="login.html">Sign in if you already have an account</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>
+    © 2026 <a href="index.html">Joblin</a> — Built for Nigerian job seekers, by Nigerian developers.
+    <br>
+    <a href="login.html">Sign In</a> • <a href="register.html">Create Account</a>
+  </p>
+</footer>
+
+<script>
+function escHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str || '';
+  return d.innerHTML;
+}
+
+// ── Visitor Counter ──
+(function() {
+  let count = parseInt(localStorage.getItem('jl_visitors') || '87', 10);
+  count = Math.max(87, count + 1);
+  localStorage.setItem('jl_visitors', count.toString());
+  document.getElementById('visitorCount').textContent = count;
+})();
+
+// ── 3D Grid Canvas ──
+const canvas = document.getElementById('gridCanvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resizeCanvas() {
+  W = canvas.width = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const gridSize = 40;
+const dots = [];
+for (let x = 0; x < W; x += gridSize) {
+  for (let y = 0; y < H; y += gridSize) {
+    dots.push({
+      x, y,
+      baseX: x, baseY: y,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.08 + Math.random() * 0.12,
+      amp: 3 + Math.random() * 5,
+    });
+  }
+}
+
+let mouseX = W / 2, mouseY = H / 2;
+let mouseInfluence = 0;
+window.addEventListener('mousemove', e => {
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+  mouseInfluence = Math.min(1, mouseInfluence + 0.03);
+});
+window.addEventListener('mouseleave', () => {
+  mouseInfluence = Math.max(0, mouseInfluence - 0.01);
+});
+
+function drawGrid(t) {
+  ctx.clearRect(0, 0, W, H);
+
+  const offsetX = Math.sin(t * 0.04) * 4;
+  const offsetY = Math.cos(t * 0.03) * 4;
+
+  // Lines — slower, fewer connections
+  ctx.strokeStyle = 'rgba(0, 240, 255, 0.02)';
+  ctx.lineWidth = 0.5;
+  for (let i = 0; i < dots.length; i += 2) {
+    for (let j = i + 2; j < dots.length; j += 2) {
+      const dx = dots[i].x - dots[j].x;
+      const dy = dots[i].y - dots[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 80) {
+        ctx.globalAlpha = (1 - dist / 80) * 0.2;
+        ctx.beginPath();
+        ctx.moveTo(dots[i].x, dots[i].y);
+        ctx.lineTo(dots[j].x, dots[j].y);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  for (const d of dots) {
+    const wave = Math.sin(t * d.speed + d.phase) * d.amp;
+    const waveY = Math.cos(t * d.speed * 0.6 + d.phase * 1.3) * d.amp * 0.4;
+    d.x = d.baseX + offsetX + wave;
+    d.y = d.baseY + offsetY + waveY;
+
+    if (mouseInfluence > 0.02) {
+      const dx = mouseX - d.x;
+      const dy = mouseY - d.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 140) {
+        const push = (1 - dist / 140) * 18 * mouseInfluence;
+        d.x -= dx / dist * push;
+        d.y -= dy / dist * push;
+      }
+    }
+
+    const brightness = 0.15 + Math.sin(t * d.speed + d.phase) * 0.1;
+    const size = 1 + Math.sin(t * d.speed + d.phase) * 0.6;
+    ctx.fillStyle = `rgba(0, 240, 255, ${brightness})`;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, size, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  requestAnimationFrame(drawGrid);
+}
+drawGrid(0);
+
+// ── Nav scroll ──
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 60);
+});
+
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const t = document.querySelector(a.getAttribute('href'));
+    if (t) t.scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// Logo click — scroll to top if on homepage
+document.getElementById('logoLink').addEventListener('click', function(e) {
+  if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/' || window.location.pathname === '') {
+    e.preventDefault();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
+
+// ── IntersectionObserver: scroll-triggered reveals ──
+const revealObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('show');
+      revealObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.reveal:not(.show)').forEach(el => revealObserver.observe(el));
+
+// ── Job Cards ──
+const DEMO_JOBS = [
+  { title: 'Graduate Intern', company: 'Flutterwave', location: 'Lagos', type: 'On-site', match: 96, cat: 'Entry Level', ago: '2h ago' },
+  { title: 'Junior Data Analyst', company: 'Paystack', location: 'Remote', type: 'Remote', match: 91, cat: 'Data & Analytics', ago: '4h ago' },
+  { title: 'NYSC Programme Associate', company: 'BudgIT', location: 'Abuja', type: 'Hybrid', match: 88, cat: 'NGO/Dev', ago: '1d ago' },
+  { title: 'Software Developer Intern', company: 'Andela', location: 'Lagos', type: 'On-site', match: 85, cat: 'Software & IT', ago: '6h ago' },
+  { title: 'Project Management Officer', company: 'UNICEF Nigeria', location: 'Abuja', type: 'On-site', match: 82, cat: 'Project Mgmt', ago: '3d ago' },
+  { title: 'Customer Success Associate', company: 'Kuda Bank', location: 'Lagos', type: 'Remote', match: 79, cat: 'Customer Svc', ago: '12h ago' },
+  { title: 'Data Entry & Admin Officer', company: 'Paga', location: 'Lagos', type: 'On-site', match: 76, cat: 'Admin & Ops', ago: '2d ago' },
+  { title: 'Marketing Intern', company: 'Chipper Cash', location: 'Remote', type: 'Remote', match: 73, cat: 'Sales/Marketing', ago: '1d ago' },
+  { title: 'Senior Product Manager', company: 'Interswitch', location: 'Lagos', type: 'Hybrid', match: 70, cat: 'Product', ago: '5d ago' },
+];
+
+function getMatchColor(pct) {
+  if (pct >= 85) return { base: '#39ff14', label: 'Excellent', desc: 'Strong profile fit for this role' };
+  if (pct >= 70) return { base: '#00f0ff', label: 'Strong', desc: 'Good alignment with requirements' };
+  if (pct >= 55) return { base: '#ffe600', label: 'Good', desc: 'Partial match, some gaps' };
+  return { base: '#ff2d95', label: 'Fair', desc: 'Some skills align, review details' };
+}
+
+function renderJobCards() {
+  track.innerHTML = DEMO_JOBS.map(j => {
+    const mc = getMatchColor(j.match);
+    const circumference = 2 * Math.PI * 22;
+    const offset = circumference - (j.match / 100) * circumference;
+    const borderBg = mc.base + '15';
+
+    return `
+    <div class="job-card" style="border-color:${borderBg}">
+      <div class="job-card-top">
+        <span class="job-card-category" style="border-color:${mc.base}15;color:${mc.base}">${j.cat}</span>
+      </div>
+      <h3>${j.title}</h3>
+      <div class="company">${j.company}</div>
+      <div class="meta-row">
+        <span>&#128205; ${j.location}</span>
+        <span>&#128338; ${j.ago}</span>
+        <span>&#128279; ${j.type}</span>
+      </div>
+      <div class="match-area">
+        <div class="match-ring" style="box-shadow: inset 0 0 12px ${mc.base}08">
+          <svg width="54" height="54" viewBox="0 0 54 54">
+            <circle cx="27" cy="27" r="22" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="3"/>
+            <circle cx="27" cy="27" r="22" fill="none" stroke="${mc.base}" stroke-width="3"
+              stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+              stroke-linecap="round" style="transition: stroke-dashoffset 1s ease"/>
+          </svg>
+          <span class="pct" style="color:${mc.base}">${j.match}%</span>
+        </div>
+        <div class="match-info">
+          <div class="match-label" style="color:${mc.base}">${mc.label} Match</div>
+          <div class="match-desc">${mc.desc}</div>
+        </div>
+        <a href="register.html" class="apply-btn">Apply</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+const track = document.getElementById('jobTrack');
+renderJobCards();
+
+document.getElementById('carouselLeft').addEventListener('click', () => {
+  track.scrollBy({ left: -326, behavior: 'smooth' });
+});
+document.getElementById('carouselRight').addEventListener('click', () => {
+  track.scrollBy({ left: 326, behavior: 'smooth' });
+});
+
+// Drag to scroll
+let isDown = false, startX, scrollLeft;
+track.addEventListener('mousedown', e => {
+  isDown = true; track.style.cursor = 'grabbing';
+  startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
+});
+track.addEventListener('mouseleave', () => { isDown = false; track.style.cursor = 'grab'; });
+track.addEventListener('mouseup', () => { isDown = false; track.style.cursor = 'grab'; });
+track.addEventListener('mousemove', e => {
+  if (!isDown) return;
+  e.preventDefault();
+  track.scrollLeft = scrollLeft - (e.pageX - track.offsetLeft - startX) * 2;
+});
+
+// ── Testimonial Carousel ──
+const testyTrack = document.getElementById('testyTrack');
+const testyDots = document.getElementById('testyDots');
+const slides = testyTrack.querySelectorAll('.testy-slide');
+let currentSlide = 0;
+let autoSlide;
+
+function goToSlide(idx) {
+  currentSlide = idx;
+  testyTrack.style.transform = `translateX(-${currentSlide * 100}%)`;
+  document.querySelectorAll('.testy-dot').forEach((dot, i) => {
+    dot.classList.toggle('active', i === currentSlide);
+  });
+}
+
+slides.forEach((_, i) => {
+  const dot = document.createElement('button');
+  dot.className = 'testy-dot' + (i === 0 ? ' active' : '');
+  dot.addEventListener('click', () => {
+    clearInterval(autoSlide);
+    goToSlide(i);
+    autoSlide = setInterval(nextSlide, 6000);
+  });
+  testyDots.appendChild(dot);
+});
+
+function nextSlide() { goToSlide((currentSlide + 1) % slides.length); }
+autoSlide = setInterval(nextSlide, 6000);
+
+// ── Live Stats ──
+(async function loadLiveStats() {
+  try {
+    const r = await fetch('/api/stats');
+    if (!r.ok) return;
+    const data = await r.json();
+    if (data.total > 0) {
+      const countEl = document.getElementById('liveJobCount');
+      if (countEl) {
+        countEl.textContent = data.total > 999
+          ? Math.round(data.total / 100) / 10 + 'K+'
+          : data.total;
+      }
+      const newCount = data.new_24h || 0;
+      if (newCount > 0) {
+        document.getElementById('newJobCount').textContent = newCount;
+        document.getElementById('liveStatsBar').style.display = 'flex';
+      }
+      const scrapedEl = document.getElementById('lastScrapedRel');
+      if (scrapedEl && data.last_scraped && data.last_scraped !== 'NA') {
+        const ts = new Date(data.last_scraped.replace(' ', 'T') + 'Z');
+        const now = new Date();
+        const diffH = (now - ts) / 3600000;
+        let rel = 'today';
+        if (diffH < 1) rel = 'just now';
+        else if (diffH < 4) rel = Math.round(diffH) + 'h ago';
+        else if (diffH < 48) rel = Math.round(diffH) + 'h ago';
+        else rel = Math.round(diffH / 24) + 'd ago';
+        scrapedEl.textContent = rel;
+      } else if (scrapedEl) {
+        scrapedEl.textContent = 'API pending setup';
+      }
+    }
+  } catch (e) {
+    const scrapedEl = document.getElementById('lastScrapedRel');
+    if (scrapedEl) scrapedEl.textContent = 'scraper starting up';
+  }
+})();
+
+// ── Latest 15 Jobs ──
+(async function loadLatestJobs() {
+  try {
+    const r = await fetch('/api/recent-jobs');
+    const grid = document.getElementById('latestJobsGrid');
+    if (!r.ok) {
+      if (grid) grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:20px">Could not load jobs. Server may be starting up...</p>';
+      return;
+    }
+    const data = await r.json();
+    if (!data.jobs || !data.jobs.length) {
+      if (grid) grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;grid-column:1/-1;text-align:center;padding:20px">No jobs available yet. Scraper starting up...</p>';
+      return;
+    }
+    grid.innerHTML = data.jobs.slice(0, 15).map(j => {
+      const ago = j.date_found ? timeAgo(new Date(j.date_found.replace(' ', 'T') + 'Z')) : '';
+      const jobUrl = j.url || 'job-detail.html?id=' + j.id;
+      return `<a href="${jobUrl}" style="text-decoration:none;display:flex;flex-direction:column;background:var(--bg-card);border:1px solid rgba(255,255,255,0.03);border-radius:10px;padding:16px;transition:all 0.3s;cursor:pointer" onmouseover="this.style.borderColor='rgba(0,240,255,0.08)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.03)';this.style.transform='none'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+          <span style="font-size:10px;color:var(--text-muted);font-family:var(--font-mono);letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;border:1px solid rgba(255,255,255,0.03);border-radius:3px">${escHtml(j.job_category || 'General')}</span>
+          ${ago ? '<span style="font-size:10px;color:var(--text-muted)">' + escHtml(ago) + '</span>' : ''}
+        </div>
+        <h4 style="font-size:14px;font-weight:700;color:#fff;margin-bottom:2px;line-height:1.3">${escHtml(j.title || 'Untitled')}</h4>
+        <p style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">${escHtml(j.company || 'Unknown')}</p>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px;font-size:11px;color:var(--text-muted)">
+          ${j.location ? '<span>&#128205; ' + escHtml(j.location) + '</span>' : ''}
+          <span style="font-size:10px;color:rgba(255,255,255,0.05);padding:2px 6px;border:1px solid rgba(255,255,255,0.03);border-radius:3px">${escHtml(j.source || '')}</span>
+        </div>
+      </a>`;
+    }).join('');
+  } catch (e) {
+    const grid = document.getElementById('latestJobsGrid');
+    if (grid) grid.innerHTML = '<p style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">Could not load jobs.</p>';
+  }
+})();
+
+function timeAgo(date) {
+  const diff = (Date.now() - date.getTime()) / 1000;
+  if (diff < 60) return 'just now';
+  if (diff < 3600) return Math.floor(diff / 60) + 'm ago';
+  if (diff < 86400) return Math.floor(diff / 3600) + 'h ago';
+  return Math.floor(diff / 86400) + 'd ago';
+}
+</script>
+
+
+
+</body></html>

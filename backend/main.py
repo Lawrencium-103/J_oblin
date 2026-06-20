@@ -29,15 +29,18 @@ from backend.cv_quality import score_cv_quality
 from backend.docx_generator import generate_cv_docx, generate_cover_docx, generate_cv_pdf, generate_cover_pdf, generate_cv_preview_text, get_cv_profile
 
 
-def _file_slug(name: str, company: str = "", counter: int = 0, user_id: int = 0) -> str:
+def _file_slug(name: str, company: str = "", title: str = "", counter: int = 0, user_id: int = 0) -> str:
     pad = max(2, len(str(abs(counter or 0))))
     seq = str(counter).zfill(pad)
     name_part = re.sub(r"[^a-zA-Z0-9]", "", name)[:20] if name else ""
+    title_part = re.sub(r"[^a-zA-Z0-9]", "", title)[:15] if title else ""
     company_part = re.sub(r"[^a-zA-Z0-9]", "", company)[:10] if company else ""
-    suffix = hashlib.md5(f"{user_id}_{counter}_{name}_{company}".encode()).hexdigest()[:6]
+    suffix = hashlib.md5(f"{user_id}_{counter}_{name}_{title}_{company}".encode()).hexdigest()[:6]
     parts = [seq]
     if name_part:
         parts.append(name_part)
+    if title_part:
+        parts.append(title_part)
     if company_part:
         parts.append(company_part)
     parts.append(suffix)
@@ -57,16 +60,7 @@ from backend.scrapers.ats import ATSJobScraper
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    from backend.cron import setup_scheduler
-    scheduler = setup_scheduler(app)
     yield
-    if scheduler:
-        scheduler.shutdown()
-        if hasattr(scheduler, "_lock_fd") and scheduler._lock_fd:
-            try:
-                scheduler._lock_fd.close()
-            except Exception:
-                pass
 
 
 app = FastAPI(title="Joblin", version="2.0.0", lifespan=lifespan)
@@ -712,7 +706,7 @@ def tailor_from_job_data(
         diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
         tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
 
-        slug = _file_slug(name, job.get("company", "") or "", counter=counter, user_id=user_id)
+        slug = _file_slug(name, job.get("company", "") or "", title=job.get("title", ""), counter=counter, user_id=user_id)
         cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
         cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
         cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
@@ -813,7 +807,7 @@ def tailor_job(job_id: int, current_user: dict = Depends(get_current_user), gene
         diversity_seed = f"{user_id}_{job.get('title', '')}_{counter}"
         tailored_cv = randomize_tailored_cv(tailored_cv, job.get("title", ""), seed=diversity_seed)
 
-        slug = _file_slug(name, job.get("company", "") or "", counter=counter, user_id=user_id)
+        slug = _file_slug(name, job.get("company", "") or "", title=job.get("title", ""), counter=counter, user_id=user_id)
         cv_path = str(GENERATED_DIR / f"{slug}_cv.docx")
         cover_path = str(GENERATED_DIR / f"{slug}_cover.docx")
         cv_pdf_path = str(GENERATED_DIR / f"{slug}_cv.pdf")
@@ -949,7 +943,16 @@ def download(job_id: int, doc_type: str, current_user: dict = Depends(get_curren
     label = "CV" if doc_type == "cv" else "Cover_Letter"
     title_slug = re.sub(r"[^a-zA-Z0-9]", "", link.get("title", "Job"))[:25]
     company_slug = re.sub(r"[^a-zA-Z0-9]", "", link.get("company", ""))[:15]
-    filename = f"{label}_{title_slug}_{company_slug}_{job_id}_{datetime.now().strftime('%Y-%m-%d')}.docx"
+    name_slug = ""
+    try:
+        cv_json = get_cv(current_user["user_id"])
+        if cv_json:
+            cv_data = json.loads(cv_json)
+            name = (cv_data.get("personal_info") or {}).get("name", "")
+            name_slug = "_" + re.sub(r"[^a-zA-Z0-9]", "", name)[:15] if name else ""
+    except Exception:
+        pass
+    filename = f"{label}{name_slug}_{title_slug}_{company_slug}_{job_id}_{datetime.now().strftime('%Y-%m-%d')}.docx"
     return FileResponse(path, filename=filename, media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
 
 

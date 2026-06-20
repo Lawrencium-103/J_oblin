@@ -536,11 +536,16 @@ def get_api_keys(user_id: int) -> dict:
 
 
 def get_effective_api_keys(user_id: int) -> dict:
-    from backend.config import DEFAULT_NVIDIA_KEY
+    from backend.config import DEFAULT_NVIDIA_KEY, DEFAULT_GROQ_KEY, DEFAULT_GEMINI_KEY
     keys = get_api_keys(user_id)
     settings = get_user_settings(user_id)
-    if settings.get("use_default_api", True) and DEFAULT_NVIDIA_KEY:
-        keys.setdefault("nvidia", DEFAULT_NVIDIA_KEY)
+    if settings.get("use_default_api", True):
+        if DEFAULT_NVIDIA_KEY:
+            keys.setdefault("nvidia", DEFAULT_NVIDIA_KEY)
+        if DEFAULT_GROQ_KEY:
+            keys.setdefault("groq", DEFAULT_GROQ_KEY)
+        if DEFAULT_GEMINI_KEY:
+            keys.setdefault("gemini", DEFAULT_GEMINI_KEY)
     return keys
 
 
