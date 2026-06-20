@@ -1660,4 +1660,46 @@ def generate_hr_email(
         "- The subject line must be on the very first line.\n"
     )
 
-    return _call_any(prompt, api_keys, max_tokens=800)
+    raw = _call_any(prompt, api_keys, max_tokens=800)
+    if raw:
+        return raw
+
+    # Rule-based fallback
+    name = candidate_name or "the candidate"
+    top_skills = ", ".join(skills_flat[:5]) if skills_flat else "data analysis and reporting"
+    exp_highlights = []
+    for e in (experiences or [])[:2]:
+        t = e.get("title", "")
+        c = e.get("company", "")
+        a = (e.get("achievements") or [])[:1]
+        if a and a[0]:
+            ach_text = a[0].strip().rstrip(".")
+            if ach_text:
+                ach_text = ach_text[0].upper() + ach_text[1:]
+                exp_highlights.append(f"In my role as {t} at {c}, {ach_text}.")
+        elif t and c:
+            exp_highlights.append(f"In my role as {t} at {c}, I developed and applied skills directly relevant to this position.")
+    exp_lines = "\n\n".join(exp_highlights[:2]) if exp_highlights else ""
+    summary_text = (summary or "")[:300]
+
+    email_lines = [
+        f"Subject: Re: {job_title} \u2014 {name}",
+        "",
+        f"Dear Hiring Manager,",
+        "",
+        f"I came across the {job_title} role at {company} and wanted to reach out directly. "
+        f"My background in {top_skills} aligns well with what your team is looking for.",
+        "",
+    ]
+    if summary_text:
+        email_lines.append(summary_text + "\n")
+    if exp_lines:
+        email_lines.append(exp_lines + "\n")
+    email_lines.append(
+        f"I would welcome the opportunity to discuss how my experience can contribute to "
+        f"your team\u2019s goals. Happy to provide more details or samples of my work at your convenience."
+    )
+    email_lines.append("")
+    email_lines.append("Best regards,")
+    email_lines.append(name)
+    return "\n".join(email_lines)
