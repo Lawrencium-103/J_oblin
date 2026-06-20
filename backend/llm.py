@@ -1468,7 +1468,14 @@ def parse_cv_text(raw_text: str, api_keys: dict = None) -> dict:
 
 
 def score_job_match(job_title: str, job_description: str, user_cv: dict) -> int:
-    skills_str = " ".join(user_cv.get("skills", [])).lower()
+    skills_raw = user_cv.get("skills", [])
+    if skills_raw and isinstance(skills_raw[0], dict):
+        flat = []
+        for g in skills_raw:
+            flat.extend(g.get("items", []))
+        skills_str = " ".join(flat).lower()
+    else:
+        skills_str = " ".join(skills_raw).lower()
     jd_kw = top_keywords(job_description)
     hits = sum(1 for k in jd_kw if k in skills_str)
     return min(100, int(hits / max(len(jd_kw), 1) * 100))
