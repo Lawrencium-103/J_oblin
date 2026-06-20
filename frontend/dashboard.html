@@ -125,6 +125,33 @@ body { background: #ffffff; }
   .search-dash input,
   .search-dash select { width: 100%; min-width: 0; }
 }
+
+.scrape-modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.scrape-modal {
+  background: #fff; border-radius: 12px; padding: 24px;
+  max-width: 480px; width: 90%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+.scrape-modal-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 16px;
+}
+.scrape-modal-header h3 { margin: 0; font-size: 18px; color: #1e293b; }
+.scrape-modal-body {
+  text-align: center; min-height: 100px;
+}
+.scrape-status-icon { margin-bottom: 12px; }
+.scrape-status-msg { font-size: 14px; color: #475569; margin-bottom: 12px; }
+.scrape-details { text-align: left; max-height: 300px; overflow-y: auto; }
+.spinner {
+  width: 32px; height: 32px; border: 3px solid #e2e8f0;
+  border-top-color: #0d9488; border-radius: 50%;
+  animation: spin 0.8s linear infinite; margin: 0 auto;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -455,17 +482,120 @@ async function triggerScrape() {
   if (!btn) return;
   btn.disabled = true;
   btn.textContent = "Scraping...";
+  showScrapeModal("pending");
   try {
     const data = await apiFetch("POST", "/api/scrape/cron", {});
-    showToast("Scraping started in background — refresh in 60 seconds.");
+    pollScrapeStatus();
   } catch (err) {
     showToast("Scrape error: " + err.message, "error");
-  } finally {
-    setTimeout(() => {
-      if (btn) { btn.disabled = false; btn.textContent = "Scrape Fresh Jobs"; }
-      loadStats();
-    }, 5000);
+    showScrapeModal("error", err.message);
+    btn.disabled = false;
+    btn.textContent = "Scrape Fresh Jobs";
   }
+}
+
+let _scrapePollTimer = null;
+async function pollScrapeStatus() {
+  try {
+    const data = await apiFetch("GET", "/api/scrape/status", null);
+    const log = data.last_scrape;
+    if (!log) {
+      showScrapeModal("pending");
+      _scrapePollTimer = setTimeout(pollScrapeStatus, 3000);
+      return;
+    }
+    if (log.status === "running") {
+      showScrapeModal("running", null, log);
+      _scrapePollTimer = setTimeout(pollScrapeStatus, 3000);
+      return;
+    }
+    showScrapeModal(log.status, null, log);
+    const btn = document.getElementById("scrapeBtn");
+    if (btn) { btn.disabled = false; btn.textContent = "Scrape Fresh Jobs"; }
+    setTimeout(() => hideScrapeModal(), 10000);
+    loadStats();
+  } catch (err) {
+    _scrapePollTimer = setTimeout(pollScrapeStatus, 5000);
+  }
+}
+
+function showScrapeModal(status, errorMsg, log) {
+  let modal = document.getElementById("scrapeModal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "scrapeModal";
+    modal.innerHTML = `<div class="scrape-modal-overlay" onclick="hideScrapeModal()">
+      <div class="scrape-modal" onclick="event.stopPropagation()">
+        <div class="scrape-modal-header">
+          <h3>Scrape Status</h3>
+          <button onclick="hideScrapeModal()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:18px">&times;</button>
+        </div>
+        <div class="scrape-modal-body" id="scrapeModalBody">
+          <div class="scrape-status-icon" id="scrapeStatusIcon">...</div>
+          <div class="scrape-status-msg" id="scrapeStatusMsg">Starting...</div>
+          <div class="scrape-details" id="scrapeDetails"></div>
+        </div>
+      </div>
+    </div>`;
+    document.body.appendChild(modal);
+  }
+  const overlay = modal.querySelector(".scrape-modal-overlay");
+  overlay.style.display = "flex";
+  const icon = document.getElementById("scrapeStatusIcon");
+  const msg = document.getElementById("scrapeStatusMsg");
+  const details = document.getElementById("scrapeDetails");
+  if (status === "pending") {
+    icon.innerHTML = '<div class="spinner"></div>';
+    msg.textContent = "Starting scrape...";
+    details.innerHTML = "";
+  } else if (status === "running") {
+    icon.innerHTML = '<div class="spinner"></div>';
+    const elapsed = log ? Math.floor((Date.now() - new Date(log.started_at + "Z").getTime()) / 1000) : 0;
+    msg.textContent = `Scraping in progress... ${elapsed}s elapsed`;
+    if (log && log.board_yields && log.board_yields !== "{}") {
+      try {
+        const yields = JSON.parse(log.board_yields);
+        const entries = Object.entries(yields).sort((a, b) => b[1] - a[1]);
+        details.innerHTML = "<h4>Board yields:</h4>" + entries.map(([n, c]) => `<div style="font-size:12px;color:var(--text-muted)">${n}: ${c}</div>`).join("");
+      } catch(e) {
+        details.innerHTML = "";
+      }
+    } else {
+      details.innerHTML = "";
+    }
+  } else if (status === "complete") {
+    icon.innerHTML = '<span style="color:#22c55e;font-size:24px">&#10003;</span>';
+    msg.textContent = "Scrape completed!";
+    let html = "";
+    if (log) {
+      html += `<div style="font-size:13px;color:var(--text-default);margin-top:8px">
+        <div>Scraped: <strong>${log.total_scraped}</strong> jobs</div>
+        <div>Saved: <strong>${log.total_saved}</strong> new jobs</div>
+        <div>Removed old: <strong>${log.total_removed}</strong></div>
+      </div>`;
+      if (log.board_yields && log.board_yields !== "{}") {
+        try {
+          const yields = JSON.parse(log.board_yields);
+          const entries = Object.entries(yields).sort((a, b) => b[1] - a[1]);
+          html += "<h4 style='margin-top:12px;font-size:13px'>Board yields:</h4>" + entries.map(([n, c]) => `<div style="font-size:12px;color:var(--text-muted)">${n}: ${c}</div>`).join("");
+        } catch(e) {}
+      }
+    }
+    details.innerHTML = html;
+  } else if (status === "error") {
+    icon.innerHTML = '<span style="color:#ef4444;font-size:24px">&#10007;</span>';
+    msg.textContent = "Scrape error";
+    details.innerHTML = `<div style="font-size:13px;color:#ef4444;margin-top:8px">${escHtml(errorMsg || (log && log.error) || "Unknown error")}</div>`;
+  }
+}
+
+function hideScrapeModal() {
+  const modal = document.getElementById("scrapeModal");
+  if (modal) {
+    const overlay = modal.querySelector(".scrape-modal-overlay");
+    if (overlay) overlay.style.display = "none";
+  }
+  if (_scrapePollTimer) { clearTimeout(_scrapePollTimer); _scrapePollTimer = null; }
 }
 
 async function loadAppliedCount() {
@@ -551,6 +681,8 @@ async function loadCategories() {
   } catch (err) {}
 }
 
+window.addEventListener("beforeunload", () => { if (_scrapePollTimer) clearTimeout(_scrapePollTimer); });
+window.addEventListener("pageshow", () => { if (_scrapePollTimer) clearTimeout(_scrapePollTimer); });
 if (!getToken()) window.location.href = "login.html";
 updateHeader();
 renderDailyMotivation();

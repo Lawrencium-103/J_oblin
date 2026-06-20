@@ -3,7 +3,7 @@ import asyncio
 from datetime import datetime
 
 from backend.config import PUBLIC_BOARDS, CRON_QUERIES
-from backend.database import save_global_jobs, deactivate_old_jobs, get_global_stats
+from backend.database import save_global_jobs, deactivate_old_jobs, get_global_stats, create_scrape_log, update_scrape_log
 
 from backend.scrapers.nigeria import NigerianJobScraper
 from backend.scrapers.ngos import NGOJobScraper
@@ -47,33 +47,43 @@ def _scrape_board(board_name: str, cat: str, query: str) -> list[dict]:
     return []
 
 
+_current_log_id = None
+
+
 def run_nightly_scrape() -> dict:
+    global _current_log_id
     start = time.time()
     all_jobs = []
     queries = CRON_QUERIES
 
-    print(f"[cron] Nightly scrape starting at {datetime.now().isoformat()}")
+    _current_log_id = create_scrape_log()
+    print(f"[cron] Nightly scrape #{_current_log_id} starting at {datetime.now().isoformat()}")
 
     board_yields = {}
-    for cat, name, cfg in PUBLIC_BOARDS:
-        if not cfg.get("enabled", True):
-            continue
-        board_start = time.time()
-        board_urls = set()
-        for query in queries:
-            if len(all_jobs) >= _MAX_JOBS * 2:
-                break
-            if time.time() - board_start > _BOARD_TIMEOUT:
-                print(f"[cron] Timeout for {name} ({cat}) after {_BOARD_TIMEOUT}s")
-                break
-            jobs = _scrape_board(name, cat, query)
-            if jobs:
-                all_jobs.extend(jobs)
-                board_yields[name] = board_yields.get(name, 0) + len(jobs)
-                new_urls = {j.get("url", "") for j in jobs if j.get("url")}
-                if board_urls and new_urls and new_urls.issubset(board_urls):
+    error_msg = ""
+    try:
+        for cat, name, cfg in PUBLIC_BOARDS:
+            if not cfg.get("enabled", True):
+                continue
+            board_start = time.time()
+            board_urls = set()
+            for query in queries:
+                if len(all_jobs) >= _MAX_JOBS * 2:
                     break
-                board_urls.update(new_urls)
+                if time.time() - board_start > _BOARD_TIMEOUT:
+                    print(f"[cron] Timeout for {name} ({cat}) after {_BOARD_TIMEOUT}s")
+                    break
+                jobs = _scrape_board(name, cat, query)
+                if jobs:
+                    all_jobs.extend(jobs)
+                    board_yields[name] = board_yields.get(name, 0) + len(jobs)
+                    new_urls = {j.get("url", "") for j in jobs if j.get("url")}
+                    if board_urls and new_urls and new_urls.issubset(board_urls):
+                        break
+                    board_urls.update(new_urls)
+    except Exception as e:
+        error_msg = f"{type(e).__name__}: {e}"
+        print(f"[cron] Fatal error during scrape loop: {error_msg}")
 
     # Dedup by URL
     seen = set()
@@ -87,7 +97,13 @@ def run_nightly_scrape() -> dict:
                 break
 
     # Save to global pool
-    saved = save_global_jobs(unique)
+    saved = 0
+    try:
+        saved = save_global_jobs(unique)
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+        error_msg = f"{error_msg}; save error: {err}" if error_msg else f"save error: {err}"
+        print(f"[cron] Error saving jobs: {err}")
 
     # Log per-board yield
     print(f"[cron] Board yields:")
@@ -95,9 +111,26 @@ def run_nightly_scrape() -> dict:
         print(f"  {bname}: {cnt}")
 
     # Clean old jobs
-    removed = deactivate_old_jobs(7)
+    removed = 0
+    try:
+        removed = deactivate_old_jobs(7)
+    except Exception as e:
+        err = f"{type(e).__name__}: {e}"
+        error_msg = f"{error_msg}; cleanup error: {err}" if error_msg else f"cleanup error: {err}"
+        print(f"[cron] Error cleaning old jobs: {err}")
 
     elapsed = time.time() - start
+    import json
+    update_scrape_log(
+        _current_log_id,
+        finished_at=datetime.now().isoformat(),
+        status="error" if error_msg else "complete",
+        board_yields=json.dumps(board_yields),
+        total_scraped=len(all_jobs),
+        total_saved=saved,
+        total_removed=removed,
+        error=error_msg,
+    )
     result = {
         "scraped": len(all_jobs),
         "unique": len(unique),
@@ -105,6 +138,7 @@ def run_nightly_scrape() -> dict:
         "removed_old": removed,
         "elapsed_seconds": round(elapsed, 1),
         "timestamp": datetime.now().isoformat(),
+        "error": error_msg,
     }
     print(f"[cron] Done: {result}")
     return result

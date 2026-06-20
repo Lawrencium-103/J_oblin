@@ -169,6 +169,18 @@ CREATE TABLE IF NOT EXISTS user_activity_log (
     ip_address TEXT DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS scrape_log (
+    id SERIAL PRIMARY KEY,
+    started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    finished_at TIMESTAMP,
+    status TEXT DEFAULT 'running',
+    board_yields TEXT DEFAULT '{}',
+    total_scraped INTEGER DEFAULT 0,
+    total_saved INTEGER DEFAULT 0,
+    total_removed INTEGER DEFAULT 0,
+    error TEXT DEFAULT ''
+);
 """
 
 _SQLITE_DDL = """
@@ -259,6 +271,18 @@ CREATE TABLE IF NOT EXISTS user_activity_log (
     details TEXT DEFAULT '',
     ip_address TEXT DEFAULT '',
     created_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE TABLE IF NOT EXISTS scrape_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    started_at TEXT DEFAULT (datetime('now')),
+    finished_at TEXT,
+    status TEXT DEFAULT 'running',
+    board_yields TEXT DEFAULT '{}',
+    total_scraped INTEGER DEFAULT 0,
+    total_saved INTEGER DEFAULT 0,
+    total_removed INTEGER DEFAULT 0,
+    error TEXT DEFAULT ''
 );
 """
 
@@ -1118,3 +1142,34 @@ def get_activity_stats():
             "monthly": [{"month": r["month"], "count": r["cnt"]} for r in monthly],
             "yearly": [{"year": r["year"], "count": r["cnt"]} for r in yearly],
         }
+
+
+def create_scrape_log() -> int:
+    with get_db() as conn:
+        cur = _exec_lastid(
+            conn,
+            "INSERT INTO scrape_log (status) VALUES ('running')",
+        )
+        return cur if cur is not None else 0
+
+
+def update_scrape_log(log_id: int, **kwargs):
+    sets = []
+    vals = []
+    for k, v in kwargs.items():
+        sets.append(f"{k} = ?")
+        vals.append(v)
+    if not sets:
+        return
+    vals.append(log_id)
+    with get_db() as conn:
+        _exec(conn, f"UPDATE scrape_log SET {', '.join(sets)} WHERE id = ?", vals)
+
+
+def get_last_scrape_log() -> dict | None:
+    with get_db() as conn:
+        rows = _exec(
+            conn,
+            "SELECT * FROM scrape_log ORDER BY id DESC LIMIT 5",
+        ).fetchall()
+        return [dict(r) for r in rows]

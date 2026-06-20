@@ -22,6 +22,7 @@ from backend.database import (
     deactivate_old_jobs,
     create_reset_token, get_valid_token, mark_token_used, update_password,
     log_activity, get_activity_stats, get_activity_log,
+    get_last_scrape_log,
 )
 from backend.auth import hash_password, verify_password, create_access_token, get_current_user, optional_user
 from backend.llm import tailor_application as llm_tailor, make_cv_from_scratch, parse_cv_text, generate_hr_email, score_job_match, top_keywords
@@ -346,6 +347,13 @@ def scrape_cron(req: ScrapeRequest, token: str = Query(""), current_user: dict =
         raise HTTPException(403, "Admin access required")
     threading.Thread(target=run_nightly_scrape, daemon=True).start()
     return {"status": "started", "message": "Scraping in background"}
+
+@app.get("/api/scrape/status")
+def scrape_status():
+    logs = get_last_scrape_log()
+    if not logs:
+        return {"logs": [], "last_scrape": None}
+    return {"logs": logs, "last_scrape": logs[0]}
 
 @app.get("/api/check-network")
 def check_network():
