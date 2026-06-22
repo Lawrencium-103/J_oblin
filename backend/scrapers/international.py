@@ -549,6 +549,78 @@ class InternationalJobScraper(BaseScraper):
     def scrape_naukri(self, query: str) -> list[dict]:
         return []
 
+    # ── Foundit.in (India/APAC) — JSON API (fully accessible) ────────────
+    def scrape_foundit(self, query: str) -> list[dict]:
+        data = self.fetch_json(
+            f"https://www.foundit.in/middleware/jobsearch?query={quote(query)}&page=1&size=25",
+            extra_headers={"Referer": "https://www.foundit.in/"},
+        )
+        if not isinstance(data, dict):
+            return []
+        jobs_data = data.get("jobSearchResponse", {}).get("data", [])
+        if not jobs_data:
+            return []
+        jobs = []
+        for item in jobs_data[:25]:
+            try:
+                title = item.get("title", "")
+                if not title:
+                    continue
+                company = item.get("companyName", "") or ""
+                location = item.get("locations", "") or ""
+                url = item.get("redirectUrl", "") or item.get("applyUrl", "")
+                if not url:
+                    jd_path = item.get("seoJdUrl", "") or item.get("jdUrl", "")
+                    if jd_path:
+                        url = f"https://www.foundit.in{jd_path}"
+                if not url:
+                    continue
+                exp = item.get("minimumExperience", {}) or {}
+                exp_max = item.get("maximumExperience", {}) or {}
+                exp_str = f"{exp.get('years', '')}-{exp_max.get('years', '')} yrs" if exp.get('years') is not None else ""
+                salary = item.get("salary", "") or ""
+                skills = item.get("skills", "") or ""
+                desc_parts = [p for p in [skills, exp_str, salary] if p]
+                desc = " | ".join(desc_parts)[:500]
+                posted = item.get("postedBy", "") or ""
+                jobs.append(self._make_job(title, company, location, desc, url, "foundit", CAT, posted))
+            except Exception:
+                continue
+        return self.filter_fresh(jobs)
+
+    # ── BuiltIn.com (US tech hubs) — SSR HTML, sync accessible ───────────
+    def scrape_builtin(self, query: str) -> list[dict]:
+        from urllib.parse import urljoin
+        soup = self.fetch_soup(f"https://builtin.com/jobs?q={quote(query)}")
+        if not soup:
+            return []
+        cards = soup.select("div.job-bounded-responsive")
+        if not cards:
+            return self._extract_from_text(soup, "builtin", "https://builtin.com", CAT)
+        jobs, seen = [], set()
+        for card in cards[:25]:
+            try:
+                title_el = card.select_one('a[data-id="job-card-title"]')
+                if not title_el:
+                    continue
+                title = self._clean_text(title_el.get_text())
+                href = title_el.get("href", "")
+                if not title or not href or href in seen:
+                    continue
+                seen.add(href)
+                company_el = card.select_one('a[data-id="company-title"] span')
+                company = self._clean_text(company_el.get_text()) if company_el else ""
+                location_el = card.select_one("span.font-barlow.text-gray-04")
+                location = self._clean_text(location_el.get_text()) if location_el else ""
+                date_el = card.select_one("span.fs-xs.fw-bold")
+                posted = self._clean_text(date_el.get_text()) if date_el else ""
+                jobs.append(self._make_job(title, company, location, "",
+                                           urljoin("https://builtin.com", href),
+                                           "builtin", CAT, posted))
+            except Exception:
+                continue
+        return self.filter_fresh(jobs)
+
     # ── Shared multi-selector card parser ─────────────────────────────────
     def _parse_cards(self, cards: list, source: str, base: str, limit: int = 25) -> list[dict]:
         jobs, seen = [], set()

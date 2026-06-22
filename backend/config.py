@@ -327,6 +327,16 @@ JOB_BOARDS = {
             "search_url": "https://www.naukri.com/jobs?k={query}",
             "type": "login_required", "region": "India/Global", "icon": "global", "enabled": True,
         },
+        "foundit": {
+            "base_url": "https://www.foundit.in",
+            "search_url": "https://www.foundit.in/srp/results?query={query}",
+            "type": "public", "region": "India/Southeast Asia", "icon": "global", "enabled": True,
+        },
+        "builtin": {
+            "base_url": "https://builtin.com",
+            "search_url": "https://builtin.com/jobs?q={query}",
+            "type": "public", "region": "USA/Tech Hubs", "icon": "global", "enabled": True,
+        },
     },
 }
 
