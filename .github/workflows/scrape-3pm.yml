@@ -1,0 +1,17 @@
+name: Scrape - 3 PM
+
+on:
+  schedule:
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger scrape on HuggingFace Space
+        run: |
+          curl -s -X POST "${{ secrets.HF_SPACE_URL }}/api/scrape/cron?token=${{ secrets.JOBLIN_CRON_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"title": "Data Analyst", "boards": []}' \
+            --max-time 300
