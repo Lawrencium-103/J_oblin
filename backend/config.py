@@ -307,6 +307,26 @@ JOB_BOARDS = {
             "search_url": "https://www.skipthedrive.com/?s={query}",
             "type": "public", "region": "Remote/Global", "icon": "global", "enabled": True,
         },
+        "salesjobs": {
+            "base_url": "https://www.salesjobs.com",
+            "search_url": "https://www.salesjobs.com/sales-jobs/in/{location}",
+            "type": "public", "region": "USA/Sales", "icon": "global", "enabled": True,
+        },
+        "dice": {
+            "base_url": "https://www.dice.com",
+            "search_url": "https://www.dice.com/jobs?q={query}",
+            "type": "playwright", "region": "USA/Global Tech", "icon": "global", "enabled": True,
+        },
+        "monster": {
+            "base_url": "https://www.monster.com",
+            "search_url": "https://www.monster.com/jobs/search/?q={query}",
+            "type": "playwright", "region": "USA/Global", "icon": "global", "enabled": True,
+        },
+        "naukri": {
+            "base_url": "https://www.naukri.com",
+            "search_url": "https://www.naukri.com/jobs?k={query}",
+            "type": "login_required", "region": "India/Global", "icon": "global", "enabled": True,
+        },
     },
 }
 

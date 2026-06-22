@@ -474,6 +474,81 @@ class InternationalJobScraper(BaseScraper):
             return self._extract_from_text(soup, "rigzone", "https://www.rigzone.com", CAT)
         return result
 
+    # ── SalesJobs.com — sync HTML (fully accessible) ──────────────────────
+    def scrape_salesjobs(self, query: str) -> list[dict]:
+        from urllib.parse import urljoin
+        cities = ["new-york-ny", "chicago-il", "los-angeles-ca", "remote"]
+        result, seen = [], set()
+        for city in cities:
+            for page in range(2):
+                soup = self.fetch_soup(f"https://www.salesjobs.com/sales-jobs/in/{city}?page={page}")
+                if not soup:
+                    break
+                for card in soup.select("#jobSearchResults div.border-bottom.p-2.my-2"):
+                    try:
+                        title_el = card.select_one("h2 a.job-link")
+                        if not title_el:
+                            continue
+                        title = self._clean_text(title_el.get_text())
+                        href = title_el.get("href", "")
+                        if not title or not href or href in seen:
+                            continue
+                        seen.add(href)
+                        if query.lower() not in title.lower():
+                            continue
+                        company = self._clean_text(card.select_one("strong").get_text()) if card.select_one("strong") else ""
+                        location = title_el.get("data-jobcitymatch", "") or ""
+                        result.append(self._make_job(title, company, location, "",
+                                                     urljoin("https://www.salesjobs.com", href),
+                                                     "salesjobs", CAT, ""))
+                    except Exception:
+                        continue
+                if len(result) >= 20:
+                    return self.filter_fresh(result)
+        return self.filter_fresh(result)
+
+    # ── Dice.com — WAF blocked; sync stub + Playwright variant ────────────
+    def scrape_dice(self, query: str) -> list[dict]:
+        return []
+
+    async def scrape_dice_playwright(self, page, query: str) -> list[dict]:
+        from bs4 import BeautifulSoup
+        try:
+            await page.goto(f"https://www.dice.com/jobs?q={quote(query)}", wait_until="domcontentloaded", timeout=45000)
+            await page.wait_for_timeout(5000)
+            soup = BeautifulSoup(await page.content(), "html.parser")
+            cards = self.multi_select(soup, [
+                "a[href*='job-detail']", "[class*='card']", "[data-testid*='job']",
+                "div[class*='job-card']", "article", "li",
+            ])
+            return self._parse_cards(cards, "dice", "https://www.dice.com")
+        except Exception as e:
+            print(f"[dice] playwright error: {e}")
+        return []
+
+    # ── Monster.com — WAF blocked; sync stub + Playwright variant ────────
+    def scrape_monster(self, query: str) -> list[dict]:
+        return []
+
+    async def scrape_monster_playwright(self, page, query: str) -> list[dict]:
+        from bs4 import BeautifulSoup
+        try:
+            await page.goto(f"https://www.monster.com/jobs/search/?q={quote(query)}", wait_until="domcontentloaded", timeout=45000)
+            await page.wait_for_timeout(5000)
+            soup = BeautifulSoup(await page.content(), "html.parser")
+            cards = self.multi_select(soup, [
+                "div[class*='job-card']", "article[class*='job']", "[data-testid*='svx-job']",
+                "li[class*='result']", "div[class*='listing']", "article", "li",
+            ])
+            return self._parse_cards(cards, "monster", "https://www.monster.com")
+        except Exception as e:
+            print(f"[monster] playwright error: {e}")
+        return []
+
+    # ── Naukri.com — Next.js SPA; needs nkparam header for JSON API ──────
+    def scrape_naukri(self, query: str) -> list[dict]:
+        return []
+
     # ── Shared multi-selector card parser ─────────────────────────────────
     def _parse_cards(self, cards: list, source: str, base: str, limit: int = 25) -> list[dict]:
         jobs, seen = [], set()
