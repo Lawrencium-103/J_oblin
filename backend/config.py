@@ -334,6 +334,11 @@ JOB_BOARDS["highimpact"] = {
         "search_url": "https://www.anthropic.com/careers?query={query}",
         "type": "public", "region": "Global/AI", "icon": "ai", "enabled": True,
     },
+    "gainwell": {
+        "base_url": "https://jobs.gainwelltechnologies.com",
+        "search_url": "https://jobs.gainwelltechnologies.com/go/View-All-Jobs/8808000/",
+        "type": "public", "region": "Global/Healthcare Tech", "icon": "ai", "enabled": True,
+    },
 }
 
 JOB_BOARDS["ats"] = {

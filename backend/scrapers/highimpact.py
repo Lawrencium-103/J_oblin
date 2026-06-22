@@ -5,7 +5,7 @@ Future-proof: Algolia API → JSON-LD → multi-selector → heuristic text.
 """
 import re as _re
 from datetime import datetime
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from .base import BaseScraper
 
 CAT = "highimpact"
@@ -130,6 +130,47 @@ class HighImpactScraper(BaseScraper):
             if result:
                 return result
         return []
+
+    # ── Gainwell Technologies (SAP SuccessFactors) ─────────────────────────
+    def scrape_gainwell(self, query: str) -> list[dict]:
+        base = "https://jobs.gainwelltechnologies.com"
+        jobs = []
+        seen = set()
+        for page_url in [
+            f"{base}/go/View-All-Jobs/8808000/?q=&sortColumn=referencedate&sortDirection=desc",
+            f"{base}/go/View-All-Jobs/8808000/25/?q=&sortColumn=referencedate&sortDirection=desc",
+            f"{base}/go/View-All-Jobs/8808000/50/?q=&sortColumn=referencedate&sortDirection=desc",
+        ]:
+            soup = self.fetch_soup(page_url)
+            if not soup:
+                continue
+            rows = soup.select("tr.data-row")
+            if not rows:
+                continue
+            for row in rows:
+                title_el = row.select_one("a.jobTitle-link")
+                if not title_el:
+                    continue
+                title = title_el.get_text(strip=True)
+                href = title_el.get("href", "")
+                url = urljoin(base, href) if href and not href.startswith("http") else href
+                if not title or not url or url in seen:
+                    continue
+                seen.add(url)
+                loc_el  = row.select_one("span.jobLocation")
+                location = self._clean_text(loc_el.get_text()) if loc_el else ""
+                date_el = row.select_one("span.jobDate")
+                date_text = date_el.get_text(strip=True) if date_el else ""
+                jobs.append(self._make_job(title, "Gainwell Technologies", location, "", url, "gainwell", CAT, date_text))
+            if len(jobs) >= 75:
+                break
+        if not jobs:
+            rss = self.fetch_rss(f"{base}/services/rss/category/?catid=8808000")
+            if rss:
+                for j in rss:
+                    j.update({"source": "gainwell", "category": CAT, "company": "Gainwell Technologies"})
+                return self.filter_fresh(rss)
+        return self.filter_fresh(jobs[:75])
 
     # ── Shared card parser ─────────────────────────────────────────────────
     def _parse_cards(self, cards: list, source: str, base: str, limit: int = 20) -> list[dict]:
