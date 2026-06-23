@@ -28,8 +28,8 @@ _UA_POOL = [
 
 # Domain-level rate tracking (shared across all instances)
 _DOMAIN_LAST_HIT: dict[str, float] = {}
-_MIN_DELAY = 3.0   # seconds min between hits to same domain
-_MAX_DELAY = 8.0   # seconds max — looks more human
+_MIN_DELAY = 4.0   # seconds min between hits to same domain
+_MAX_DELAY = 6.0   # seconds max — looks more human
 
 # Circuit breaker: track consecutive failures per domain
 _DOMAIN_FAILURES: dict[str, int] = {}

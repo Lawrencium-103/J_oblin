@@ -349,11 +349,6 @@ CRON_QUERIES = [
 ]
 
 JOB_BOARDS["highimpact"] = {
-    "idealist": {
-        "base_url": "https://www.idealist.org",
-        "search_url": "https://www.idealist.org/en/jobs?q={query}",
-        "type": "public", "region": "Global/Nonprofit", "icon": "ai", "enabled": True,
-    },
     "80000hours": {
         "base_url": "https://80000hours.org",
         "search_url": "https://80000hours.org/job-board/?search={query}",
