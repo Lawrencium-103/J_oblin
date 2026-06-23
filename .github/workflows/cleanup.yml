@@ -9,6 +9,6 @@ jobs:
   cleanup:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger cleanup on HuggingFace Space
+      - name: Trigger cleanup on Render
         run: |
-          curl -s "${{ secrets.HF_SPACE_URL }}/api/cleanup?token=${{ secrets.JOBLIN_CRON_TOKEN }}" --max-time 30
+          curl -s "https://joblin-hx5a.onrender.com/api/cleanup?token=${{ secrets.JOBLIN_CRON_TOKEN }}" --max-time 30
