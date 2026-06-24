@@ -10,6 +10,7 @@ Robust base scraper with:
 import re
 import time
 import json
+import gc
 import random
 import hashlib
 import requests
@@ -44,7 +45,13 @@ _ROBOTS_TTL = 86400  # 24 hours
 
 # HTTP response cache per URL (in-memory, TTL per domain)
 _HTTP_CACHE: dict[str, tuple[float, str]] = {}  # url -> (expires_at, text)
-_HTTP_CACHE_TTL = 300  # 5 minutes default
+_HTTP_CACHE_TTL = 60   # 1 minute — no point keeping across boards
+
+
+def clear_cache():
+    """Drop the HTTP cache between boards to avoid OOM on 512MB RAM."""
+    _HTTP_CACHE.clear()
+    gc.collect()
 
 # Freshness window — 72 hours gives better coverage without letting stale jobs in
 _FRESHNESS_HOURS = 72

@@ -5,6 +5,7 @@ from datetime import datetime
 from backend.config import PUBLIC_BOARDS, CRON_QUERIES
 from backend.database import save_global_jobs, deactivate_old_jobs, get_global_stats, create_scrape_log, update_scrape_log
 
+from backend.scrapers.base import clear_cache
 from backend.scrapers.nigeria import NigerianJobScraper
 from backend.scrapers.ngos import NGOJobScraper
 from backend.scrapers.international import InternationalJobScraper
@@ -81,6 +82,7 @@ def run_nightly_scrape() -> dict:
                     if board_urls and new_urls and new_urls.issubset(board_urls):
                         break
                     board_urls.update(new_urls)
+            clear_cache()
     except Exception as e:
         error_msg = f"{type(e).__name__}: {e}"
         print(f"[cron] Fatal error during scrape loop: {error_msg}")
